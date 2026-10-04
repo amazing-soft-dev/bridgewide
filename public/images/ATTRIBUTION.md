@@ -19,3 +19,8 @@ The ids below are Unsplash image CDN ids (`images.unsplash.com/photo-{id}`). The
 | `region-canada.webp` | https://unsplash.com/ | `1517935706615-2717063c2225` |
 | `region-latam.webp` | https://unsplash.com/ | `1483729558449-99ef09a8c325` |
 | `region-europe.webp` | https://unsplash.com/ | `1513635269975-59663e0ac1ad` |
+| `person-lena.webp` | https://unsplash.com/ | `1573496359142-b8d87734a5a2` |
+| `person-henrik.webp` | https://unsplash.com/ | `1500648767791-00dcc994a43e` |
+| `person-sofia.webp` | https://unsplash.com/ | `1580489944761-15a19d654956` |
+| `person-marcus.webp` | https://unsplash.com/ | `1507003211169-0a1dd7228f2d` |
+| `person-priya.webp` | https://unsplash.com/ | `1544005313-94ddf0286df2` |

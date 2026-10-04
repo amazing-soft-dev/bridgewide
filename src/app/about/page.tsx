@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { SampleNote } from "@/components/pages/SampleNote";
@@ -31,8 +32,16 @@ export default function AboutPage() {
       >
         <ul className="grid gap-10 md:grid-cols-2">
           {people.map((person) => (
-            <li key={person.name} className="border-t border-brand pt-6">
-              <article>
+            <li key={person.id} id={person.id} className="border-t border-brand pt-6">
+              <article className="grid grid-cols-[7.5rem_1fr] gap-5">
+                <Image
+                  src={person.image}
+                  alt=""
+                  width={240}
+                  height={300}
+                  className="aspect-[4/5] w-full object-cover"
+                />
+                <div>
                 <h3 className="font-display text-3xl text-ink">{person.name}</h3>
                 <p className="mt-3 leading-7 text-ink-soft">{person.role}</p>
                 <p className="mt-3 font-mono text-xs tracking-[0.18em] text-brand uppercase">
@@ -44,6 +53,7 @@ export default function AboutPage() {
                     {person.placementCount} placements
                   </span>
                 </p>
+                </div>
               </article>
             </li>
           ))}

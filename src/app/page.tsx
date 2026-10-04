@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
 import { pageMetadata } from "@/components/pages/metadata";
+import { AstraField } from "@/components/home/AstraField";
 import { ClosingBand } from "@/components/home/ClosingBand";
 import { Hero } from "@/components/home/Hero";
 import { TwoDoors } from "@/components/home/TwoDoors";
@@ -86,6 +87,7 @@ export default function HomePage() {
       <InsightsSection />
       <FaqSection />
       <ClosingBand />
+      <AstraField />
     </>
   );
 }

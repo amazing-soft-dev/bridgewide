@@ -110,10 +110,12 @@ export type WeekStep = {
 };
 
 export type Person = {
+  id: string;
   name: string;
   role: string;
   focus: string;
   placementCount: number;
+  image: string;
 };
 
 export type SalaryRange = {
@@ -282,34 +284,44 @@ export const week: readonly WeekStep[] = [
 
 export const people: readonly Person[] = [
   {
+    id: "lena-cho",
     name: "Lena Cho",
     role: "Partner, former staff backend engineer",
     focus: "USA",
     placementCount: 42,
+    image: "/images/person-lena.webp",
   },
   {
+    id: "henrik-dahl",
     name: "Henrik Dahl",
     role: "Principal, former platform engineer",
     focus: "Europe · Cloud",
     placementCount: 31,
+    image: "/images/person-henrik.webp",
   },
   {
+    id: "sofia-navarro",
     name: "Sofia Navarro",
     role: "Consultant, former iOS engineer",
     focus: "LATAM · Mobile",
     placementCount: 27,
+    image: "/images/person-sofia.webp",
   },
   {
+    id: "marcus-adeyemi",
     name: "Marcus Adeyemi",
     role: "Consultant, former data engineer",
     focus: "Canada · Data",
     placementCount: 24,
+    image: "/images/person-marcus.webp",
   },
   {
+    id: "priya-raman",
     name: "Priya Raman",
     role: "Director, former engineering manager",
     focus: "Leadership",
     placementCount: 19,
+    image: "/images/person-priya.webp",
   },
 ];
 
