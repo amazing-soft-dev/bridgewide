@@ -13,7 +13,7 @@ export function SiteFooter() {
     <footer className="bg-ink text-cloud">
       <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 md:grid-cols-3">
         <div className="grid content-start gap-4">
-          <Logo />
+          <Logo variant="full" className="text-cloud" />
           <p className="text-sm text-cloud-soft">{contact.location}</p>
         </div>
         <nav aria-label="Footer">
