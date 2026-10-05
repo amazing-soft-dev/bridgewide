@@ -30,7 +30,7 @@ export function Logo({ className, variant = "full" }: LogoProps) {
       href="/"
       aria-label="BridgeWide"
       className={[
-        "inline-flex items-center gap-[0.4em] text-[1.15rem] leading-none font-sans font-extrabold tracking-[-0.045em] whitespace-nowrap text-current no-underline sm:text-[1.3rem]",
+        "inline-flex items-center gap-[0.4em] text-[1.15rem] leading-none font-sans font-extrabold tracking-[-0.045em] whitespace-nowrap no-underline sm:text-[1.3rem]",
         className,
       ]
         .filter(Boolean)

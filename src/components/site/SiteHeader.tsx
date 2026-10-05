@@ -8,7 +8,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-ink/10 bg-cloud/95 text-ink backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3">
-        <Logo variant="full" className="shrink-0 text-ink" />
+        <Logo variant="full" className="shrink-0 text-brand" />
         <nav aria-label="Primary" className="ml-4 hidden xl:block">
           <ul className="flex items-center gap-5">
             {nav.map((item) => (

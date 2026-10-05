@@ -3,347 +3,123 @@
 import { useEffect, useRef } from "react";
 import { markPaths } from "@/components/brand/mark";
 
-const DEPTH = 46;
 const SCALE = 0.0092;
 const RIBBON_WORLD_WIDTH = 168 * SCALE;
+const [upperWing, lowerArch] = markPaths;
 
-type Pt = { x: number; y: number };
-type ThreeModule = typeof import("three");
-type Spray = {
-  positions: number[];
-  colors: number[];
-  tangents: number[];
-  amps: number[];
-  phases: number[];
+/** Previous upper path midpoint was 0.071. Both ribbons share one third of that. */
+const FLOW_SPEED = 0.071 / 3;
+const SIZE_MIN = 0.02;
+const SIZE_MAX = 0.16;
+const PULL_RADIUS_PX = 96;
+const PULL_MAX_PX = 18;
+const DUST_PER_SIDE = 210;
+
+type Sample = { x: number; y: number };
+type Spine = Sample[];
+type RibbonStar = {
+  kind: "ribbon";
+  spine: 0 | 1;
+  t: number;
+  speed: number;
+  offset: number;
+  z: number;
+  size: number;
+  warm: boolean;
 };
+type DustStar = {
+  kind: "dust";
+  x: number;
+  y: number;
+  z: number;
+  size: number;
+  warm: boolean;
+};
+type Star = RibbonStar | DustStar;
 
-const EMPTY = (): Spray => ({
-  positions: [],
-  colors: [],
-  tangents: [],
-  amps: [],
-  phases: [],
-});
-
-function inside(poly: Pt[], x: number, y: number) {
-  let wind = 0;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const a = poly[j];
-    const b = poly[i];
-    if (a && b && (a.y > y) !== (b.y > y)) {
-      const xint = ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x;
-      if (x < xint) wind++;
-    }
+function sampleSpine(d: string, steps: number): Spine {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("viewBox", "0 0 168 100");
+  svg.style.position = "absolute";
+  svg.style.left = "-9999px";
+  svg.style.width = "168px";
+  svg.style.height = "100px";
+  path.setAttribute("d", d);
+  svg.appendChild(path);
+  document.body.appendChild(svg);
+  const length = path.getTotalLength();
+  const samples: Spine = [];
+  const count = Math.max(2, steps);
+  for (let i = 0; i < count; i++) {
+    const point = path.getPointAtLength((i / count) * length);
+    samples.push({ x: point.x, y: point.y });
   }
-  return wind % 2 === 1;
+  svg.remove();
+  return samples;
 }
 
-function distToSeg(px: number, py: number, ax: number, ay: number, bx: number, by: number) {
-  const dx = bx - ax;
-  const dy = by - ay;
-  const l2 = dx * dx + dy * dy || 1;
-  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l2));
-  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+function spineLength(spine: Spine) {
+  let length = 0;
+  for (let i = 0; i < spine.length; i++) {
+    const a = spine[i];
+    const b = spine[(i + 1) % spine.length];
+    if (!a || !b) continue;
+    length += Math.hypot(b.x - a.x, b.y - a.y);
+  }
+  return length;
 }
 
-function buildFlow(outline: Pt[]) {
-  const gw = 84;
-  const gh = 50;
-  const sx = 168 / gw;
-  const sy = 100 / gh;
-  const dist = new Float32Array(gw * gh);
-  const tx = new Float32Array(gw * gh);
-  const ty = new Float32Array(gw * gh);
-  let maxDist = 1;
-  let seed = -1;
-  let seedX = Infinity;
-
-  for (let j = 0; j < gh; j++) {
-    for (let i = 0; i < gw; i++) {
-      const x = (i + 0.5) * sx;
-      const y = (j + 0.5) * sy;
-      const id = j * gw + i;
-      if (!inside(outline, x, y)) continue;
-      let d = Infinity;
-      for (let e = 0; e < outline.length; e++) {
-        const a = outline[e];
-        const b = outline[(e + 1) % outline.length];
-        if (!a || !b) continue;
-        d = Math.min(d, distToSeg(x, y, a.x, a.y, b.x, b.y));
-      }
-      dist[id] = d;
-      if (d > maxDist) maxDist = d;
-      if (x < seedX) {
-        seedX = x;
-        seed = id;
-      }
-    }
-  }
-
-  for (let j = 1; j < gh - 1; j++) {
-    for (let i = 1; i < gw - 1; i++) {
-      const id = j * gw + i;
-      if (dist[id] <= 0) continue;
-      const gx = (dist[id + 1] ?? 0) - (dist[id - 1] ?? 0);
-      const gy = (dist[id + gw] ?? 0) - (dist[id - gw] ?? 0);
-      const len = Math.hypot(gx, gy) || 1;
-      tx[id] = -gy / len;
-      ty[id] = gx / len;
-    }
-  }
-
-  if (seed >= 0) {
-    const seen = new Uint8Array(gw * gh);
-    const queue = [seed];
-    seen[seed] = 1;
-    for (let q = 0; q < queue.length; q++) {
-      const id = queue[q] ?? 0;
-      const i = id % gw;
-      const j = Math.floor(id / gw);
-      const neighbors = [i > 0 ? id - 1 : -1, i + 1 < gw ? id + 1 : -1, j > 0 ? id - gw : -1, j + 1 < gh ? id + gw : -1];
-      for (const next of neighbors) {
-        if (next < 0 || seen[next] || (dist[next] ?? 0) <= 0) continue;
-        const dot = (tx[id] ?? 0) * (tx[next] ?? 0) + (ty[id] ?? 0) * (ty[next] ?? 0);
-        if (dot < 0) {
-          tx[next] = -(tx[next] ?? 0);
-          ty[next] = -(ty[next] ?? 0);
-        }
-        seen[next] = 1;
-        queue.push(next);
-      }
-    }
-  }
-
+function pointOnSpine(spine: Spine, t: number, offset: number) {
+  const n = spine.length;
+  const wrapped = ((t % 1) + 1) % 1;
+  const f = wrapped * n;
+  const i = Math.floor(f) % n;
+  const u = f - Math.floor(f);
+  const a = spine[i];
+  const b = spine[(i + 1) % n];
+  if (!a || !b) return { x: 84, y: 50 };
+  const tx = b.x - a.x;
+  const ty = b.y - a.y;
+  const len = Math.hypot(tx, ty) || 1;
   return {
-    maxDist,
-    at(x: number, y: number) {
-      const i = Math.max(0, Math.min(gw - 1, Math.floor(x / sx)));
-      const j = Math.max(0, Math.min(gh - 1, Math.floor(y / sy)));
-      const id = j * gw + i;
-      return {
-        dist: dist[id] ?? 0,
-        tx: tx[id] || 1,
-        ty: ty[id] || 0,
-      };
-    },
+    x: a.x + tx * u + (-ty / len) * offset,
+    y: a.y + ty * u + (tx / len) * offset,
   };
 }
 
-function shapeFromPath(THREE: ThreeModule, d: string) {
-  const tokens = d.match(/[MLCQZ]|-?\d*\.?\d+/g) ?? [];
-  const shape = new THREE.Shape();
-  let i = 0;
-  while (i < tokens.length) {
-    const command = tokens[i];
-    if (command === "M") {
-      shape.moveTo(Number(tokens[++i]), Number(tokens[++i]));
-      i++;
-    } else if (command === "L") {
-      shape.lineTo(Number(tokens[++i]), Number(tokens[++i]));
-      i++;
-    } else if (command === "C") {
-      const x1 = Number(tokens[++i]);
-      const y1 = Number(tokens[++i]);
-      const x2 = Number(tokens[++i]);
-      const y2 = Number(tokens[++i]);
-      const x = Number(tokens[++i]);
-      const y = Number(tokens[++i]);
-      shape.bezierCurveTo(x1, y1, x2, y2, x, y);
-      i++;
-    } else if (command === "Q") {
-      const x1 = Number(tokens[++i]);
-      const y1 = Number(tokens[++i]);
-      const x = Number(tokens[++i]);
-      const y = Number(tokens[++i]);
-      shape.quadraticCurveTo(x1, y1, x, y);
-      i++;
-    } else if (command === "Z") {
-      shape.closePath();
-      i++;
-    } else {
-      i++;
-    }
-  }
-  return shape;
+function toWorld(x: number, y: number, z: number) {
+  return [(x - 84) * SCALE, (50 - y) * SCALE, z * SCALE] as const;
 }
 
-function worldOf(x: number, y: number, z: number) {
-  return [(x - 84) * SCALE, (50 - y) * SCALE, (z - DEPTH / 2) * SCALE] as const;
+function starSize() {
+  const biased = SIZE_MIN + Math.pow(Math.random(), 5) * (SIZE_MAX - SIZE_MIN);
+  return biased;
 }
 
-type Flow = ReturnType<typeof buildFlow>;
-type Swatch = { r: number; g: number; b: number };
-
-function paint(swatches: { red: Swatch; white: Swatch; ice: Swatch; amber: Swatch }, ridge: number, roll: number) {
-  if (ridge > 0.58 && roll < 0.8) return swatches.red;
-  if (roll < 0.34) return swatches.white;
-  if (roll < 0.67) return swatches.ice;
-  return swatches.amber;
+function starGain(size: number) {
+  const t = Math.min(1, Math.max(0, (size - SIZE_MIN) / (SIZE_MAX - SIZE_MIN)));
+  return 0.34 + t * 1.22;
 }
 
-function pushPoint(
-  bins: { small: Spray; mid: Spray; spark: Spray },
-  kind: "edge" | "face" | "core" | "dust",
-  x: number,
-  y: number,
-  z: number,
-  flow: Flow | null,
-  swatches: { red: Swatch; white: Swatch; ice: Swatch; amber: Swatch },
-  gain = 1,
-) {
-  const sample = flow ? flow.at(x, y) : { dist: 0, tx: 1, ty: 0 };
-  const ridge = flow ? sample.dist / flow.maxDist : 0;
-  const roll = kind === "edge" ? 0.42 + Math.random() * 0.58 : Math.random();
-  const color = kind === "dust" ? paint(swatches, 0, roll) : paint(swatches, ridge, roll);
-  const bin =
-    kind === "dust" || (kind === "edge" && roll < 0.75)
-      ? bins.small
-      : kind === "core" && ridge > 0.58
-        ? roll < 0.45
-          ? bins.spark
-          : bins.mid
-        : roll < 0.5
-          ? bins.small
-          : roll < 0.88
-            ? bins.mid
-            : bins.spark;
-  const [wx, wy, wz] = worldOf(x, y, z);
-  bin.positions.push(wx, wy, wz);
-  bin.colors.push(color.r * gain, color.g * gain, color.b * gain);
-  if (kind === "dust") {
-    const ang = Math.random() * Math.PI * 2;
-    bin.tangents.push(Math.cos(ang), Math.sin(ang) * 0.6, (Math.random() - 0.5) * 0.4);
-    bin.amps.push(0.03 + Math.random() * 0.04);
-  } else {
-    const len = Math.hypot(sample.tx, sample.ty) || 1;
-    bin.tangents.push(sample.tx / len, -sample.ty / len, 0);
-    bin.amps.push(Math.min(0.1, sample.dist * SCALE * 0.7));
-  }
-  bin.phases.push(Math.random() * Math.PI * 2);
+function makeRibbon(spine: 0 | 1): RibbonStar {
+  const warm = Math.random() < 0.075;
+  return {
+    kind: "ribbon",
+    spine,
+    t: Math.random(),
+    speed: FLOW_SPEED * (0.97 + Math.random() * 0.06),
+    offset: warm
+      ? (Math.random() < 0.5 ? -1 : 1) * (2.5 + Math.random() * 2.4)
+      : (Math.random() - 0.5) * (1.2 + Math.random() * 1.1),
+    z: (Math.random() - 0.5) * 7,
+    size: starSize(),
+    warm,
+  };
 }
 
-function scatterRibbon(THREE: ThreeModule, bins: { small: Spray; mid: Spray; spark: Spray }, swatches: { red: Swatch; white: Swatch; ice: Swatch; amber: Swatch }, d: string) {
-  const shape = shapeFromPath(THREE, d);
-  const outline = shape.getPoints(6).map((point) => ({ x: point.x, y: point.y }));
-  const flow = buildFlow(outline);
-
-  const geo = new THREE.ExtrudeGeometry(shape, {
-    depth: DEPTH,
-    bevelEnabled: false,
-    curveSegments: 6,
-    steps: 1,
-  });
-  const position = geo.getAttribute("position");
-  const index = geo.getIndex();
-  const triangles = index ? index.count / 3 : position.count / 3;
-  let surface = 0;
-
-  for (let tri = 0; tri < triangles; tri++) {
-    const i0 = index ? index.getX(tri * 3) : tri * 3;
-    const i1 = index ? index.getX(tri * 3 + 1) : tri * 3 + 1;
-    const i2 = index ? index.getX(tri * 3 + 2) : tri * 3 + 2;
-    const ax = position.getX(i0);
-    const ay = position.getY(i0);
-    const az = position.getZ(i0);
-    const bx = position.getX(i1);
-    const by = position.getY(i1);
-    const bz = position.getZ(i1);
-    const cx = position.getX(i2);
-    const cy = position.getY(i2);
-    const cz = position.getZ(i2);
-    const ux = bx - ax;
-    const uy = by - ay;
-    const uz = bz - az;
-    const vx = cx - ax;
-    const vy = cy - ay;
-    const vz = cz - az;
-    const nx = uy * vz - uz * vy;
-    const ny = uz * vx - ux * vz;
-    const nz = ux * vy - uy * vx;
-    const area = 0.5 * Math.hypot(nx, ny, nz);
-    if (area < 1.5) continue;
-    const faceZ = nz / (Math.hypot(nx, ny, nz) || 1);
-    const kind = Math.abs(faceZ) > 0.72 ? "face" : "edge";
-    const density = kind === "edge" ? 0.1 : 0.15;
-    const count = Math.round(area * density);
-    for (let n = 0; n < count; n++) {
-      let a = Math.random();
-      let b = Math.random();
-      if (a + b > 1) {
-        a = 1 - a;
-        b = 1 - b;
-      }
-      const c = 1 - a - b;
-      pushPoint(
-        bins,
-        kind,
-        ax * a + bx * b + cx * c,
-        ay * a + by * b + cy * c,
-        az * a + bz * b + cz * c,
-        flow,
-        swatches,
-      );
-      surface++;
-    }
-  }
-  geo.dispose();
-
-  if (surface < 400) {
-    const length = outline.reduce((sum, point, i) => {
-      const next = outline[(i + 1) % outline.length];
-      return next ? sum + Math.hypot(next.x - point.x, next.y - point.y) : sum;
-    }, 0);
-    for (let n = 0; n < 900; n++) {
-      let walk = Math.random() * length;
-      for (let i = 0; i < outline.length; i++) {
-        const a = outline[i];
-        const b = outline[(i + 1) % outline.length];
-        if (!a || !b) continue;
-        const span = Math.hypot(b.x - a.x, b.y - a.y);
-        if (walk > span) {
-          walk -= span;
-          continue;
-        }
-        const t = span ? walk / span : 0;
-        pushPoint(bins, "edge", a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, Math.random() * DEPTH, flow, swatches);
-        break;
-      }
-    }
-  }
-
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (const point of outline) {
-    minX = Math.min(minX, point.x);
-    minY = Math.min(minY, point.y);
-    maxX = Math.max(maxX, point.x);
-    maxY = Math.max(maxY, point.y);
-  }
-  let kept = 0;
-  for (let guard = 0; kept < 1700 && guard < 9000; guard++) {
-    const x = minX + Math.random() * (maxX - minX);
-    const y = minY + Math.random() * (maxY - minY);
-    if (!inside(outline, x, y)) continue;
-    const dist = flow.at(x, y).dist;
-    if (dist < 1.4) continue;
-    if (dist / flow.maxDist < 0.42 && Math.random() < 0.62) continue;
-    pushPoint(bins, "core", x, y, 2 + Math.random() * (DEPTH - 4), flow, swatches, dist / flow.maxDist > 0.58 ? 1.05 : 0.9);
-    kept++;
-  }
-}
-
-function scatterDust(bins: { small: Spray; mid: Spray; spark: Spray }, swatches: { red: Swatch; white: Swatch; ice: Swatch; amber: Swatch }) {
-  for (let i = 0; i < 820; i++) {
-    const x = 84 + (Math.random() - 0.5) * 230;
-    const y = 50 + (Math.random() - 0.5) * 150;
-    const z = (Math.random() - 0.5) * 90;
-    pushPoint(bins, "dust", x, y, z + DEPTH / 2, null, swatches, 0.42);
-  }
-}
-
-function softSprite(THREE: ThreeModule) {
+function softSprite(THREE: typeof import("three")) {
   const canvas = document.createElement("canvas");
   canvas.width = 64;
   canvas.height = 64;
@@ -351,8 +127,8 @@ function softSprite(THREE: ThreeModule) {
   if (!context) return new THREE.Texture();
   const glow = context.createRadialGradient(32, 32, 0, 32, 32, 32);
   glow.addColorStop(0, "rgba(255,255,255,1)");
-  glow.addColorStop(0.28, "rgba(255,255,255,0.72)");
-  glow.addColorStop(0.62, "rgba(255,255,255,0.18)");
+  glow.addColorStop(0.22, "rgba(255,255,255,0.85)");
+  glow.addColorStop(0.48, "rgba(255,255,255,0.28)");
   glow.addColorStop(1, "rgba(255,255,255,0)");
   context.fillStyle = glow;
   context.fillRect(0, 0, 64, 64);
@@ -385,13 +161,97 @@ export function AstraField() {
     void import("three").then((THREE) => {
       if (!alive) return;
 
+      const upperSpine = sampleSpine(upperWing, 880);
+      const lowerSpine = sampleSpine(lowerArch, 1040);
+      const spines = [upperSpine, lowerSpine];
+      const strokeSamples: Sample[] = [];
+      for (const spine of spines) {
+        for (let i = 0; i < spine.length; i += 3) {
+          const point = spine[i];
+          if (point) strokeSamples.push(point);
+        }
+      }
+      const clearOfStroke = (x: number, y: number, min: number) => {
+        const min2 = min * min;
+        for (const point of strokeSamples) {
+          const dx = point.x - x;
+          const dy = point.y - y;
+          if (dx * dx + dy * dy < min2) return false;
+        }
+        return true;
+      };
+      const makeDust = (side: "left" | "right"): DustStar | null => {
+        const left = side === "left";
+        for (let attempt = 0; attempt < 28; attempt++) {
+          let x: number;
+          let y: number;
+          if (attempt % 2 === 0) {
+            const spine = spines[Math.random() < 0.5 ? 0 : 1];
+            if (!spine) continue;
+            const sign = Math.random() < 0.5 ? -1 : 1;
+            const point = pointOnSpine(spine, Math.random(), sign * (12 + Math.random() * 22));
+            x = point.x + (Math.random() - 0.5) * 16 + (left ? -1 : 1) * (4 + Math.random() * 14);
+            y = point.y + (Math.random() - 0.5) * 14;
+          } else {
+            x = left ? -8 + Math.random() * 80 : 96 + Math.random() * 86;
+            y = -6 + Math.random() * 112;
+          }
+          if (y < -16 || y > 116) continue;
+          if (left) {
+            if (x < -18 || x > 76) continue;
+          } else if (x < 92 || x > 186) continue;
+          if (!clearOfStroke(x, y, 7.5)) continue;
+          return {
+            kind: "dust",
+            x,
+            y,
+            z: (Math.random() - 0.5) * 26,
+            size: starSize(),
+            warm: Math.random() < 0.075,
+          };
+        }
+        return null;
+      };
+
+      const counts = [
+        Math.round(Math.max(460, Math.min(980, spineLength(upperSpine) * 1.15))),
+        Math.round(Math.max(520, Math.min(1100, spineLength(lowerSpine) * 1.15))),
+      ];
+      const stars: Star[] = [];
+      const pushRibbons = (spine: 0 | 1, count: number) => {
+        for (let i = 0; i < count; i++) stars.push(makeRibbon(spine));
+      };
+      const pushDust = (side: "left" | "right") => {
+        let placed = 0;
+        let guard = 0;
+        while (placed < DUST_PER_SIDE && guard < DUST_PER_SIDE * 40) {
+          guard += 1;
+          const dust = makeDust(side);
+          if (!dust) continue;
+          stars.push(dust);
+          placed += 1;
+        }
+      };
+      pushRibbons(0, counts[0] ?? 640);
+      pushRibbons(1, counts[1] ?? 720);
+      pushDust("left");
+      pushDust("right");
+
+      const restPosition = (star: Star) => {
+        if (star.kind === "dust") return toWorld(star.x, star.y, star.z);
+        const spine = spines[star.spine];
+        if (!spine) return [0, 0, 0] as const;
+        const point = pointOnSpine(spine, star.t, star.offset);
+        return toWorld(point.x, point.y, star.z);
+      };
+
       const renderer = new THREE.WebGLRenderer({
         canvas,
         antialias: false,
         alpha: false,
         powerPreference: "high-performance",
       });
-      renderer.setClearColor(0x000000, 1);
+      renderer.setClearColor(0x050505, 1);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
 
       const scene = new THREE.Scene();
@@ -401,49 +261,58 @@ export function AstraField() {
       group.rotation.x = orbit.current.pitch;
       scene.add(group);
 
-      const swatches = {
-        red: new THREE.Color("#F30100"),
-        white: new THREE.Color("#ffffff"),
-        ice: new THREE.Color("#c5dfff"),
-        amber: new THREE.Color("#ffb35c"),
-      };
-      const bins = { small: EMPTY(), mid: EMPTY(), spark: EMPTY() };
-      for (const path of markPaths) scatterRibbon(THREE, bins, swatches, path);
-      scatterDust(bins, swatches);
-
       const sprite = softSprite(THREE);
-      const sizes = { small: 0.034, mid: 0.058, spark: 0.098 };
-      const clouds = (Object.keys(bins) as Array<keyof typeof bins>).map((key) => {
-        const spray = bins[key];
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute("position", new THREE.Float32BufferAttribute(spray.positions, 3));
-        geometry.setAttribute("color", new THREE.Float32BufferAttribute(spray.colors, 3));
-        geometry.computeBoundingSphere();
-        if (geometry.boundingSphere) geometry.boundingSphere.radius += 0.25;
-        const material = new THREE.PointsMaterial({
-          map: sprite,
-          vertexColors: true,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-          transparent: true,
-          size: sizes[key],
-          sizeAttenuation: true,
-        });
-        const points = new THREE.Points(geometry, material);
-        points.frustumCulled = false;
-        group.add(points);
-        return {
-          points,
-          base: Float32Array.from(spray.positions),
-          tangent: Float32Array.from(spray.tangents),
-          amp: Float32Array.from(spray.amps),
-          phase: Float32Array.from(spray.phases),
-        };
+      const white = new THREE.Color("#ffffff");
+      const ice = new THREE.Color("#c5dfff");
+      const orange = new THREE.Color("#ff8f3a");
+
+      const positions = new Float32Array(stars.length * 3);
+      const colors = new Float32Array(stars.length * 3);
+      const sizes = new Float32Array(stars.length);
+      stars.forEach((star, index) => {
+        const color = star.warm ? orange : Math.random() < 0.52 ? white : ice;
+        const gain = starGain(star.size);
+        colors[index * 3] = color.r * gain;
+        colors[index * 3 + 1] = color.g * gain;
+        colors[index * 3 + 2] = color.b * gain;
+        sizes[index] = star.size;
+        const [x, y, z] = restPosition(star);
+        positions[index * 3] = x;
+        positions[index * 3 + 1] = y;
+        positions[index * 3 + 2] = z;
       });
 
+      const geometry = new THREE.BufferGeometry();
+      const positionAttr = new THREE.BufferAttribute(positions, 3);
+      positionAttr.setUsage(THREE.DynamicDrawUsage);
+      geometry.setAttribute("position", positionAttr);
+      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
+      geometry.computeBoundingSphere();
+      if (geometry.boundingSphere) geometry.boundingSphere.radius += 0.45;
+
+      const material = new THREE.PointsMaterial({
+        map: sprite,
+        vertexColors: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        transparent: true,
+        size: 1,
+        sizeAttenuation: true,
+      });
+      material.onBeforeCompile = (shader) => {
+        shader.vertexShader = shader.vertexShader.replace("uniform float size;", "attribute float size;");
+      };
+      material.customProgramCacheKey = () => "astra-sized-points";
+
+      const points = new THREE.Points(geometry, material);
+      points.frustumCulled = false;
+      group.add(points);
+
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-      const left = wrap.querySelector<HTMLElement>("[data-astra-left]");
-      const right = wrap.querySelector<HTMLElement>("[data-astra-right]");
+      const local = new THREE.Vector3();
+      const projected = new THREE.Vector3();
+      const inverseWorld = new THREE.Matrix4();
 
       const frameCamera = () => {
         const width = Math.max(1, wrap.clientWidth);
@@ -465,33 +334,63 @@ export function AstraField() {
       frameCamera();
 
       let frame = 0;
+      let previous = performance.now();
       const draw = (now: number) => {
-        const elapsed = now * 0.001;
-        const drift = reduced.matches ? 0 : 1;
-        for (const cloud of clouds) {
-          const position = cloud.points.geometry.getAttribute("position");
-          const array = position.array as Float32Array;
-          for (let i = 0; i < cloud.amp.length; i++) {
-            const along = Math.sin(elapsed * 0.22 + (cloud.phase[i] ?? 0)) * (cloud.amp[i] ?? 0) * drift;
-            array[i * 3] = (cloud.base[i * 3] ?? 0) + (cloud.tangent[i * 3] ?? 0) * along;
-            array[i * 3 + 1] = (cloud.base[i * 3 + 1] ?? 0) + (cloud.tangent[i * 3 + 1] ?? 0) * along;
-            array[i * 3 + 2] = (cloud.base[i * 3 + 2] ?? 0) + (cloud.tangent[i * 3 + 2] ?? 0) * along;
+        const dt = Math.min(0.05, (now - previous) * 0.001);
+        previous = now;
+        if (!reduced.matches) {
+          for (const star of stars) {
+            if (star.kind !== "ribbon") continue;
+            star.t += star.speed * dt;
+            if (star.t >= 1) star.t -= 1;
           }
-          position.needsUpdate = true;
         }
+
+        group.rotation.y = orbit.current.yaw;
+        group.rotation.x = orbit.current.pitch;
 
         const width = Math.max(1, wrap.clientWidth);
         const height = Math.max(1, wrap.clientHeight);
-        const px = pointer.current.inside ? pointer.current.x / width - 0.5 : 0;
-        const py = pointer.current.inside ? pointer.current.y / height - 0.5 : 0;
-        group.rotation.y = orbit.current.yaw + px * 0.36;
-        group.rotation.x = orbit.current.pitch + py * 0.2;
-        if (left) {
-          left.style.transform = `translate(${px * -34}px, calc(-50% + ${py * -16}px))`;
+        const attract = pointer.current.inside && !drag.current.active;
+        if (attract) {
+          group.updateMatrixWorld(true);
+          camera.updateMatrixWorld();
+          inverseWorld.copy(group.matrixWorld).invert();
         }
-        if (right) {
-          right.style.transform = `translate(${px * 34}px, calc(-50% + ${py * 16}px))`;
+
+        const array = positionAttr.array as Float32Array;
+        for (let index = 0; index < stars.length; index++) {
+          const star = stars[index];
+          if (!star) continue;
+          let [x, y, z] = restPosition(star);
+          if (attract) {
+            local.set(x, y, z).applyMatrix4(group.matrixWorld);
+            projected.copy(local).project(camera);
+            if (projected.z > -1 && projected.z < 1) {
+              const sx = (projected.x * 0.5 + 0.5) * width;
+              const sy = (-projected.y * 0.5 + 0.5) * height;
+              const dx = pointer.current.x - sx;
+              const dy = pointer.current.y - sy;
+              const dist = Math.hypot(dx, dy);
+              if (dist < PULL_RADIUS_PX && dist > 0.5) {
+                const falloff = 1 - dist / PULL_RADIUS_PX;
+                const shift = PULL_MAX_PX * falloff * falloff;
+                const px = sx + (dx / dist) * shift;
+                const py = sy + (dy / dist) * shift;
+                projected.x = (px / width) * 2 - 1;
+                projected.y = -((py / height) * 2 - 1);
+                projected.unproject(camera).applyMatrix4(inverseWorld);
+                x = projected.x;
+                y = projected.y;
+                z = projected.z;
+              }
+            }
+          }
+          array[index * 3] = x;
+          array[index * 3 + 1] = y;
+          array[index * 3 + 2] = z;
         }
+        positionAttr.needsUpdate = true;
         renderer.render(scene, camera);
         frame = requestAnimationFrame(draw);
       };
@@ -500,12 +399,8 @@ export function AstraField() {
       cleanup = () => {
         cancelAnimationFrame(frame);
         observer.disconnect();
-        for (const cloud of clouds) {
-          cloud.points.geometry.dispose();
-          const material = cloud.points.material;
-          if (Array.isArray(material)) material.forEach((entry) => entry.dispose());
-          else material.dispose();
-        }
+        geometry.dispose();
+        material.dispose();
         sprite.dispose();
         renderer.dispose();
       };
@@ -520,7 +415,7 @@ export function AstraField() {
   return (
     <section
       ref={wrapRef}
-      className="relative z-10 h-[100svh] min-h-[36rem] cursor-grab touch-none overflow-hidden bg-black text-white select-none active:cursor-grabbing"
+      className="relative z-10 h-[100svh] min-h-[36rem] cursor-grab touch-none overflow-hidden bg-[#050505] text-white select-none active:cursor-grabbing"
       aria-label="BridgeWide mark between the words Bridge and Wide. Drag to orbit the mark."
       onPointerDown={(event) => {
         drag.current.active = true;
@@ -553,15 +448,13 @@ export function AstraField() {
       <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
       <p
         data-astra-left
-        className="pointer-events-none absolute top-1/2 left-[7%] font-sans text-4xl font-medium tracking-[-0.04em] md:text-6xl"
-        style={{ transform: "translateY(-50%)" }}
+        className="pointer-events-none absolute top-1/2 left-[12%] -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:left-[15%] md:text-6xl"
       >
         Bridge
       </p>
       <p
         data-astra-right
-        className="pointer-events-none absolute top-1/2 right-[7%] font-sans text-4xl font-medium tracking-[-0.04em] md:text-6xl"
-        style={{ transform: "translateY(-50%)" }}
+        className="pointer-events-none absolute top-1/2 right-[12%] -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:right-[15%] md:text-6xl"
       >
         Wide
       </p>
