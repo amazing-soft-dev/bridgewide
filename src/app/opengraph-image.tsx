@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { markPaths, markViewBox } from "@/components/brand/mark";
+import { markPath, markViewBox } from "@/components/brand/mark";
 
 export const alt =
   "BridgeWide. Hiring engineers across the USA, Canada, LATAM, and Europe.";
@@ -11,8 +11,8 @@ export const size = {
 
 export const contentType = "image/png";
 
-const brand = "#F30100";
 const ink = "#111111";
+const cloud = "#f4f0e8";
 
 export default function OpenGraphImage() {
   return new ImageResponse(
@@ -25,20 +25,13 @@ export default function OpenGraphImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           background: ink,
-          color: brand,
+          color: cloud,
           padding: "72px",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
-          <svg
-            width="168"
-            height="100"
-            viewBox={markViewBox}
-            fill={brand}
-          >
-            {markPaths.map((d, index) => (
-              <path key={index} d={d} fill={brand} />
-            ))}
+          <svg width="168" height="100" viewBox={markViewBox} fill={cloud}>
+            <path d={markPath} fill={cloud} />
           </svg>
           <div
             style={{
@@ -46,7 +39,7 @@ export default function OpenGraphImage() {
               fontWeight: 800,
               letterSpacing: -3,
               lineHeight: 1,
-              color: brand,
+              color: cloud,
             }}
           >
             BridgeWide

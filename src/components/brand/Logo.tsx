@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { markPaths, markViewBox } from "@/components/brand/mark";
+import { markPath, markViewBox } from "@/components/brand/mark";
 
 export function BridgeMark({ className }: { className?: string }) {
   return (
@@ -9,30 +9,43 @@ export function BridgeMark({ className }: { className?: string }) {
       className={className}
       fill="currentColor"
     >
-      {markPaths.map((d) => (
-        <path key={d.slice(0, 32)} d={d} />
-      ))}
+      <path d={markPath} />
     </svg>
   );
 }
 
+type LogoVariant = "full" | "mark" | "wordmark";
+
 type LogoProps = {
   className?: string;
+  variant?: LogoVariant;
 };
 
-export function Logo({ className }: LogoProps) {
+export function Logo({ className, variant = "full" }: LogoProps) {
+  const showMark = variant !== "wordmark";
+  const showWord = variant !== "mark";
+
   return (
     <Link
       href="/"
+      aria-label="BridgeWide"
       className={[
-        "inline-flex items-center gap-[0.4em] text-[1.12rem] leading-none font-sans font-extrabold tracking-[-0.045em] whitespace-nowrap text-brand no-underline sm:text-[1.28rem]",
+        "inline-flex items-center gap-[0.4em] text-[1.15rem] leading-none font-sans font-extrabold tracking-[-0.045em] whitespace-nowrap text-current no-underline sm:text-[1.3rem]",
         className,
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      <BridgeMark className="h-[0.88em] w-auto shrink-0" />
-      <span>BridgeWide</span>
+      {showMark ? (
+        <BridgeMark
+          className={
+            variant === "mark"
+              ? "h-[1em] w-auto shrink-0"
+              : "h-[0.86em] w-auto shrink-0"
+          }
+        />
+      ) : null}
+      {showWord ? <span>BridgeWide</span> : null}
     </Link>
   );
 }
