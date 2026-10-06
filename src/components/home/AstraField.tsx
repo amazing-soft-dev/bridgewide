@@ -45,11 +45,14 @@ const WORD_PAD_PX = 32;
 const DUST_TIERS = [0.85, 0.15] as const;
 /** Ribbon: 60% 1px dust, 30% 3px cyan, 10% 8–12px flares. */
 const RIBBON_TIERS = [0.6, 0.3] as const;
-const FINE_COLOR = 0xdfe9f5;
-const ICE_COLOR = 0x9fdcff;
+const FINE_COLOR = 0xffffff;
+const ICE_COLOR = 0xaee6ff;
+const AMBER_COLOR = 0xffa366;
 const FLARE_COLOR = 0xffffff;
-/** ~65% of a N(0, σ) sample falls inside ±1.2 mark units. */
-const SPINE_SIGMA = 1.28;
+/** Stroke width in mark units. Core is 20% of this; mist reaches 120%. */
+const STROKE_WIDTH = 6;
+const CORE_WIDTH = STROKE_WIDTH * 0.2;
+const MIST_WIDTH = STROKE_WIDTH * 1.2;
 
 const STAR_VERTEX = /* glsl */ `
 attribute float size;
@@ -99,12 +102,11 @@ void main() {
   float coreWidth = max(coreCss, 1.0 / uPixelRatio);
   float c = css / coreWidth;
   float core = (coreCss * coreCss) / (coreWidth * coreWidth) * exp(-2.0 * c * c);
-  float r = min(d / (vSize * 0.5), 1.0);
+  float r = min(d / (vQuad * 0.5), 1.0);
   float edge = 1.0 - r * r;
-  float halo = (0.18 + vGlow) * exp(-mix(2.6, 1.55, hero) * r) * edge * edge;
-  vec3 ice = vec3(0.682, 0.902, 1.0);
-  vec3 hot = mix(vColor, vec3(1.0), clamp(core * 1.35, 0.0, 1.0));
-  gl_FragColor = vec4((hot * core + ice * halo) * vAlpha, 1.0);
+  float halo = (0.35 + vGlow) * exp(-mix(2.2, 1.45, hero) * r) * edge * edge;
+  vec3 hot = vec3(1.0);
+  gl_FragColor = vec4((hot * core + vColor * halo) * vAlpha, 1.0);
 }
 `;
 
@@ -207,9 +209,11 @@ function pointOnSpine(spine: Spine, t: number, offset: number) {
   const tx = b.x - a.x;
   const ty = b.y - a.y;
   const len = Math.hypot(tx, ty) || 1;
+  const nx = -ty / len;
+  const ny = tx / len;
   return {
-    x: a.x + tx * u + (-ty / len) * offset,
-    y: a.y + ty * u + (tx / len) * offset,
+    x: a.x + tx * u + nx * offset,
+    y: a.y + ty * u + ny * offset,
   };
 }
 
@@ -255,17 +259,17 @@ function starLook(kind: "ribbon" | "dust"): Look {
   if (roll < fine) {
     return {
       tier: "fine" as const,
-      size: dust ? between(0.8, 1.5) : between(0.9, 1.2),
-      glow: dust ? 0 : 0.22,
+      size: between(0.8, 1.5),
+      glow: dust ? 0 : 0.45,
       color: FINE_COLOR,
-      brightness: dust ? between(0.35, 0.65) : between(0.7, 1),
+      brightness: dust ? between(0.35, 0.65) : between(0.28, 0.48),
     };
   }
   if (dust || roll < fine + ambient) {
     return {
       tier: "ambient" as const,
-      size: dust ? between(2, 3) : between(2.7, 3.3),
-      glow: dust ? 0.3 : 0.78,
+      size: dust ? between(2, 3) : between(2.5, 4.5),
+      glow: dust ? 0.3 : 0.8,
       color: ICE_COLOR,
       brightness: dust ? between(0.4, 0.6) : between(0.85, 1),
     };
@@ -273,13 +277,35 @@ function starLook(kind: "ribbon" | "dust"): Look {
   return { tier: "flare" as const, size: between(8, 12), glow: 1, color: FLARE_COLOR, brightness: 1 };
 }
 
-/** Gaussian scatter around the path: ~65% on the spine, a thin mist at the fringes. */
-function ribbonSpread(tier: Tier) {
-  const sigma = tier === "flare" ? 0.65 : SPINE_SIGMA;
-  let offset = gaussian(sigma);
-  if (tier !== "flare" && Math.random() < 0.08) offset = gaussian(4.5);
-  const z = gaussian(tier === "flare" ? 0.7 : 2.1);
-  return { offset, z };
+/** White 60% / icy cyan 30% / amber 10% of the ribbon, with amber on the stroke fringe. */
+function paintRibbon(look: Look): Look {
+  if (look.tier === "flare") return { ...look, color: FLARE_COLOR };
+  const paint = Math.random();
+  if (paint < 0.556) return { ...look, color: FINE_COLOR };
+  if (paint < 0.889) return { ...look, color: ICE_COLOR };
+  return { ...look, color: AMBER_COLOR, glow: Math.max(look.glow, 0.55) };
+}
+
+function spineFade(offset: number) {
+  return clamp01(1 - Math.abs(offset) / MIST_WIDTH) ** 1.35;
+}
+
+function signedWidth(max: number, sigma: number) {
+  const side = Math.random() < 0.5 ? -1 : 1;
+  return side * Math.min(max, Math.abs(gaussian(sigma)));
+}
+
+/** Gaussian scatter: ~65% on the core (0–20% width), 35% of dust/ice out to 120%. */
+function ribbonSpread(tier: Tier, color: number) {
+  const mist =
+    tier !== "flare" && (color === AMBER_COLOR || Math.random() < 0.3125);
+  if (mist) {
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const span = MIST_WIDTH - CORE_WIDTH;
+    const reach = CORE_WIDTH + Math.min(span, Math.abs(gaussian(span * 0.55)));
+    return { offset: side * reach, z: gaussian(1.6) };
+  }
+  return { offset: signedWidth(CORE_WIDTH, CORE_WIDTH * 0.5), z: gaussian(0.45) };
 }
 
 function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
@@ -294,15 +320,16 @@ function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
 }
 
 function makeRibbon(spine: 0 | 1): RibbonStar {
-  const base = starBase("ribbon", sprayPoint(Math.random() < 0.5 ? -1 : 1));
+  const look = paintRibbon(starLook("ribbon"));
   return {
-    ...base,
+    ...starBase("ribbon", sprayPoint(Math.random() < 0.5 ? -1 : 1)),
+    ...look,
     kind: "ribbon",
     outer: starLook("dust"),
     spine,
     t: Math.random(),
     speed: FLOW_SPEED * (0.97 + Math.random() * 0.06),
-    ...ribbonSpread(base.tier),
+    ...ribbonSpread(look.tier, look.color === AMBER_COLOR),
   };
 }
 
@@ -369,33 +396,53 @@ export function AstraField() {
       // #region agent log
       {
         const ribbon = stars.filter((s): s is RibbonStar => s.kind === "ribbon");
-        const abs = ribbon.map((s) => Math.abs(s.offset)).sort((a, b) => a - b);
-        const pick = (q: number) => +(abs[Math.floor(q * (abs.length - 1))] ?? 0).toFixed(2);
-        const by: Record<string, number> = {};
-        for (const s of ribbon) by[s.tier] = (by[s.tier] ?? 0) + 1;
+        const palette = (c: number) =>
+          c === AMBER_COLOR ? "amber" : c === ICE_COLOR ? "ice" : "white";
+        const colors: Record<string, number> = { white: 0, ice: 0, amber: 0 };
+        const tiers: Record<string, number> = { fine: 0, ambient: 0, flare: 0 };
+        const sizes: Record<string, number[]> = { fine: [], ambient: [], flare: [] };
+        const amberOff: number[] = [];
+        const otherOff: number[] = [];
+        for (const s of ribbon) {
+          colors[palette(s.color)] += 1;
+          tiers[s.tier] += 1;
+          sizes[s.tier].push(s.size);
+          (s.color === AMBER_COLOR ? amberOff : otherOff).push(Math.abs(s.offset));
+        }
+        const mean = (list: number[]) =>
+          list.length ? +(list.reduce((a, b) => a + b, 0) / list.length).toFixed(2) : 0;
+        const range = (list: number[]) => {
+          if (!list.length) return { min: 0, max: 0 };
+          const sorted = [...list].sort((a, b) => a - b);
+          return { min: +sorted[0]!.toFixed(2), max: +sorted[sorted.length - 1]!.toFixed(2) };
+        };
         fetch("http://127.0.0.1:7294/ingest/d6eebea7-5345-4b53-a2ba-10de4bfce00d", {
           method: "POST",
           headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "48e4f6" },
           body: JSON.stringify({
             sessionId: "48e4f6",
             runId: "post-fix",
-            hypothesisId: "B,C,D",
+            hypothesisId: "color-size",
             location: "AstraField.tsx:init",
-            message: "ribbon gaussian offsets and 60/30/10 split",
+            message: "ribbon gaussian core vs mist",
             data: {
               n: ribbon.length,
-              onSpinePct: +((100 * abs.filter((v) => v <= 1.2).length) / Math.max(1, abs.length)).toFixed(1),
-              offset: { p50: pick(0.5), p90: pick(0.9), max: pick(1) },
-              share: {
-                fine: +((100 * (by.fine ?? 0)) / ribbon.length).toFixed(1),
-                ambient: +((100 * (by.ambient ?? 0)) / ribbon.length).toFixed(1),
-                flare: +((100 * (by.flare ?? 0)) / ribbon.length).toFixed(1),
+              corePct: +((100 * ribbon.filter((s) => Math.abs(s.offset) <= CORE_WIDTH).length) / ribbon.length).toFixed(1),
+              mistPct: +((100 * ribbon.filter((s) => Math.abs(s.offset) > CORE_WIDTH).length) / ribbon.length).toFixed(1),
+              flareCorePct: +((100 * ribbon.filter((s) => s.tier === "flare" && Math.abs(s.offset) <= CORE_WIDTH).length) / Math.max(1, ribbon.filter((s) => s.tier === "flare").length)).toFixed(1),
+              maxWidthPct: +((Math.max(...ribbon.map((s) => Math.abs(s.offset))) / STROKE_WIDTH) * 100).toFixed(0),
+              colorPct: {
+                white: +((100 * colors.white) / ribbon.length).toFixed(1),
+                ice: +((100 * colors.ice) / ribbon.length).toFixed(1),
+                amber: +((100 * colors.amber) / ribbon.length).toFixed(1),
               },
-              sizes: {
-                fine: ribbon.filter((s) => s.tier === "fine").slice(0, 1).map((s) => +s.size.toFixed(2)),
-                ambient: ribbon.filter((s) => s.tier === "ambient").slice(0, 1).map((s) => +s.size.toFixed(2)),
-                flare: ribbon.filter((s) => s.tier === "flare").slice(0, 1).map((s) => +s.size.toFixed(2)),
+              sizePct: {
+                fine: +((100 * tiers.fine) / ribbon.length).toFixed(1),
+                ambient: +((100 * tiers.ambient) / ribbon.length).toFixed(1),
+                flare: +((100 * tiers.flare) / ribbon.length).toFixed(1),
               },
+              sizeRange: { fine: range(sizes.fine), ambient: range(sizes.ambient), flare: range(sizes.flare) },
+              offsetMean: { amber: mean(amberOff), other: mean(otherOff) },
             },
             timestamp: Date.now(),
           }),
@@ -417,7 +464,7 @@ export function AstraField() {
         powerPreference: "high-performance",
       });
       renderer.setClearColor(0x050505, 1);
-      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 80);
@@ -662,6 +709,7 @@ export function AstraField() {
           let z = settled.z;
           let size = star.size;
           let tier = star.tier;
+          let alpha = 1;
           if (star.kind === "ribbon") {
             const land = smoothstep((gather - LAND_START) / (1 - LAND_START));
             const outer = star.outer;
@@ -673,10 +721,10 @@ export function AstraField() {
               colors[c] = from + ((ribbonColors[c] ?? 0) - from) * land;
             }
             if (land < 0.5) tier = outer.tier;
+            alpha *= 1 - land * (1 - spineFade(star.offset));
           }
           const fine = tier === "fine";
           const flare = tier === "flare";
-          let alpha = 1;
           if (gather < 1) {
             ndcToLocal(star.spray.nx, star.spray.ny, star.spray.z, sprayed);
             x = sprayed.x + (x - sprayed.x) * gather;
@@ -757,9 +805,9 @@ export function AstraField() {
             body: JSON.stringify({
               sessionId: "48e4f6",
               runId: "post-fix",
-              hypothesisId: "A",
+              hypothesisId: "blend",
               location: "AstraField.tsx:draw",
-              message: "additive blend and halo still active",
+              message: "additive blending flags",
               data: {
                 scroll: +scroll.toFixed(3),
                 blending: material.blending === THREE.AdditiveBlending,
