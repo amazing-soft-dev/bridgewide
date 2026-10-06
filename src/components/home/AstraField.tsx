@@ -3,16 +3,18 @@
 import { useEffect, useRef } from "react";
 import { markPaths } from "@/components/brand/mark";
 
-const SCALE = 0.0092;
-const RIBBON_WORLD_WIDTH = 168 * SCALE;
+/** Mark units → world. The camera then fits this height to 3/4 of the stage. */
+const SCALE = 0.0092 * 4;
+const MARK_HEIGHT = 100;
+const MARK_SCREEN_FRACTION = 0.75;
 const [upperWing, lowerArch] = markPaths;
 
 /** Previous upper path midpoint was 0.071. Both ribbons share one third of that. */
 const FLOW_SPEED = 0.071 / 3;
-const SIZE_MIN = 0.02;
-const SIZE_MAX = 0.16;
-const PULL_RADIUS_PX = 96;
-const PULL_MAX_PX = 18;
+const SIZE_MIN = 0.06;
+const SIZE_MAX = 0.42;
+const NUDGE_RADIUS_PX = 120;
+const NUDGE_GAIN = 1.65;
 const DUST_PER_SIDE = 210;
 
 type Sample = { x: number; y: number };
@@ -20,6 +22,9 @@ type Spine = Sample[];
 type RibbonStar = {
   kind: "ribbon";
   spine: 0 | 1;
+  side: "left" | "right";
+  ju: number;
+  jv: number;
   t: number;
   speed: number;
   offset: number;
@@ -29,13 +34,22 @@ type RibbonStar = {
 };
 type DustStar = {
   kind: "dust";
-  x: number;
-  y: number;
+  side: "left" | "right";
+  ju: number;
+  jv: number;
   z: number;
-  size: number;
   warm: boolean;
 };
 type Star = RibbonStar | DustStar;
+
+function clamp01(value: number) {
+  return Math.min(1, Math.max(0, value));
+}
+
+function smoothstep(value: number) {
+  const t = clamp01(value);
+  return t * t * (3 - 2 * t);
+}
 
 function sampleSpine(d: string, steps: number): Spine {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -94,13 +108,17 @@ function toWorld(x: number, y: number, z: number) {
 }
 
 function starSize() {
-  const biased = SIZE_MIN + Math.pow(Math.random(), 5) * (SIZE_MAX - SIZE_MIN);
+  const biased = SIZE_MIN + Math.pow(Math.random(), 3) * (SIZE_MAX - SIZE_MIN);
   return biased;
 }
 
 function starGain(size: number) {
   const t = Math.min(1, Math.max(0, (size - SIZE_MIN) / (SIZE_MAX - SIZE_MIN)));
-  return 0.34 + t * 1.22;
+  return 0.72 + t * 1.55;
+}
+
+function cloudJitter() {
+  return (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
 }
 
 function makeRibbon(spine: 0 | 1): RibbonStar {
@@ -108,11 +126,14 @@ function makeRibbon(spine: 0 | 1): RibbonStar {
   return {
     kind: "ribbon",
     spine,
+    side: Math.random() < 0.5 ? "left" : "right",
+    ju: cloudJitter(),
+    jv: cloudJitter(),
     t: Math.random(),
     speed: FLOW_SPEED * (0.97 + Math.random() * 0.06),
     offset: warm
-      ? (Math.random() < 0.5 ? -1 : 1) * (2.5 + Math.random() * 2.4)
-      : (Math.random() - 0.5) * (1.2 + Math.random() * 1.1),
+      ? (Math.random() < 0.5 ? -1 : 1) * (5.4 + Math.random() * 2.6)
+      : (Math.random() - 0.5) * (4.8 + Math.random() * 4.4),
     z: (Math.random() - 0.5) * 7,
     size: starSize(),
     warm,
@@ -138,9 +159,10 @@ function softSprite(THREE: typeof import("three")) {
 }
 
 export function AstraField() {
-  const wrapRef = useRef<HTMLElement>(null);
+  const trackRef = useRef<HTMLElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const pointer = useRef({ x: 0, y: 0, inside: false });
+  const pointer = useRef({ x: 0, y: 0, inside: false, dx: 0, dy: 0 });
   const orbit = useRef({ yaw: 0.62, pitch: -0.18 });
   const drag = useRef({
     active: false,
@@ -153,7 +175,8 @@ export function AstraField() {
   useEffect(() => {
     const wrap = wrapRef.current;
     const canvas = canvasRef.current;
-    if (!wrap || !canvas) return;
+    const track = trackRef.current;
+    if (!wrap || !canvas || !track) return;
 
     let alive = true;
     let cleanup = () => {};
@@ -164,72 +187,27 @@ export function AstraField() {
       const upperSpine = sampleSpine(upperWing, 880);
       const lowerSpine = sampleSpine(lowerArch, 1040);
       const spines = [upperSpine, lowerSpine];
-      const strokeSamples: Sample[] = [];
-      for (const spine of spines) {
-        for (let i = 0; i < spine.length; i += 3) {
-          const point = spine[i];
-          if (point) strokeSamples.push(point);
-        }
-      }
-      const clearOfStroke = (x: number, y: number, min: number) => {
-        const min2 = min * min;
-        for (const point of strokeSamples) {
-          const dx = point.x - x;
-          const dy = point.y - y;
-          if (dx * dx + dy * dy < min2) return false;
-        }
-        return true;
-      };
-      const makeDust = (side: "left" | "right"): DustStar | null => {
-        const left = side === "left";
-        for (let attempt = 0; attempt < 28; attempt++) {
-          let x: number;
-          let y: number;
-          if (attempt % 2 === 0) {
-            const spine = spines[Math.random() < 0.5 ? 0 : 1];
-            if (!spine) continue;
-            const sign = Math.random() < 0.5 ? -1 : 1;
-            const point = pointOnSpine(spine, Math.random(), sign * (12 + Math.random() * 22));
-            x = point.x + (Math.random() - 0.5) * 16 + (left ? -1 : 1) * (4 + Math.random() * 14);
-            y = point.y + (Math.random() - 0.5) * 14;
-          } else {
-            x = left ? -8 + Math.random() * 80 : 96 + Math.random() * 86;
-            y = -6 + Math.random() * 112;
-          }
-          if (y < -16 || y > 116) continue;
-          if (left) {
-            if (x < -18 || x > 76) continue;
-          } else if (x < 92 || x > 186) continue;
-          if (!clearOfStroke(x, y, 7.5)) continue;
-          return {
-            kind: "dust",
-            x,
-            y,
-            z: (Math.random() - 0.5) * 26,
-            size: starSize(),
-            warm: Math.random() < 0.075,
-          };
-        }
-        return null;
-      };
+      const leftWord = wrap.querySelector("[data-astra-left]");
+      const rightWord = wrap.querySelector("[data-astra-right]");
 
       const counts = [
-        Math.round(Math.max(460, Math.min(980, spineLength(upperSpine) * 1.15))),
-        Math.round(Math.max(520, Math.min(1100, spineLength(lowerSpine) * 1.15))),
+        Math.round(Math.max(1600, Math.min(3600, spineLength(upperSpine) * 4))),
+        Math.round(Math.max(1800, Math.min(4000, spineLength(lowerSpine) * 4))),
       ];
       const stars: Star[] = [];
       const pushRibbons = (spine: 0 | 1, count: number) => {
         for (let i = 0; i < count; i++) stars.push(makeRibbon(spine));
       };
       const pushDust = (side: "left" | "right") => {
-        let placed = 0;
-        let guard = 0;
-        while (placed < DUST_PER_SIDE && guard < DUST_PER_SIDE * 40) {
-          guard += 1;
-          const dust = makeDust(side);
-          if (!dust) continue;
-          stars.push(dust);
-          placed += 1;
+        for (let i = 0; i < DUST_PER_SIDE; i++) {
+          stars.push({
+            kind: "dust",
+            side,
+            ju: cloudJitter(),
+            jv: cloudJitter(),
+            z: (Math.random() - 0.5) * 0.4,
+            warm: Math.random() < 0.075,
+          });
         }
       };
       pushRibbons(0, counts[0] ?? 640);
@@ -237,8 +215,7 @@ export function AstraField() {
       pushDust("left");
       pushDust("right");
 
-      const restPosition = (star: Star) => {
-        if (star.kind === "dust") return toWorld(star.x, star.y, star.z);
+      const restPosition = (star: RibbonStar) => {
         const spine = spines[star.spine];
         if (!spine) return [0, 0, 0] as const;
         const point = pointOnSpine(spine, star.t, star.offset);
@@ -268,28 +245,33 @@ export function AstraField() {
 
       const positions = new Float32Array(stars.length * 3);
       const colors = new Float32Array(stars.length * 3);
+      const baseColors = new Float32Array(stars.length * 3);
       const sizes = new Float32Array(stars.length);
       stars.forEach((star, index) => {
         const color = star.warm ? orange : Math.random() < 0.52 ? white : ice;
-        const gain = starGain(star.size);
+        baseColors[index * 3] = color.r;
+        baseColors[index * 3 + 1] = color.g;
+        baseColors[index * 3 + 2] = color.b;
+        const shown = star.kind === "dust" ? SIZE_MIN : SIZE_MIN;
+        const gain = starGain(shown);
         colors[index * 3] = color.r * gain;
         colors[index * 3 + 1] = color.g * gain;
         colors[index * 3 + 2] = color.b * gain;
-        sizes[index] = star.size;
-        const [x, y, z] = restPosition(star);
-        positions[index * 3] = x;
-        positions[index * 3 + 1] = y;
-        positions[index * 3 + 2] = z;
+        sizes[index] = shown;
       });
 
       const geometry = new THREE.BufferGeometry();
       const positionAttr = new THREE.BufferAttribute(positions, 3);
       positionAttr.setUsage(THREE.DynamicDrawUsage);
       geometry.setAttribute("position", positionAttr);
-      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-      geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
+      const colorAttr = new THREE.BufferAttribute(colors, 3);
+      const sizeAttr = new THREE.BufferAttribute(sizes, 1);
+      colorAttr.setUsage(THREE.DynamicDrawUsage);
+      sizeAttr.setUsage(THREE.DynamicDrawUsage);
+      geometry.setAttribute("color", colorAttr);
+      geometry.setAttribute("size", sizeAttr);
       geometry.computeBoundingSphere();
-      if (geometry.boundingSphere) geometry.boundingSphere.radius += 0.45;
+      if (geometry.boundingSphere) geometry.boundingSphere.radius += 2;
 
       const material = new THREE.PointsMaterial({
         map: sprite,
@@ -312,6 +294,7 @@ export function AstraField() {
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
       const local = new THREE.Vector3();
       const projected = new THREE.Vector3();
+      const scratch = new THREE.Vector3();
       const inverseWorld = new THREE.Matrix4();
 
       const frameCamera = () => {
@@ -319,9 +302,11 @@ export function AstraField() {
         const height = Math.max(1, wrap.clientHeight);
         const aspect = width / height;
         camera.aspect = aspect;
-        const visible = RIBBON_WORLD_WIDTH / 0.36;
-        const z = visible / (2 * Math.tan((30 * Math.PI) / 360) * Math.max(aspect, 0.45));
-        camera.position.set(z * 0.16, z * 0.09, z);
+        const fovRad = (30 * Math.PI) / 180;
+        const visibleHeight = (MARK_HEIGHT * SCALE) / MARK_SCREEN_FRACTION;
+        const distance = visibleHeight / (2 * Math.tan(fovRad / 2));
+        const aim = new THREE.Vector3(0.16, 0.09, 1).normalize().multiplyScalar(distance);
+        camera.position.copy(aim);
         camera.lookAt(0, 0, 0);
         camera.updateProjectionMatrix();
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
@@ -333,12 +318,45 @@ export function AstraField() {
       observer.observe(wrap);
       frameCamera();
 
+      const readProgress = () => {
+        const rect = track.getBoundingClientRect();
+        const scrollable = rect.height - window.innerHeight;
+        if (scrollable <= 0) return 1;
+        const passed = Math.min(Math.max(-rect.top, 0), scrollable);
+        return passed / scrollable;
+      };
+
+      const ndcToLocal = (ndcX: number, ndcY: number, depth: number, out: typeof scratch) => {
+        projected.set(ndcX, ndcY, 0.5);
+        projected.unproject(camera);
+        const origin = camera.position;
+        const dz = projected.z - origin.z;
+        const travel = Math.abs(dz) > 1e-5 ? (depth - origin.z) / dz : 0;
+        out.set(
+          origin.x + (projected.x - origin.x) * travel,
+          origin.y + (projected.y - origin.y) * travel,
+          depth,
+        );
+        out.applyMatrix4(inverseWorld);
+      };
+
+      const wordBand = (element: Element | null, fallbackX: number) => {
+        const stage = wrap.getBoundingClientRect();
+        if (!element || stage.width <= 0 || stage.height <= 0) return { x: fallbackX, y: 0 };
+        const rect = element.getBoundingClientRect();
+        const cx = (rect.left + rect.width / 2 - stage.left) / stage.width;
+        const cy = (rect.top + rect.height / 2 - stage.top) / stage.height;
+        return { x: cx * 2 - 1, y: -(cy * 2 - 1) };
+      };
+
       let frame = 0;
       let previous = performance.now();
       const draw = (now: number) => {
         const dt = Math.min(0.05, (now - previous) * 0.001);
         previous = now;
-        if (!reduced.matches) {
+        const progress = reduced.matches ? 1 : readProgress();
+        const gather = reduced.matches ? 1 : smoothstep(progress / 0.64);
+        if (!reduced.matches && gather >= 0.999) {
           for (const star of stars) {
             if (star.kind !== "ribbon") continue;
             star.t += star.speed * dt;
@@ -348,22 +366,68 @@ export function AstraField() {
 
         group.rotation.y = orbit.current.yaw;
         group.rotation.x = orbit.current.pitch;
+        group.updateMatrixWorld(true);
+        camera.updateMatrixWorld();
+        inverseWorld.copy(group.matrixWorld).invert();
+
+        const nudgeX = pointer.current.dx;
+        const nudgeY = pointer.current.dy;
+        const nudging =
+          pointer.current.inside &&
+          !drag.current.active &&
+          nudgeX * nudgeX + nudgeY * nudgeY > 0.16;
 
         const width = Math.max(1, wrap.clientWidth);
         const height = Math.max(1, wrap.clientHeight);
-        const attract = pointer.current.inside && !drag.current.active;
-        if (attract) {
-          group.updateMatrixWorld(true);
-          camera.updateMatrixWorld();
-          inverseWorld.copy(group.matrixWorld).invert();
-        }
-
+        const leftBand = wordBand(leftWord, -0.55);
+        const rightBand = wordBand(rightWord, 0.55);
+        const spreadX = width < 768 ? 0.2 : 0.15;
+        const sidePoint = (side: "left" | "right", ju: number, jv: number, depth: number) => {
+          const band = side === "left" ? leftBand : rightBand;
+          const cloudX = Math.min(0.94, Math.max(-0.94, band.x + ju * spreadX));
+          const cloudY = Math.min(0.72, Math.max(-0.72, band.y + jv * 0.22));
+          ndcToLocal(cloudX, cloudY, depth, scratch);
+          return { x: scratch.x, y: scratch.y, z: scratch.z };
+        };
         const array = positionAttr.array as Float32Array;
+        const colorArray = colorAttr.array as Float32Array;
+        const sizeArray = sizeAttr.array as Float32Array;
+
         for (let index = 0; index < stars.length; index++) {
           const star = stars[index];
           if (!star) continue;
-          let [x, y, z] = restPosition(star);
-          if (attract) {
+          let x = 0;
+          let y = 0;
+          let z = 0;
+          let shown = SIZE_MIN;
+          if (star.kind === "ribbon") {
+            const home = sidePoint(star.side, star.ju, star.jv, star.z * SCALE);
+            const [tx, ty, tz] = restPosition(star);
+            if (gather >= 1) {
+              x = tx;
+              y = ty;
+              z = tz;
+            } else {
+              x = home.x + (tx - home.x) * gather;
+              y = home.y + (ty - home.y) * gather;
+              z = home.z + (tz - home.z) * gather;
+            }
+            shown = SIZE_MIN + (star.size - SIZE_MIN) * gather;
+          } else {
+            const parked = sidePoint(star.side, star.ju, star.jv, star.z);
+            x = parked.x;
+            y = parked.y;
+            z = parked.z;
+            shown = SIZE_MIN;
+          }
+
+          sizeArray[index] = shown;
+          const gain = starGain(shown);
+          colorArray[index * 3] = (baseColors[index * 3] ?? 1) * gain;
+          colorArray[index * 3 + 1] = (baseColors[index * 3 + 1] ?? 1) * gain;
+          colorArray[index * 3 + 2] = (baseColors[index * 3 + 2] ?? 1) * gain;
+
+          if (nudging && star.kind === "ribbon") {
             local.set(x, y, z).applyMatrix4(group.matrixWorld);
             projected.copy(local).project(camera);
             if (projected.z > -1 && projected.z < 1) {
@@ -372,11 +436,11 @@ export function AstraField() {
               const dx = pointer.current.x - sx;
               const dy = pointer.current.y - sy;
               const dist = Math.hypot(dx, dy);
-              if (dist < PULL_RADIUS_PX && dist > 0.5) {
-                const falloff = 1 - dist / PULL_RADIUS_PX;
-                const shift = PULL_MAX_PX * falloff * falloff;
-                const px = sx + (dx / dist) * shift;
-                const py = sy + (dy / dist) * shift;
+              if (dist < NUDGE_RADIUS_PX) {
+                const falloff = 1 - dist / NUDGE_RADIUS_PX;
+                const influence = falloff * falloff;
+                const px = sx + nudgeX * NUDGE_GAIN * influence;
+                const py = sy + nudgeY * NUDGE_GAIN * influence;
                 projected.x = (px / width) * 2 - 1;
                 projected.y = -((py / height) * 2 - 1);
                 projected.unproject(camera).applyMatrix4(inverseWorld);
@@ -386,11 +450,19 @@ export function AstraField() {
               }
             }
           }
+
           array[index * 3] = x;
           array[index * 3 + 1] = y;
           array[index * 3 + 2] = z;
         }
         positionAttr.needsUpdate = true;
+        colorAttr.needsUpdate = true;
+        sizeAttr.needsUpdate = true;
+
+        const fade = Math.exp(-dt * 8);
+        pointer.current.dx *= fade;
+        pointer.current.dy *= fade;
+
         renderer.render(scene, camera);
         frame = requestAnimationFrame(draw);
       };
@@ -414,50 +486,67 @@ export function AstraField() {
 
   return (
     <section
-      ref={wrapRef}
-      className="relative z-10 h-[100svh] min-h-[36rem] cursor-grab touch-none overflow-hidden bg-[#050505] text-white select-none active:cursor-grabbing"
+      ref={trackRef}
+      className="relative z-10 h-[220vh] bg-[#050505]"
       aria-label="BridgeWide mark between the words Bridge and Wide. Drag to orbit the mark."
-      onPointerDown={(event) => {
-        drag.current.active = true;
-        drag.current.startX = event.clientX;
-        drag.current.startY = event.clientY;
-        drag.current.originYaw = orbit.current.yaw;
-        drag.current.originPitch = orbit.current.pitch;
-        event.currentTarget.setPointerCapture(event.pointerId);
-      }}
-      onPointerMove={(event) => {
-        const rect = event.currentTarget.getBoundingClientRect();
-        pointer.current.x = event.clientX - rect.left;
-        pointer.current.y = event.clientY - rect.top;
-        pointer.current.inside = true;
-        if (!drag.current.active) return;
-        orbit.current.yaw = drag.current.originYaw + (event.clientX - drag.current.startX) * 0.0075;
-        const pitch = drag.current.originPitch + (event.clientY - drag.current.startY) * 0.005;
-        orbit.current.pitch = Math.max(-1.05, Math.min(1.05, pitch));
-      }}
-      onPointerUp={() => {
-        drag.current.active = false;
-      }}
-      onPointerCancel={() => {
-        drag.current.active = false;
-      }}
-      onPointerLeave={() => {
-        pointer.current.inside = false;
-      }}
     >
-      <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
-      <p
-        data-astra-left
-        className="pointer-events-none absolute top-1/2 left-[12%] -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:left-[15%] md:text-6xl"
+      <div
+        ref={wrapRef}
+        className="sticky top-0 h-[100svh] min-h-[36rem] cursor-grab touch-none overflow-hidden bg-[#050505] text-white select-none active:cursor-grabbing"
+        onPointerDown={(event) => {
+          drag.current.active = true;
+          drag.current.startX = event.clientX;
+          drag.current.startY = event.clientY;
+          drag.current.originYaw = orbit.current.yaw;
+          drag.current.originPitch = orbit.current.pitch;
+          pointer.current.dx = 0;
+          pointer.current.dy = 0;
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          if (pointer.current.inside && !drag.current.active) {
+            const dx = Math.max(-48, Math.min(48, x - pointer.current.x));
+            const dy = Math.max(-48, Math.min(48, y - pointer.current.y));
+            pointer.current.dx = Math.max(-64, Math.min(64, pointer.current.dx + dx));
+            pointer.current.dy = Math.max(-64, Math.min(64, pointer.current.dy + dy));
+          }
+          pointer.current.x = x;
+          pointer.current.y = y;
+          pointer.current.inside = true;
+          if (!drag.current.active) return;
+          orbit.current.yaw = drag.current.originYaw + (event.clientX - drag.current.startX) * 0.0075;
+          const pitch = drag.current.originPitch + (event.clientY - drag.current.startY) * 0.005;
+          orbit.current.pitch = Math.max(-1.05, Math.min(1.05, pitch));
+        }}
+        onPointerUp={() => {
+          drag.current.active = false;
+        }}
+        onPointerCancel={() => {
+          drag.current.active = false;
+        }}
+        onPointerLeave={() => {
+          pointer.current.inside = false;
+          pointer.current.dx = 0;
+          pointer.current.dy = 0;
+        }}
       >
-        Bridge
-      </p>
-      <p
-        data-astra-right
-        className="pointer-events-none absolute top-1/2 right-[12%] -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:right-[15%] md:text-6xl"
-      >
-        Wide
-      </p>
+        <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
+        <p
+          data-astra-left
+          className="pointer-events-none absolute top-1/2 left-1/2 z-10 -translate-x-[112%] -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:left-[15%] md:translate-x-0 md:text-6xl"
+        >
+          Bridge
+        </p>
+        <p
+          data-astra-right
+          className="pointer-events-none absolute top-1/2 left-1/2 z-10 translate-x-[12%] -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:left-auto md:right-[15%] md:translate-x-0 md:text-6xl"
+        >
+          Wide
+        </p>
+      </div>
     </section>
   );
 }
