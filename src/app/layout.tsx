@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, Geist, IBM_Plex_Mono } from "next/font/google";
 import { siteUrl } from "@/components/pages/metadata";
 import { AnnouncementBar } from "@/components/site/AnnouncementBar";
+import { FooterMark } from "@/components/site/FooterMark";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import "./globals.css";
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
+        <FooterMark />
       </body>
     </html>
   );

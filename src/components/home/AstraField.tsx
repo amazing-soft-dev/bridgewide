@@ -18,13 +18,10 @@ const [upperWing, lowerArch] = markPaths;
 
 /** Previous upper path midpoint was 0.071. Both ribbons share one third of that. */
 const FLOW_SPEED = 0.071 / 3;
-const SPRAY_SIZE = 0.6;
 const TWINKLE = 0.45;
 const FLARE_TWINKLE = 0.2;
-/** A ribbon flare looks like an ambient star until it lands on its line. */
-const IGNITE_SIZE = 3;
-const IGNITE_GLOW = 0.3;
-const IGNITE_START = 0.75;
+/** Ribbon stars wear the outer-spray look until this far into their gather, then take their ribbon look. */
+const LAND_START = 0.75;
 const GATHER_STAGGER = 0.22;
 const GATHER_SPAN = 0.58;
 const FLOW_START = 0.6;
@@ -66,13 +63,13 @@ varying float vQuad;
 void main() {
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
   gl_Position = projectionMatrix * mvPosition;
-  vSize = max(size * uPixelRatio * uDepth / -mvPosition.z, 1.0);
-  // The core needs about 2 CSS px of radius even when the star itself is smaller.
-  vQuad = max(vSize, 4.0 * uPixelRatio);
-  gl_PointSize = vQuad;
   vColor = color;
   vGlow = glow;
   vAlpha = alpha;
+  vSize = max(size * uPixelRatio, 1.0);
+  // Fine dust stays 1 device px. Glow stars keep a little halo room. Heroes use their real size.
+  vQuad = max(vSize, mix(1.0, 2.0, vGlow) * uPixelRatio);
+  gl_PointSize = vQuad;
 }
 `;
 
@@ -88,14 +85,20 @@ void main() {
   float d = length(gl_PointCoord - 0.5) * vQuad;
   if (d > vQuad * 0.5) discard;
   float css = d / uPixelRatio;
-  float coreCss = clamp(vSize / uPixelRatio * 0.45, 0.4, 1.4);
+  float sizeCss = vSize / uPixelRatio;
+  float hero = step(0.8, vGlow);
+  float coreCss = mix(
+    clamp(sizeCss * 0.45, 0.4, 1.4),
+    clamp(sizeCss * 0.35, 2.0, 5.0),
+    hero
+  );
   // Under one device pixel the core aliases as it moves, so widen it and keep its energy.
   float coreWidth = max(coreCss, 1.0 / uPixelRatio);
   float c = css / coreWidth;
   float core = (coreCss * coreCss) / (coreWidth * coreWidth) * exp(-2.0 * c * c);
   float r = min(d / (vSize * 0.5), 1.0);
   float edge = 1.0 - r * r;
-  float halo = vGlow * exp(-4.0 * r) * edge * edge;
+  float halo = vGlow * exp(-mix(4.0, 1.8, hero) * r) * edge * edge;
   gl_FragColor = vec4(vColor * (core + halo) * vAlpha, 1.0);
 }
 `;
@@ -104,14 +107,16 @@ type Sample = { x: number; y: number };
 type Spine = Sample[];
 type Spray = { nx: number; ny: number; z: number };
 type Tier = "fine" | "ambient" | "flare";
-type StarBase = {
-  z: number;
+type Look = {
   tier: Tier;
   /** CSS px on the full 600px mark. */
   size: number;
   glow: number;
   color: number;
   brightness: number;
+};
+type StarBase = Look & {
+  z: number;
   spray: Spray;
   delay: number;
   phase: number;
@@ -119,6 +124,8 @@ type StarBase = {
 };
 type RibbonStar = StarBase & {
   kind: "ribbon";
+  /** Look while the star is out in the side spray, drawn from the dust split. */
+  outer: Look;
   spine: 0 | 1;
   t: number;
   speed: number;
@@ -230,7 +237,7 @@ function bandPoint(side: -1 | 1) {
   return { nx: side * between(BAND_INNER, BAND_OUTER), ny: between(-BAND_Y, BAND_Y) };
 }
 
-function starLook(kind: "ribbon" | "dust") {
+function starLook(kind: "ribbon" | "dust"): Look {
   const dust = kind === "dust";
   const [fine, ambient] = dust ? DUST_TIERS : RIBBON_TIERS;
   const roll = Math.random();
@@ -284,6 +291,7 @@ function makeRibbon(spine: 0 | 1): RibbonStar {
   return {
     ...base,
     kind: "ribbon",
+    outer: starLook("dust"),
     spine,
     t: Math.random(),
     speed: FLOW_SPEED * (0.97 + Math.random() * 0.06),
@@ -381,11 +389,18 @@ export function AstraField() {
       const alphas = new Float32Array(stars.length);
       const nudgeX = new Float32Array(stars.length);
       const nudgeY = new Float32Array(stars.length);
+      const ribbonColors = new Float32Array(stars.length * 3);
+      const outerColors = new Float32Array(stars.length * 3);
+      // Colours stay in display space: the shader writes them without conversion.
+      const writeColor = (out: Float32Array, index: number, look: Look) => {
+        out[index * 3] = (((look.color >> 16) & 255) / 255) * look.brightness;
+        out[index * 3 + 1] = (((look.color >> 8) & 255) / 255) * look.brightness;
+        out[index * 3 + 2] = ((look.color & 255) / 255) * look.brightness;
+      };
       stars.forEach((star, index) => {
-        // Colours stay in display space: the shader writes them without conversion.
-        colors[index * 3] = (((star.color >> 16) & 255) / 255) * star.brightness;
-        colors[index * 3 + 1] = (((star.color >> 8) & 255) / 255) * star.brightness;
-        colors[index * 3 + 2] = ((star.color & 255) / 255) * star.brightness;
+        writeColor(ribbonColors, index, star);
+        writeColor(outerColors, index, star.kind === "ribbon" ? star.outer : star);
+        writeColor(colors, index, star);
         sizes[index] = star.size;
         glows[index] = star.glow;
         alphas[index] = 1;
@@ -401,7 +416,9 @@ export function AstraField() {
       const alphaAttr = new THREE.BufferAttribute(alphas, 1);
       alphaAttr.setUsage(THREE.DynamicDrawUsage);
       geometry.setAttribute("position", positionAttr);
-      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      const colorAttr = new THREE.BufferAttribute(colors, 3);
+      colorAttr.setUsage(THREE.DynamicDrawUsage);
+      geometry.setAttribute("color", colorAttr);
       geometry.setAttribute("size", sizeAttr);
       geometry.setAttribute("glow", glowAttr);
       geometry.setAttribute("alpha", alphaAttr);
@@ -599,12 +616,22 @@ export function AstraField() {
           let x = settled.x;
           let y = settled.y;
           let z = settled.z;
-          const fine = star.tier === "fine";
-          const flare = star.tier === "flare";
-          const ignite = flare ? smoothstep((gather - IGNITE_START) / (1 - IGNITE_START)) : 1;
-          const look = flare ? IGNITE_SIZE + (star.size - IGNITE_SIZE) * ignite : star.size;
-          const size = fine ? look : look * sizeScale * (SPRAY_SIZE + (1 - SPRAY_SIZE) * gather);
-          if (flare) glows[index] = IGNITE_GLOW + (star.glow - IGNITE_GLOW) * ignite;
+          let size = star.size;
+          let tier = star.tier;
+          if (star.kind === "ribbon") {
+            const land = smoothstep((gather - LAND_START) / (1 - LAND_START));
+            const outer = star.outer;
+            const ribbonSize = star.tier === "fine" ? star.size : star.size * sizeScale;
+            size = outer.size + (ribbonSize - outer.size) * land;
+            glows[index] = outer.glow + (star.glow - outer.glow) * land;
+            for (let c = index * 3; c < index * 3 + 3; c++) {
+              const from = outerColors[c] ?? 0;
+              colors[c] = from + ((ribbonColors[c] ?? 0) - from) * land;
+            }
+            if (land < 0.5) tier = outer.tier;
+          }
+          const fine = tier === "fine";
+          const flare = tier === "flare";
           let alpha = 1;
           if (gather < 1) {
             ndcToLocal(star.spray.nx, star.spray.ny, star.spray.z, sprayed);
@@ -675,6 +702,7 @@ export function AstraField() {
         sizeAttr.needsUpdate = true;
         glowAttr.needsUpdate = true;
         alphaAttr.needsUpdate = true;
+        colorAttr.needsUpdate = true;
 
         renderer.render(scene, camera);
         if (running) frame = requestAnimationFrame(draw);

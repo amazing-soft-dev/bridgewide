@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
+import { HeaderShell } from "@/components/site/HeaderShell";
 import { MobileNav } from "@/components/site/MobileNav";
 import { Button } from "@/components/ui/Button";
 import { nav } from "@/content/site";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-ink/10 bg-cloud/95 text-ink backdrop-blur-md">
+    <HeaderShell>
       <div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3">
         <Logo variant="full" className="shrink-0 text-brand" />
         <nav aria-label="Primary" className="ml-4 hidden xl:block">
@@ -33,6 +34,6 @@ export function SiteHeader() {
         </div>
         <MobileNav items={nav} />
       </div>
-    </header>
+    </HeaderShell>
   );
 }

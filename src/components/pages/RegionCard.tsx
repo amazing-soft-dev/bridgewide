@@ -12,7 +12,7 @@ export function RegionCard({ region }: { region: Region }) {
         src={region.image}
         alt={`Photograph for the ${region.name} desk`}
         sizes="(min-width: 768px) 50vw, 100vw"
-        className="aspect-[4/3]"
+        className="aspect-[4/3] transform-gpu"
       />
       <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">{region.code}</p>
       <h3 className="font-display text-3xl text-ink">

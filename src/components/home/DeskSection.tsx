@@ -140,7 +140,7 @@ export default function DeskSection() {
                         className="!h-full !w-full object-cover"
                       />
                     </span>
-                    <span className="grid gap-0.5 border-t border-dashed border-stone/50 px-3 py-3">
+                    <span className="grid flex-1 content-start gap-0.5 border-t border-dashed border-stone/50 px-3 py-3">
                       <b className="font-display text-[15px] tracking-tight">{person.name}</b>
                       <span className="text-[11.5px] text-ink-soft">{person.role}</span>
                       <em className="mt-1 font-mono text-[9px] tracking-[0.12em] text-brand not-italic uppercase">

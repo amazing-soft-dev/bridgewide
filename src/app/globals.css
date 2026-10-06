@@ -69,20 +69,141 @@
     transform: none !important;
     opacity: 1 !important;
   }
+}
 
-  .story-stack {
-    height: auto !important;
-    overflow: visible !important;
+/* Pinned employer stories. --s is the slide position (0 to n-1) written from scroll. */
+.stories-track {
+  height: calc(var(--n) * 100vh);
+}
+
+.stories-stage {
+  --s: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: #111;
+}
+
+.story-slide {
+  --w: clamp(0, (var(--s) - var(--i) + 0.75) / 0.5, 1);
+  --o: clamp(0, (var(--s) - var(--i) - 0.25) / 0.5, 1);
+  --e: calc(var(--w) * var(--w) * (3 - 2 * var(--w)));
+  --cut: calc(var(--e) * 150%);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  clip-path: polygon(
+    calc(150% - var(--cut)) 0,
+    200% 0,
+    200% 100%,
+    calc(100% - var(--cut)) 100%
+  );
+}
+
+.story-bg,
+.story-veil {
+  position: absolute;
+  inset: 0;
+}
+
+.story-bg img {
+  transform: scale(calc(1.12 - var(--e) * 0.12));
+}
+
+.story-veil {
+  z-index: 1;
+  background:
+    linear-gradient(
+      90deg,
+      rgb(17 17 17 / 0.9) 0%,
+      rgb(17 17 17 / 0.68) 42%,
+      rgb(17 17 17 / 0.4) 100%
+    ),
+    linear-gradient(180deg, rgb(17 17 17 / 0.45), transparent 32%, transparent 68%, rgb(17 17 17 / 0.6));
+}
+
+.story-body {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  height: 100%;
+  align-items: center;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 5rem);
+  padding-top: clamp(5rem, 12vh, 7rem);
+  padding-bottom: calc(var(--seam) + clamp(1.5rem, 4vh, 2.75rem));
+}
+
+.story-copy,
+.story-side {
+  opacity: calc(var(--w) * var(--w) - var(--o) * 1.6);
+}
+
+.story-copy {
+  translate: 0 calc((1 - var(--w) - var(--o)) * 28px);
+}
+
+.story-side {
+  translate: 0 calc((1 - var(--w) - var(--o)) * 48px);
+}
+
+.story-stat {
+  width: min(100%, 15rem);
+  border-radius: 8px;
+  background: #f4f0e8;
+  padding: 1.15rem 1.15rem 1rem;
+  color: #111;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+}
+
+@media (max-width: 899px), (prefers-reduced-motion: reduce) {
+  .stories-track {
+    height: auto;
   }
 
-  .story-stack > article {
-    position: relative !important;
-    inset: auto !important;
+  .stories-stage {
+    position: relative;
     height: auto;
-    min-height: 24rem;
-    margin-bottom: 1rem;
-    transform: none !important;
-    opacity: 1 !important;
+    overflow: visible;
+  }
+
+  .story-slide {
+    position: relative;
+    inset: auto;
+    clip-path: none;
+  }
+
+  .story-bg img {
+    transform: none;
+  }
+
+  .story-body {
+    height: auto;
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+  }
+
+  .story-slide:first-child .story-body {
+    padding-top: calc(var(--seam) + 3.5rem);
+  }
+
+  .story-slide:last-child .story-body {
+    padding-bottom: calc(var(--seam) + 3.5rem);
+  }
+
+  .story-copy,
+  .story-side {
+    opacity: 1;
+    translate: none;
+  }
+}
+
+@media (max-width: 899px) {
+  .story-body {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
   }
 }
 
@@ -236,12 +357,11 @@
   z-index: 3;
   margin: 0;
   border: 2px solid #f30100;
-  outline: 1px solid rgb(243 1 0 / 0.9);
-  outline-offset: 5px;
-  padding: 0.35rem 0.85rem;
+  border-radius: 6px;
+  padding: 0.45rem 1.1rem;
   color: #f30100;
   font-size: clamp(1.75rem, 3vw, 2.6rem);
-  letter-spacing: 0.16em;
+  letter-spacing: 0.08em;
   line-height: 1;
   white-space: nowrap;
   pointer-events: none;
@@ -446,8 +566,9 @@
   display: grid;
   height: 100%;
   grid-template-rows: 1fr auto;
+  row-gap: 1.5rem;
   padding-top: clamp(4.5rem, 10vh, 6.5rem);
-  padding-bottom: clamp(1.5rem, 4vh, 2.75rem);
+  padding-bottom: calc(var(--seam) + clamp(1.5rem, 4vh, 2.75rem));
 }
 
 .desk-team {
@@ -460,9 +581,15 @@
   perspective: 900px;
 }
 
+.desk-team > li {
+  display: flex;
+}
+
 .desk-card {
   position: relative;
-  display: block;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   overflow: hidden;
   border-radius: 8px;
   background: #f4f0e8;
@@ -500,6 +627,13 @@
 .desk-card:hover .desk-photo img {
   filter: saturate(1);
   scale: 1.05;
+}
+
+/* Short viewports: shrink the photos so heading and cards fit above the next seam. */
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .desk-photo {
+    max-height: max(6rem, calc(100vh - 36rem));
+  }
 }
 
 .desk-stamp {
@@ -593,7 +727,7 @@
     display: block;
     height: auto;
     padding-top: 6.5rem;
-    padding-bottom: 4rem;
+    padding-bottom: calc(var(--seam) + 2.5rem);
   }
 
   .desk-team {
@@ -606,7 +740,7 @@
   }
 
   .desk-team li {
-    flex: 0 0 68vw;
+    flex: 0 0 min(68vw, 17rem);
     scroll-snap-align: start;
   }
 

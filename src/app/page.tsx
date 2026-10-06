@@ -1,6 +1,5 @@
 import dynamic from "next/dynamic";
 import { pageMetadata } from "@/components/pages/metadata";
-import { AstraField } from "@/components/home/AstraField";
 import { ClosingBand } from "@/components/home/ClosingBand";
 import { Hero } from "@/components/home/Hero";
 import { TwoDoors } from "@/components/home/TwoDoors";
@@ -54,7 +53,7 @@ const StoriesSection = dynamic(
   () => import("@/components/home/StoriesSection"),
   {
     ssr: true,
-    loading: () => <div className="min-h-[40rem] bg-cloud-soft" aria-hidden />,
+    loading: () => <div className="min-h-[400vh] bg-ink" aria-hidden />,
   },
 );
 
@@ -87,7 +86,6 @@ export default function HomePage() {
       <InsightsSection />
       <FaqSection />
       <ClosingBand />
-      <AstraField />
     </>
   );
 }
