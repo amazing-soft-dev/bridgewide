@@ -43,10 +43,13 @@ const WORD_FEATHER = 0.06;
 const WORD_PAD_PX = 32;
 /** Share of fine and ambient stars; the rest are flares. Dust has no flares. */
 const DUST_TIERS = [0.85, 0.15] as const;
-const RIBBON_TIERS = [0.35, 0.55] as const;
+/** Ribbon: 60% 1px dust, 30% 3px cyan, 10% 8–12px flares. */
+const RIBBON_TIERS = [0.6, 0.3] as const;
 const FINE_COLOR = 0xdfe9f5;
 const ICE_COLOR = 0x9fdcff;
 const FLARE_COLOR = 0xffffff;
+/** ~65% of a N(0, σ) sample falls inside ±1.2 mark units. */
+const SPINE_SIGMA = 1.28;
 
 const STAR_VERTEX = /* glsl */ `
 attribute float size;
@@ -67,8 +70,8 @@ void main() {
   vGlow = glow;
   vAlpha = alpha;
   vSize = max(size * uPixelRatio, 1.0);
-  // Fine dust stays 1 device px. Glow stars keep a little halo room. Heroes use their real size.
-  vQuad = max(vSize, mix(1.0, 2.0, vGlow) * uPixelRatio);
+  // Halo must reach past the core so neighbours add into one beam.
+  vQuad = max(vSize, mix(2.5, 10.0, vGlow) * uPixelRatio);
   gl_PointSize = vQuad;
 }
 `;
@@ -98,8 +101,10 @@ void main() {
   float core = (coreCss * coreCss) / (coreWidth * coreWidth) * exp(-2.0 * c * c);
   float r = min(d / (vSize * 0.5), 1.0);
   float edge = 1.0 - r * r;
-  float halo = vGlow * exp(-mix(4.0, 1.8, hero) * r) * edge * edge;
-  gl_FragColor = vec4(vColor * (core + halo) * vAlpha, 1.0);
+  float halo = (0.18 + vGlow) * exp(-mix(2.6, 1.55, hero) * r) * edge * edge;
+  vec3 ice = vec3(0.682, 0.902, 1.0);
+  vec3 hot = mix(vColor, vec3(1.0), clamp(core * 1.35, 0.0, 1.0));
+  gl_FragColor = vec4((hot * core + ice * halo) * vAlpha, 1.0);
 }
 `;
 
@@ -237,6 +242,12 @@ function bandPoint(side: -1 | 1) {
   return { nx: side * between(BAND_INNER, BAND_OUTER), ny: between(-BAND_Y, BAND_Y) };
 }
 
+function gaussian(sigma: number) {
+  let u = 0;
+  while (u === 0) u = Math.random();
+  return sigma * Math.sqrt(-2 * Math.log(u)) * Math.cos(Math.PI * 2 * Math.random());
+}
+
 function starLook(kind: "ribbon" | "dust"): Look {
   const dust = kind === "dust";
   const [fine, ambient] = dust ? DUST_TIERS : RIBBON_TIERS;
@@ -244,35 +255,31 @@ function starLook(kind: "ribbon" | "dust"): Look {
   if (roll < fine) {
     return {
       tier: "fine" as const,
-      size: between(0.8, 1.5),
-      glow: 0,
+      size: dust ? between(0.8, 1.5) : between(0.9, 1.2),
+      glow: dust ? 0 : 0.22,
       color: FINE_COLOR,
-      brightness: dust ? between(0.35, 0.65) : between(0.5, 0.8),
+      brightness: dust ? between(0.35, 0.65) : between(0.7, 1),
     };
   }
   if (dust || roll < fine + ambient) {
     return {
       tier: "ambient" as const,
-      size: dust ? between(2, 3) : between(2.5, 4),
-      glow: dust ? 0.3 : 0.6,
+      size: dust ? between(2, 3) : between(2.7, 3.3),
+      glow: dust ? 0.3 : 0.78,
       color: ICE_COLOR,
-      brightness: dust ? between(0.4, 0.6) : between(0.9, 1),
+      brightness: dust ? between(0.4, 0.6) : between(0.85, 1),
     };
   }
   return { tier: "flare" as const, size: between(8, 12), glow: 1, color: FLARE_COLOR, brightness: 1 };
 }
 
-/** Distance from the line and depth, in mark units: flares on the line, fine stars at the edges. */
+/** Gaussian scatter around the path: ~65% on the spine, a thin mist at the fringes. */
 function ribbonSpread(tier: Tier) {
-  if (tier === "flare") return { offset: between(-1.2, 1.2), z: between(-1.5, 1.5) };
-  if (tier === "ambient") {
-    const centred = Math.random() < 0.5;
-    const offset = centred ? (Math.random() + Math.random() - 1) * 4 : between(-4, 4);
-    return { offset, z: between(-3.5, 3.5) };
-  }
-  const side = Math.random() < 0.5 ? -1 : 1;
-  const reach = Math.random() < 1 / 7 ? between(6.5, 8) : between(2.5, 6.5);
-  return { offset: side * reach, z: between(-4.5, 4.5) };
+  const sigma = tier === "flare" ? 0.65 : SPINE_SIGMA;
+  let offset = gaussian(sigma);
+  if (tier !== "flare" && Math.random() < 0.08) offset = gaussian(4.5);
+  const z = gaussian(tier === "flare" ? 0.7 : 2.1);
+  return { offset, z };
 }
 
 function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
@@ -359,6 +366,42 @@ export function AstraField() {
       for (let i = 0; i < (counts[1] ?? 720); i++) stars.push(makeRibbon(1));
       for (let i = 0; i < DUST_PER_SIDE; i++) stars.push(makeDust(-1));
       for (let i = 0; i < DUST_PER_SIDE; i++) stars.push(makeDust(1));
+      // #region agent log
+      {
+        const ribbon = stars.filter((s): s is RibbonStar => s.kind === "ribbon");
+        const abs = ribbon.map((s) => Math.abs(s.offset)).sort((a, b) => a - b);
+        const pick = (q: number) => +(abs[Math.floor(q * (abs.length - 1))] ?? 0).toFixed(2);
+        const by: Record<string, number> = {};
+        for (const s of ribbon) by[s.tier] = (by[s.tier] ?? 0) + 1;
+        fetch("http://127.0.0.1:7294/ingest/d6eebea7-5345-4b53-a2ba-10de4bfce00d", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "48e4f6" },
+          body: JSON.stringify({
+            sessionId: "48e4f6",
+            runId: "post-fix",
+            hypothesisId: "B,C,D",
+            location: "AstraField.tsx:init",
+            message: "ribbon gaussian offsets and 60/30/10 split",
+            data: {
+              n: ribbon.length,
+              onSpinePct: +((100 * abs.filter((v) => v <= 1.2).length) / Math.max(1, abs.length)).toFixed(1),
+              offset: { p50: pick(0.5), p90: pick(0.9), max: pick(1) },
+              share: {
+                fine: +((100 * (by.fine ?? 0)) / ribbon.length).toFixed(1),
+                ambient: +((100 * (by.ambient ?? 0)) / ribbon.length).toFixed(1),
+                flare: +((100 * (by.flare ?? 0)) / ribbon.length).toFixed(1),
+              },
+              sizes: {
+                fine: ribbon.filter((s) => s.tier === "fine").slice(0, 1).map((s) => +s.size.toFixed(2)),
+                ambient: ribbon.filter((s) => s.tier === "ambient").slice(0, 1).map((s) => +s.size.toFixed(2)),
+                flare: ribbon.filter((s) => s.tier === "flare").slice(0, 1).map((s) => +s.size.toFixed(2)),
+              },
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+      }
+      // #endregion
 
       const restPosition = (star: RibbonStar) => {
         const spine = spines[star.spine];
@@ -546,6 +589,7 @@ export function AstraField() {
         };
       };
 
+      let debugLast = 0;
       let frame = 0;
       let running = false;
       let previous = performance.now();
@@ -703,6 +747,30 @@ export function AstraField() {
         glowAttr.needsUpdate = true;
         alphaAttr.needsUpdate = true;
         colorAttr.needsUpdate = true;
+
+        // #region agent log
+        if (now - debugLast > 2000) {
+          debugLast = now;
+          fetch("http://127.0.0.1:7294/ingest/d6eebea7-5345-4b53-a2ba-10de4bfce00d", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "48e4f6" },
+            body: JSON.stringify({
+              sessionId: "48e4f6",
+              runId: "post-fix",
+              hypothesisId: "A",
+              location: "AstraField.tsx:draw",
+              message: "additive blend and halo still active",
+              data: {
+                scroll: +scroll.toFixed(3),
+                blending: material.blending === THREE.AdditiveBlending,
+                transparent: material.transparent,
+                depthWrite: material.depthWrite,
+              },
+              timestamp: Date.now(),
+            }),
+          }).catch(() => {});
+        }
+        // #endregion
 
         renderer.render(scene, camera);
         if (running) frame = requestAnimationFrame(draw);
