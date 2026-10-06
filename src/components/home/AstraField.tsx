@@ -20,6 +20,11 @@ const [upperWing, lowerArch] = markPaths;
 const FLOW_SPEED = 0.071 / 3;
 const SPRAY_SIZE = 0.6;
 const TWINKLE = 0.45;
+const FLARE_TWINKLE = 0.2;
+/** A ribbon flare looks like an ambient star until it lands on its line. */
+const IGNITE_SIZE = 3;
+const IGNITE_GLOW = 0.3;
+const IGNITE_START = 0.75;
 const GATHER_STAGGER = 0.22;
 const GATHER_SPAN = 0.58;
 const FLOW_START = 0.6;
@@ -39,9 +44,9 @@ const BAND_Y = 0.95;
 /** NDC distance over which the clear zone around each word fades back in. */
 const WORD_FEATHER = 0.06;
 const WORD_PAD_PX = 32;
-/** Share of fine and ambient stars; the rest are flares. */
-const DUST_TIERS = [0.6, 0.3] as const;
-const RIBBON_TIERS = [0.15, 0.5] as const;
+/** Share of fine and ambient stars; the rest are flares. Dust has no flares. */
+const DUST_TIERS = [0.85, 0.15] as const;
+const RIBBON_TIERS = [0.35, 0.55] as const;
 const FINE_COLOR = 0xdfe9f5;
 const ICE_COLOR = 0x9fdcff;
 const FLARE_COLOR = 0xffffff;
@@ -83,7 +88,11 @@ void main() {
   float d = length(gl_PointCoord - 0.5) * vQuad;
   if (d > vQuad * 0.5) discard;
   float css = d / uPixelRatio;
-  float core = exp(-2.0 * css * css);
+  float coreCss = clamp(vSize / uPixelRatio * 0.45, 0.4, 1.4);
+  // Under one device pixel the core aliases as it moves, so widen it and keep its energy.
+  float coreWidth = max(coreCss, 1.0 / uPixelRatio);
+  float c = css / coreWidth;
+  float core = (coreCss * coreCss) / (coreWidth * coreWidth) * exp(-2.0 * c * c);
   float r = min(d / (vSize * 0.5), 1.0);
   float edge = 1.0 - r * r;
   float halo = vGlow * exp(-4.0 * r) * edge * edge;
@@ -222,29 +231,41 @@ function bandPoint(side: -1 | 1) {
 }
 
 function starLook(kind: "ribbon" | "dust") {
-  const [fine, ambient] = kind === "dust" ? DUST_TIERS : RIBBON_TIERS;
+  const dust = kind === "dust";
+  const [fine, ambient] = dust ? DUST_TIERS : RIBBON_TIERS;
   const roll = Math.random();
   if (roll < fine) {
     return {
       tier: "fine" as const,
-      size: between(1, 1.3),
+      size: between(0.8, 1.5),
       glow: 0,
       color: FINE_COLOR,
-      brightness: between(0.35, 0.65),
+      brightness: dust ? between(0.35, 0.65) : between(0.5, 0.8),
     };
   }
-  if (roll < fine + ambient) {
+  if (dust || roll < fine + ambient) {
     return {
       tier: "ambient" as const,
-      size: between(2.5, 4.5),
-      glow: 0.35,
+      size: dust ? between(2, 3) : between(2.5, 4),
+      glow: dust ? 0.3 : 0.6,
       color: ICE_COLOR,
-      brightness: between(0.7, 1),
+      brightness: dust ? between(0.4, 0.6) : between(0.9, 1),
     };
   }
-  return kind === "dust"
-    ? { tier: "flare" as const, size: between(9, 16), glow: 1, color: FLARE_COLOR, brightness: 1 }
-    : { tier: "flare" as const, size: between(6, 11), glow: 0.6, color: FLARE_COLOR, brightness: 1 };
+  return { tier: "flare" as const, size: between(8, 12), glow: 1, color: FLARE_COLOR, brightness: 1 };
+}
+
+/** Distance from the line and depth, in mark units: flares on the line, fine stars at the edges. */
+function ribbonSpread(tier: Tier) {
+  if (tier === "flare") return { offset: between(-1.2, 1.2), z: between(-1.5, 1.5) };
+  if (tier === "ambient") {
+    const centred = Math.random() < 0.5;
+    const offset = centred ? (Math.random() + Math.random() - 1) * 4 : between(-4, 4);
+    return { offset, z: between(-3.5, 3.5) };
+  }
+  const side = Math.random() < 0.5 ? -1 : 1;
+  const reach = Math.random() < 1 / 7 ? between(6.5, 8) : between(2.5, 6.5);
+  return { offset: side * reach, z: between(-4.5, 4.5) };
 }
 
 function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
@@ -259,14 +280,14 @@ function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
 }
 
 function makeRibbon(spine: 0 | 1): RibbonStar {
+  const base = starBase("ribbon", sprayPoint(Math.random() < 0.5 ? -1 : 1));
   return {
-    ...starBase("ribbon", sprayPoint(Math.random() < 0.5 ? -1 : 1)),
+    ...base,
     kind: "ribbon",
     spine,
     t: Math.random(),
     speed: FLOW_SPEED * (0.97 + Math.random() * 0.06),
-    offset: (Math.random() - 0.5) * (4.8 + Math.random() * 4.4),
-    z: (Math.random() - 0.5) * 7,
+    ...ribbonSpread(base.tier),
   };
 }
 
@@ -375,12 +396,14 @@ export function AstraField() {
       positionAttr.setUsage(THREE.DynamicDrawUsage);
       const sizeAttr = new THREE.BufferAttribute(sizes, 1);
       sizeAttr.setUsage(THREE.DynamicDrawUsage);
+      const glowAttr = new THREE.BufferAttribute(glows, 1);
+      glowAttr.setUsage(THREE.DynamicDrawUsage);
       const alphaAttr = new THREE.BufferAttribute(alphas, 1);
       alphaAttr.setUsage(THREE.DynamicDrawUsage);
       geometry.setAttribute("position", positionAttr);
       geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
       geometry.setAttribute("size", sizeAttr);
-      geometry.setAttribute("glow", new THREE.BufferAttribute(glows, 1));
+      geometry.setAttribute("glow", glowAttr);
       geometry.setAttribute("alpha", alphaAttr);
 
       const uniforms = {
@@ -577,9 +600,11 @@ export function AstraField() {
           let y = settled.y;
           let z = settled.z;
           const fine = star.tier === "fine";
-          const size = fine
-            ? star.size
-            : star.size * sizeScale * (SPRAY_SIZE + (1 - SPRAY_SIZE) * gather);
+          const flare = star.tier === "flare";
+          const ignite = flare ? smoothstep((gather - IGNITE_START) / (1 - IGNITE_START)) : 1;
+          const look = flare ? IGNITE_SIZE + (star.size - IGNITE_SIZE) * ignite : star.size;
+          const size = fine ? look : look * sizeScale * (SPRAY_SIZE + (1 - SPRAY_SIZE) * gather);
+          if (flare) glows[index] = IGNITE_GLOW + (star.glow - IGNITE_GLOW) * ignite;
           let alpha = 1;
           if (gather < 1) {
             ndcToLocal(star.spray.nx, star.spray.ny, star.spray.z, sprayed);
@@ -588,7 +613,8 @@ export function AstraField() {
             z = sprayed.z + (z - sprayed.z) * gather;
           }
           if (flow > 0 && !fine) {
-            alpha *= 1 - TWINKLE * flow * (0.5 + 0.5 * Math.sin(time * star.rate + star.phase));
+            const depth = flare ? FLARE_TWINKLE : TWINKLE;
+            alpha *= 1 - depth * flow * (0.5 + 0.5 * Math.sin(time * star.rate + star.phase));
           }
 
           let ox = (nudgeX[index] ?? 0) * nudgeFade;
@@ -647,6 +673,7 @@ export function AstraField() {
         }
         positionAttr.needsUpdate = true;
         sizeAttr.needsUpdate = true;
+        glowAttr.needsUpdate = true;
         alphaAttr.needsUpdate = true;
 
         renderer.render(scene, camera);
