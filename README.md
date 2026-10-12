@@ -163,12 +163,12 @@ npm run lint && npm run typecheck && npm run build
    - Create the app, note its **App ID**, and under **Private keys** click **Generate a private key**.
    - Click **Install App** and install it on `amazing-soft-dev/bridgewide` only.
 2. **Add the credentials to the repo.** In **Settings → Secrets and variables → Actions**:
-   - **Variables** tab: `BOT_APP_ID` = the App ID.
+   - **Variables** tab: `BOT_APP_CLIENT_ID` = the app's **Client ID** (shown under the App ID, starts with `Iv`). `BOT_APP_ID` (the numeric App ID) also works as a fallback.
    - **Secrets** tab: `BOT_APP_PRIVATE_KEY` = the full contents of the downloaded `.pem` file.
 
    The bot token is needed because pull requests opened with the default `GITHUB_TOKEN` don't trigger CI, so auto-merge would wait forever.
 3. **Repository settings.** In **Settings → General → Pull Requests**, tick **Allow merge commits**, **Allow squash merging**, **Allow auto-merge**, and **Automatically delete head branches**.
-4. **Branch rulesets.** In **Settings → Rules → Rulesets → New ruleset → Import a ruleset**, import `.github/rulesets/dev.json`, then `.github/rulesets/main.json`. Both require a pull request and the **CI passed** check and block force pushes and deletion. `dev` allows squash merges only, `main` merge commits only. Run CI once (any PR) before importing, so GitHub knows the **CI passed** check name.
+4. **Branch rulesets.** In **Settings → Rules → Rulesets → New ruleset → Import a ruleset**, import `.github/rulesets/dev.json`, then `.github/rulesets/main.json`. Both require a pull request and the **CI passed** check and block force pushes and deletion. The deletion block matters: **Automatically delete head branches** would otherwise delete `dev` after every release PR, because `dev` is that PR's head branch. If `dev` ever goes missing, the next work-branch push recreates it from `main`. `dev` allows squash merges only, `main` merge commits only. Run CI once (any PR) before importing, so GitHub knows the **CI passed** check name.
 5. **Pages.** In **Settings → Pages**: Source **GitHub Actions**, custom domain `www.bridgewide.org`, **Enforce HTTPS** on. Under **Settings → Environments → github-pages**, make sure `main` is allowed to deploy.
 
 ## Deployment
