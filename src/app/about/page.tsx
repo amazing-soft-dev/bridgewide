@@ -1,9 +1,8 @@
 import Image from "next/image";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
-import { SampleNote } from "@/components/pages/SampleNote";
 import { pageMetadata } from "@/components/pages/metadata";
-import { images, people, sampleFiguresNote } from "@/content/site";
+import { images, people } from "@/content/site";
 
 export const metadata = pageMetadata({
   title: "About · BridgeWide",
@@ -24,12 +23,7 @@ export default function AboutPage() {
           alt: "Photograph of the BridgeWide desk",
         }}
       />
-      <PageSection
-        id="people"
-        label={sampleFiguresNote}
-        title="The desk"
-        lede="Names, focus, and placement counts on this page are sample figures."
-      >
+      <PageSection id="people" label="People" title="The desk">
         <ul className="grid gap-10 md:grid-cols-2">
           {people.map((person) => (
             <li key={person.id} id={person.id} className="border-t border-brand pt-6">
@@ -47,12 +41,7 @@ export default function AboutPage() {
                 <p className="mt-3 font-mono text-xs tracking-[0.18em] text-brand uppercase">
                   {person.focus}
                 </p>
-                <p className="mt-4 text-ink">
-                  <SampleNote />{" "}
-                  <span className="ml-2">
-                    {person.placementCount} placements
-                  </span>
-                </p>
+                <p className="mt-4 text-ink">{person.placementCount} placements</p>
                 </div>
               </article>
             </li>

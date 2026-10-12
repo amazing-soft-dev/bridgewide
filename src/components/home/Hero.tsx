@@ -4,7 +4,6 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { HeroPhoto } from "@/components/home/HeroPhoto";
 import { Button } from "@/components/ui/Button";
-import { photoSecondaryClass } from "@/components/ui/SectionHeading";
 import { SplitWords } from "@/components/ui/SplitWords";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import { getRegion, hero, images, roles, stats } from "@/content/site";
@@ -55,11 +54,7 @@ export function Hero() {
               transition={{ duration: reduced ? 0 : 0.6, delay: reduced ? 0 : 0.52, ease }}
             >
               <Button href={hero.primaryCta.href}>{hero.primaryCta.label}</Button>
-              <Button
-                href={hero.secondaryCta.href}
-                variant="secondary"
-                className={photoSecondaryClass}
-              >
+              <Button href={hero.secondaryCta.href} variant="onDark">
                 {hero.secondaryCta.label}
               </Button>
             </motion.div>

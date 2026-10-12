@@ -5,7 +5,7 @@ import { PageSection } from "@/components/pages/PageSection";
 import { RoleList } from "@/components/pages/RoleList";
 import { rolesIn, textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
-import { getRegion, regions, sampleFiguresNote } from "@/content/site";
+import { getRegion, regions } from "@/content/site";
 
 export const dynamicParams = false;
 
@@ -56,9 +56,8 @@ export default async function RegionPage({
       />
       <PageSection
         id="roles"
-        label={`${sampleFiguresNote}`}
+        label="Seats"
         title="Open roles"
-        lede="Salaries on these seats are sample figures."
       >
         <RoleList items={rolesIn(region.slug)} />
         <p className="mt-8">

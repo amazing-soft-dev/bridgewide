@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import {
   useEffect,
   useRef,
@@ -10,6 +9,7 @@ import {
   type CSSProperties,
 } from "react";
 import { sectionContainer } from "@/components/ui/SectionHeading";
+import { Button } from "@/components/ui/Button";
 import { getRegion, stories } from "@/content/site";
 
 const storyAlt: Record<string, string> = {
@@ -146,19 +146,14 @@ export default function StoriesSection() {
                         {story.attribution}
                       </figcaption>
                     </figure>
-                    <Link
+                    <Button
                       href={`/stories/${story.slug}`}
+                      variant="onDark"
+                      className="mt-8"
                       tabIndex={hidden ? -1 : undefined}
-                      className="group mt-8 mr-4 inline-flex items-center gap-5 border border-cloud/35 bg-cloud/5 py-2.5 pl-4 text-sm font-semibold text-cloud no-underline backdrop-blur-md transition-colors hover:border-cloud/70"
                     >
                       Read the story
-                      <span
-                        aria-hidden
-                        className="-mr-4 grid size-8 rotate-45 place-items-center bg-cloud text-ink transition-colors group-hover:bg-brand group-hover:text-cloud"
-                      >
-                        <span className="-rotate-45 text-sm leading-none">↗</span>
-                      </span>
-                    </Link>
+                    </Button>
                   </div>
                   <div className="story-side">
                     <div className="story-stat">

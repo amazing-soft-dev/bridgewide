@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { SampleNote } from "@/components/pages/SampleNote";
 import { regionFor, textLink } from "@/components/pages/format";
 import { HoverLift } from "@/components/ui/HoverLift";
 import { RevealGroup, RevealItem } from "@/components/ui/Reveal";
@@ -44,9 +43,7 @@ export function RoleList({
               <p className="mt-3 text-sm text-stone">
                 {region.name} · {role.city} · {role.workMode} · {role.engagement} · {role.discipline}
               </p>
-              <p className="mt-4 text-ink">
-                <SampleNote /> <span className="ml-2">{role.salary}</span>
-              </p>
+              <p className="mt-4 text-ink">{role.salary}</p>
               <p className="mt-4 max-w-3xl leading-7 text-ink-soft">{role.summary}</p>
             </article>
             </HoverLift>

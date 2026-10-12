@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import { useEffect, useRef, type CSSProperties, type PointerEvent } from "react";
 import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
-import { images, people, sampleFiguresNote } from "@/content/site";
+import { images, people } from "@/content/site";
 
 const COLS = 16;
 const ROWS = 9;
@@ -108,15 +109,9 @@ export default function DeskSection() {
                 title="Recruiters who did the job first."
                 lede="Former engineers and managers. Each consultant keeps a region or a discipline, and stays on the search until someone starts."
               />
-              <Link
-                href="/about"
-                className="mt-6 inline-flex items-center gap-3 border border-cloud/40 bg-cloud/10 px-4 py-3 text-sm font-semibold text-cloud no-underline backdrop-blur-md"
-              >
+              <Button href="/about" variant="onDark" className="mt-6">
                 Meet the team
-                <span aria-hidden className="grid size-8 place-items-center bg-cloud text-ink">
-                  →
-                </span>
-              </Link>
+              </Button>
             </div>
             <ul className="desk-team">
               {people.map((person) => (
@@ -148,7 +143,7 @@ export default function DeskSection() {
                       </em>
                     </span>
                     <span className="desk-stamp font-mono">
-                      {sampleFiguresNote}: {person.placementCount}
+                      {person.placementCount} placements
                     </span>
                   </Link>
                 </li>

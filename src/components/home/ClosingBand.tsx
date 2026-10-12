@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { SplitWords } from "@/components/ui/SplitWords";
-import { photoSecondaryClass, sectionContainer } from "@/components/ui/SectionHeading";
+import { sectionContainer } from "@/components/ui/SectionHeading";
 import { hero, images } from "@/content/site";
 
 export function ClosingBand() {
@@ -41,11 +41,7 @@ export function ClosingBand() {
             <Button href={hero.primaryCta.href}>
               {hero.primaryCta.label}
             </Button>
-            <Button
-              href={hero.secondaryCta.href}
-              variant="secondary"
-              className={photoSecondaryClass}
-            >
+            <Button href={hero.secondaryCta.href} variant="onDark">
               {hero.secondaryCta.label}
             </Button>
           </div>

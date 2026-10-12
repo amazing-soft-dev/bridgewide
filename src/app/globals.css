@@ -71,6 +71,186 @@
   }
 }
 
+/* Arrow button: left-to-right fill, diagonal chip that straightens, small cursor pull. */
+.bw-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 48px;
+  padding: 0 8px 0 22px;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 0 100%);
+  transform: translate(var(--mx, 0px), var(--my, 0px));
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 0.35s 0.05s,
+    border-color 0.35s;
+}
+
+.bw-btn::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  background: #111;
+  transform-origin: 0 50%;
+  scale: 0 1;
+  transition: scale 0.6s cubic-bezier(0.7, 0, 0.2, 1);
+}
+
+.bw-btn:hover::before,
+.bw-btn:focus-visible::before {
+  scale: 1 1;
+}
+
+.bw-btn:hover,
+.bw-btn:focus-visible {
+  transform: translate(var(--mx, 0px), calc(var(--my, 0px) - 2px));
+}
+
+.bw-btn:active {
+  transform: scale(0.97) translate(var(--mx, 0px), var(--my, 0px));
+}
+
+.bw-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.bw-lbl {
+  position: relative;
+  display: inline-block;
+  height: 1.15em;
+  overflow: hidden;
+  line-height: 1.15;
+}
+
+.bw-l1,
+.bw-l2 {
+  display: block;
+  transition: translate 0.55s cubic-bezier(0.7, 0, 0.2, 1);
+}
+
+.bw-l2 {
+  position: absolute;
+  top: 100%;
+  left: 0;
+}
+
+.bw-btn:hover .bw-l1,
+.bw-btn:hover .bw-l2,
+.bw-btn:focus-visible .bw-l1,
+.bw-btn:focus-visible .bw-l2 {
+  translate: 0 -100%;
+}
+
+.bw-arr {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 5px;
+  rotate: -45deg;
+  transition:
+    rotate 0.55s cubic-bezier(0.2, 0.9, 0.2, 1),
+    background 0.35s,
+    color 0.35s;
+}
+
+.bw-btn:hover .bw-arr,
+.bw-btn:focus-visible .bw-arr {
+  rotate: 0deg;
+}
+
+.bw-btn-primary {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+.bw-btn-primary .bw-arr {
+  background: #fff;
+  color: var(--color-brand);
+}
+
+.bw-btn-primary:hover .bw-arr,
+.bw-btn-primary:focus-visible .bw-arr {
+  color: #111;
+}
+
+.bw-btn-secondary {
+  border-color: color-mix(in srgb, #111 26%, transparent);
+  background: color-mix(in srgb, #fff 60%, transparent);
+  color: #111;
+}
+
+.bw-btn-secondary .bw-arr {
+  background: #111;
+  color: #fff;
+}
+
+.bw-btn-secondary:hover,
+.bw-btn-secondary:focus-visible {
+  border-color: #111;
+  color: #fff;
+}
+
+.bw-btn-secondary:hover .bw-arr,
+.bw-btn-secondary:focus-visible .bw-arr {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+.bw-btn-onDark {
+  border-color: color-mix(in srgb, #fff 36%, transparent);
+  background: color-mix(in srgb, #fff 8%, transparent);
+  color: #fff;
+  backdrop-filter: blur(10px);
+}
+
+.bw-btn-onDark .bw-arr {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+.bw-btn-onDark:hover,
+.bw-btn-onDark:focus-visible {
+  border-color: #111;
+  color: #fff;
+}
+
+.bw-btn-onDark:hover .bw-arr,
+.bw-btn-onDark:focus-visible .bw-arr {
+  background: #fff;
+  color: #111;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bw-btn,
+  .bw-btn::before,
+  .bw-arr,
+  .bw-l1,
+  .bw-l2 {
+    transition: none;
+  }
+
+  .bw-arr {
+    rotate: 0deg;
+  }
+}
+
 /* Pinned employer stories. --s is the slide position (0 to n-1) written from scroll. */
 .stories-track {
   height: calc(var(--n) * 100vh);

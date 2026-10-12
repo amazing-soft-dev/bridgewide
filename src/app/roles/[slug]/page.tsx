@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
-import { SampleNote } from "@/components/pages/SampleNote";
 import { regionFor, textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { Button } from "@/components/ui/Button";
@@ -78,9 +77,7 @@ export default async function RolePage({ params }: { params: Promise<{ slug: str
           ))}
           <div className="border-t border-brand pt-4">
             <dt className="font-mono text-xs tracking-[0.18em] text-stone uppercase">Salary</dt>
-            <dd className="mt-2 text-lg text-ink">
-              <SampleNote /> <span className="ml-2">{role.salary}</span>
-            </dd>
+            <dd className="mt-2 text-lg text-ink">{role.salary}</dd>
           </div>
         </dl>
         <p className="mt-10">

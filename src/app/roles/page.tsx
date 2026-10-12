@@ -4,12 +4,12 @@ import { PageSection } from "@/components/pages/PageSection";
 import { RoleList } from "@/components/pages/RoleList";
 import { rolesIn, textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
-import { regions, sampleFiguresNote } from "@/content/site";
+import { regions } from "@/content/site";
 
 export const metadata = pageMetadata({
   title: "Roles · BridgeWide",
   description:
-    "Open software engineering roles across the USA, Canada, Latin America, and Europe. Salaries are labeled sample figures.",
+    "Open software engineering roles across the USA, Canada, Latin America, and Europe.",
   path: "/roles",
 });
 
@@ -19,7 +19,7 @@ export default function RolesPage() {
       <PageHero
         eyebrow="Roles"
         title="Seats that are live this season."
-        lede="Grouped by region. Each salary is a sample figure for the conversation, not an offer."
+        lede="Grouped by region."
       >
         <nav aria-label="Jump to region">
           <ul className="flex flex-wrap gap-x-5 gap-y-2">
@@ -40,7 +40,7 @@ export default function RolesPage() {
         <PageSection
           key={region.slug}
           id={region.slug}
-          label={`${region.code} · ${sampleFiguresNote}`}
+          label={region.code}
           title={region.name}
           lede={region.summary}
         >

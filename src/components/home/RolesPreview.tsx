@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/Button";
 import { HoverLift } from "@/components/ui/HoverLift";
 import { RevealItem, RevealGroup } from "@/components/ui/Reveal";
 import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
-import { getRegion, roles, sampleFiguresNote } from "@/content/site";
+import { getRegion, roles } from "@/content/site";
 
 export default function RolesPreview() {
   const preview = roles.slice(0, 4);
@@ -25,10 +25,7 @@ export default function RolesPreview() {
             See all roles
           </Button>
         </div>
-        <p className="mt-8 font-mono text-xs tracking-[0.16em] text-ink uppercase">
-          {sampleFiguresNote}
-        </p>
-        <RevealGroup className="mt-4 divide-y divide-ink/15 border-y border-ink/15">
+        <RevealGroup className="mt-8 divide-y divide-ink/15 border-y border-ink/15">
           {preview.map((role) => {
             const code = getRegion(role.region)?.code;
             return (
@@ -60,12 +57,7 @@ export default function RolesPreview() {
                     </p>
                   </div>
                   <p className="text-sm text-ink-soft">{role.discipline}</p>
-                  <p className="text-sm text-ink">
-                    <span className="mb-1 block font-mono text-[11px] tracking-[0.14em] text-ink uppercase md:text-right">
-                      {sampleFiguresNote}
-                    </span>
-                    <span className="md:block md:text-right">{role.salary}</span>
-                  </p>
+                  <p className="text-sm text-ink md:text-right">{role.salary}</p>
                 </article>
                 </HoverLift>
               </RevealItem>

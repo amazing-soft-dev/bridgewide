@@ -20,10 +20,6 @@ export function formatUsd(amount: number): string {
   }).format(amount);
 }
 
-export function telHref(phone: string): string {
-  return `tel:${phone.replace(/[^\d+]/g, "")}`;
-}
-
 export const pageWrap = "mx-auto w-full max-w-6xl px-4";
 
 export const textLink =

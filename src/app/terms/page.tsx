@@ -21,7 +21,7 @@ export default function TermsPage() {
       <PageSection id="draft" label="Draft" title="What this page is">
         <Prose>
           <p>
-            Fees, replacement language, and salary bands elsewhere on this site are labeled sample figures. They are not an offer. A signed search agreement is the document that applies to a hire.
+            A signed search agreement is the document that applies to a hire.
           </p>
           <p>
             Nothing on this page limits liability, grants a licence, or sets rules for using the site. Those clauses belong in a document a lawyer has reviewed.
