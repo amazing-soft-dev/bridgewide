@@ -12,16 +12,21 @@ export function CountUp({
   const [shown, setShown] = useState(value);
   const ref = useRef<HTMLSpanElement>(null);
 
+  // Show the new value right away when the prop changes. The effect below
+  // animates up to it when motion is allowed.
+  const [lastValue, setLastValue] = useState(value);
+  if (value !== lastValue) {
+    setLastValue(value);
+    setShown(value);
+  }
+
   useEffect(() => {
     const node = ref.current;
     const parsed = /^(\d+)(.*)$/.exec(value);
     if (!node || !parsed) return;
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setShown(value);
-      return;
-    }
+    // With reduced motion, `shown` already equals `value`.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const end = Number(parsed[1]);
     const tail = parsed[2];

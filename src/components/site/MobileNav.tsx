@@ -16,9 +16,13 @@ export function MobileNav({ items }: { items: readonly NavItem[] }) {
   const menuId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
+  // Close the menu after navigation. Adjusting state during render (instead of
+  // in an effect) avoids an extra render pass.
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     if (!open) return;

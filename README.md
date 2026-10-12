@@ -38,7 +38,8 @@ Open <http://localhost:3000>.
 | `npm run dev` | Start the dev server |
 | `npm run build` | Production build |
 | `npm run start` | Serve the production build |
-| `npm run lint` | Run ESLint |
+| `npm run lint` | Run ESLint (fails on any warning) |
+| `npm run typecheck` | Generate route types and run `tsc --noEmit` |
 
 ## Environment variables
 
@@ -119,6 +120,23 @@ The canonical site URL (used for metadata, sitemap, and Open Graph) is `siteUrl`
 - All motion respects `prefers-reduced-motion`, and the heavier effects turn off below 900 px wide.
 - The logo and bridge mark are original artwork.
 - Photos come from Unsplash under the Unsplash License. Credits are in `public/images/ATTRIBUTION.md`.
+
+## CI/CD
+
+Branch flow: `fix/*` or `feat/*` → pull request into **`dev`** → pull request from `dev` into **`main`** → deploy.
+
+| Workflow | Runs on | What it does |
+| --- | --- | --- |
+| `.github/workflows/ci.yml` (**CI**) | Pull requests into `dev` or `main`, pushes to `dev` | `npm run lint`, `npm run typecheck`, and two builds: `server` (full app with `/api` routes) and `static` (the GitHub Pages export, with a check that the expected files exist) |
+| `.github/workflows/nextjs.yml` (**Deploy**) | Pushes to `main` | Builds the static export and publishes it to GitHub Pages |
+
+Run the same checks locally before opening a pull request:
+
+```bash
+npm run lint && npm run typecheck && npm run build
+```
+
+To make CI a merge gate, add a branch protection rule (or ruleset) for `dev` and `main` under **Settings → Branches**. Require pull requests and the status checks `Lint and type check`, `Build (server)` and `Build (static)`.
 
 ## Deployment
 
