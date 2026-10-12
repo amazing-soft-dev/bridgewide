@@ -60,7 +60,7 @@ jobs:
         # patch next.config.js/.mjs. This repo uses next.config.ts, so the action
         # wrote a separate next.config.js that overrode it. next.config.ts
         # switches to a static export itself when NEXT_OUTPUT=export (see the
-        # build step), and reads the Pages sub-path from PAGES_BASE_PATH.
+        # build step).
       - name: Restore cache
         uses: actions/cache@v4
         with:
@@ -78,8 +78,16 @@ jobs:
         env:
           # Static HTML export to ./out. The /api form routes are not included.
           NEXT_OUTPUT: export
-          # "/bridgewide" on https://<owner>.github.io/bridgewide, empty on a custom domain.
-          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          # Sub-path the site is served from. Empty because the site is served
+          # from the root of the custom domain (www.bridgewide.org).
+          # It is pinned here on purpose: configure-pages' `base_path` output
+          # is "/bridgewide" whenever the custom domain is not active at build
+          # time, which made every asset URL 404 on the custom domain.
+          # To serve from https://<owner>.github.io/bridgewide instead, set the
+          # repository variable PAGES_BASE_PATH to /bridgewide.
+          PAGES_BASE_PATH: ${{ vars.PAGES_BASE_PATH || '' }}
+          # Canonical origin for metadata, sitemap.xml and robots.txt.
+          NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL || 'https://www.bridgewide.org' }}
           NEXT_TELEMETRY_DISABLED: "1"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

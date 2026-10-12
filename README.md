@@ -112,7 +112,7 @@ plan.md                 Original build plan and design decisions
 
 All copy and data are in **`src/content/site.ts`**: contact details, nav, hero, stats, placements, the weekly process, people, roles, regions, salary bands, stories, insights, FAQ, and fees. Change it there and every page that uses it updates.
 
-The canonical site URL (used for metadata, sitemap, and Open Graph) is `siteUrl` in `src/components/pages/metadata.ts`.
+The canonical site URL (used for metadata, sitemap, and Open Graph) is `siteUrl` in `src/components/pages/metadata.ts`. It defaults to `https://www.bridgewide.org` and can be overridden with `NEXT_PUBLIC_SITE_URL` at build time.
 
 ## Design notes
 
@@ -146,19 +146,20 @@ This is a standard Next.js app, so it can run on Vercel or any Node host (`npm r
 
 ### GitHub Pages (static preview)
 
-`.github/workflows/nextjs.yml` deploys a static export to GitHub Pages on every push to `main`. It builds with:
+`.github/workflows/nextjs.yml` deploys a static export to GitHub Pages on every push to `main`. The site is served from the custom domain **https://www.bridgewide.org**. The workflow builds with:
 
 ```bash
-NEXT_OUTPUT=export PAGES_BASE_PATH=/bridgewide npx next build   # writes ./out
+NEXT_OUTPUT=export NEXT_PUBLIC_SITE_URL=https://www.bridgewide.org npx next build   # writes ./out
 ```
 
 - `NEXT_OUTPUT=export` makes `next.config.ts` switch to `output: "export"`, set `basePath`, and use the custom image loader in `src/lib/static-image-loader.ts`.
-- `PAGES_BASE_PATH` comes from `actions/configure-pages` (`/bridgewide` for a project site, empty for a custom domain).
+- `PAGES_BASE_PATH` is the sub-path the site is served from. It is empty for the custom domain. Only set it (repository variable `PAGES_BASE_PATH=/bridgewide`) if you serve the site from `https://<owner>.github.io/bridgewide` without a custom domain. A mismatch makes every script, stylesheet, font and image 404.
+- `NEXT_PUBLIC_SITE_URL` sets the canonical origin used in page metadata, `sitemap.xml` and `robots.txt` (default `https://www.bridgewide.org`; override with the repository variable `SITE_URL`).
 - Route files that produce files (`sitemap.ts`, `robots.ts`, `apple-icon.tsx`, `opengraph-image.tsx`) set `dynamic = "force-static"` so they prerender.
 - Pages has no server, so `/api/*` is left out of the export. On the static site the forms skip sending and tell visitors to email `hello@bridgewide.com` instead.
 - Don't add `static_site_generator: next` back to the Pages step. It only patches `next.config.js`, so with this repo's `next.config.ts` it writes a second config that overrides ours.
 
-In the repo settings, set **Pages → Source** to **GitHub Actions**.
+In the repo settings, set **Pages → Source** to **GitHub Actions**, set the custom domain to `www.bridgewide.org`, and turn on **Enforce HTTPS**.
 
 ## License
 

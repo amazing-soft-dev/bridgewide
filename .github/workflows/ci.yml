@@ -70,7 +70,9 @@ jobs:
         run: npx --no-install next build
         env:
           NEXT_OUTPUT: ${{ matrix.target == 'static' && 'export' || '' }}
-          PAGES_BASE_PATH: ${{ matrix.target == 'static' && '/bridgewide' || '' }}
+          # Same settings as the production deploy in nextjs.yml.
+          PAGES_BASE_PATH: ""
+          NEXT_PUBLIC_SITE_URL: https://www.bridgewide.org
       - name: Check static export output
         if: matrix.target == 'static'
         run: |
@@ -79,4 +81,8 @@ jobs:
           done
           if [ -d out/api ]; then
             echo "::error::out/api should not exist in the static export"; exit 1
+          fi
+          # Asset URLs must match where the site is served (the domain root).
+          if grep -q '"/bridgewide/_next/' out/index.html; then
+            echo "::error::index.html references /bridgewide/_next/ but the site is served from the domain root"; exit 1
           fi
