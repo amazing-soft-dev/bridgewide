@@ -40,6 +40,7 @@ Open <http://localhost:3000>.
 | `npm run start` | Serve the production build |
 | `npm run lint` | Run ESLint (fails on any warning) |
 | `npm run typecheck` | Generate route types and run `tsc --noEmit` |
+| `npm run images` | Build the responsive WebP variants in `public/_img` (needed for the static export) |
 
 ## Environment variables
 
@@ -48,7 +49,7 @@ Copy `.env.example` to `.env.local`. Never commit real keys (`.env` and `.env*.l
 | Variable | Purpose |
 | --- | --- |
 | `RESEND_API_KEY` | API key from resend.com |
-| `CONTACT_TO_EMAIL` | Inbox that receives submissions (default `hello@bridgewide.com`) |
+| `CONTACT_TO_EMAIL` | Inbox that receives submissions (default `bill@bridgewide.com`) |
 | `CONTACT_FROM_EMAIL` | Sender address. `onboarding@resend.dev` is Resend's sandbox sender and only delivers to the Resend account owner's address. Switch to a sender on a verified domain for production. |
 
 If any of the three is missing, the form APIs return a 500 that names the missing variable.
@@ -171,6 +172,29 @@ npm run lint && npm run typecheck && npm run build
 4. **Branch rulesets.** In **Settings → Rules → Rulesets → New ruleset → Import a ruleset**, import `.github/rulesets/dev.json`, then `.github/rulesets/main.json`. Both require a pull request and the **CI passed** check and block force pushes and deletion. The deletion block matters: **Automatically delete head branches** would otherwise delete `dev` after every release PR, because `dev` is that PR's head branch. If `dev` ever goes missing, the next work-branch push recreates it from `main`. `dev` allows squash merges only, `main` merge commits only. Run CI once (any PR) before importing, so GitHub knows the **CI passed** check name.
 5. **Pages.** In **Settings → Pages**: Source **GitHub Actions**, custom domain `www.bridgewide.org`, **Enforce HTTPS** on. Under **Settings → Environments → github-pages**, make sure `main` is allowed to deploy.
 
+## Performance and CDN
+
+**Responsive images.** GitHub Pages has no image optimizer, so `npm run images` (`scripts/optimize-images.mjs`) pre-builds a WebP for each width in `src/lib/image-sizes.json`. In the static export, `next/image` serves `srcset` from those files through `src/lib/static-image-loader.ts`. For example, a 384px region card loads a 22 KB file, not the 640 KB original. File names carry a content hash (`hero.<hash>.640.webp`), so they can be cached for a year. CI and the deploy run the script before `next build`, and CI fails if any image the HTML references is missing. After adding or replacing a photo in `public/images/`, run `npm run images` and commit `src/lib/image-manifest.json`.
+
+**CDN.** GitHub Pages already serves the site through Fastly's CDN with HTTPS. Its only limit is a fixed 10-minute cache on every file. For long-lived caching, Brotli and HTTP/3, put Cloudflare (free plan) in front:
+
+1. Add `bridgewide.org` to Cloudflare and switch the domain's nameservers to Cloudflare.
+2. Keep the GitHub Pages DNS records (`www` CNAME to `amazing-soft-dev.github.io`, apex A/AAAA records). Leave them **DNS only** (grey cloud) until GitHub Pages shows the HTTPS certificate as issued, then switch them to **Proxied**.
+3. **SSL/TLS:** Full (strict). Turn on **Always Use HTTPS**, **Brotli** and **HTTP/3**.
+4. **Caching → Cache Rules:** for URI paths starting with `/_next/static/` or `/_img/`, set Edge TTL and Browser TTL to 1 year. These files are content-hashed, so they never change in place. Leave HTML on the origin's default.
+
+## SEO and GEO
+
+- **Metadata:** every page has a title, description, canonical URL, Open Graph and Twitter card tags, and a generated Open Graph image (`src/components/pages/metadata.ts`, `src/app/opengraph-image.tsx`).
+- **Structured data (JSON-LD, `src/lib/structured-data.ts`):** Organization and WebSite on every page, FAQPage on the homepage, BreadcrumbList on detail pages, and Article on insights.
+- **No JobPosting or Review markup** while `contentIsSample` in `src/content/site.ts` is `true`. Search engines penalize markup for jobs or reviews that don't exist. Once roles and stories are real, set it to `false` and add that markup.
+- **Crawlable FAQ:** FAQ answers are in the HTML even when collapsed, so search engines and AI crawlers can read them.
+- **AI crawlers:** `robots.txt` allows all crawlers and names the main AI ones (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, …).
+- **`/llms.txt`:** a plain-Markdown summary of the site for AI assistants (services, regions, process, key pages, insights, FAQ), generated from `src/content/site.ts`. While `contentIsSample` is `true`, it tells assistants that figures on the site are illustrative.
+- **`sitemap.xml`:** lists every page, with `lastModified` dates for insights.
+
+After the next deploy, submit `https://www.bridgewide.org/sitemap.xml` in Google Search Console and Bing Webmaster Tools. Bing's index also feeds ChatGPT search and Copilot.
+
 ## Deployment
 
 ### Node host (full site)
@@ -189,7 +213,7 @@ NEXT_OUTPUT=export NEXT_PUBLIC_SITE_URL=https://www.bridgewide.org npx next buil
 - `PAGES_BASE_PATH` is the sub-path the site is served from. It is empty for the custom domain. Only set it (repository variable `PAGES_BASE_PATH=/bridgewide`) if you serve the site from `https://<owner>.github.io/bridgewide` without a custom domain. A mismatch makes every script, stylesheet, font and image 404.
 - `NEXT_PUBLIC_SITE_URL` sets the canonical origin used in page metadata, `sitemap.xml` and `robots.txt` (default `https://www.bridgewide.org`; override with the repository variable `SITE_URL`).
 - Route files that produce files (`sitemap.ts`, `robots.ts`, `apple-icon.tsx`, `opengraph-image.tsx`) set `dynamic = "force-static"` so they prerender.
-- Pages has no server, so `/api/*` is left out of the export. On the static site the forms skip sending and tell visitors to email `hello@bridgewide.com` instead.
+- Pages has no server, so `/api/*` is left out of the export. On the static site the forms skip sending and tell visitors to email `bill@bridgewide.com` instead.
 - Don't add `static_site_generator: next` back to the Pages step. It only patches `next.config.js`, so with this repo's `next.config.ts` it writes a second config that overrides ours.
 
 In the repo settings, set **Pages → Source** to **GitHub Actions**, set the custom domain to `www.bridgewide.org`, and turn on **Enforce HTTPS**.

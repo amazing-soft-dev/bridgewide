@@ -69,6 +69,13 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - name: Restore responsive images
+        uses: actions/cache@v6
+        with:
+          path: public/_img
+          key: img-${{ hashFiles('public/images/**', 'src/lib/image-sizes.json', 'scripts/optimize-images.mjs') }}
+      - name: Build responsive images
+        run: npm run images
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
         env:

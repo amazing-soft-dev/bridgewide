@@ -173,8 +173,38 @@ export type SiteImages = {
   close: string;
 };
 
+/**
+ * True while roles, salary bands, stats, people, and stories are sample data.
+ * While it is true the site emits no JobPosting or Review structured data, and
+ * /llms.txt tells AI assistants that figures are illustrative. Set it to false
+ * once the content is real.
+ */
+export const contentIsSample = true;
+
+/** Facts used for Organization structured data and /llms.txt. */
+export const organization = {
+  name: "BridgeWide",
+  description:
+    "BridgeWide is a recruitment firm that places software engineers with companies, sourcing from the United States, Canada, Latin America, and Europe on permanent and contract terms.",
+  areaServed: ["United States", "Canada", "Latin America", "Europe"],
+  knowsAbout: [
+    "Software engineering recruitment",
+    "Technical recruiting",
+    "Contract software engineers",
+    "Nearshore engineering hiring in Latin America",
+    "Hiring software engineers in Europe",
+    "Engineering salary benchmarks",
+  ],
+  services: [
+    "Permanent software engineer placement",
+    "Contract software engineer placement",
+    "Confidential engineering searches",
+    "Engineering leadership searches",
+  ],
+} as const;
+
 export const contact: Contact = {
-  email: "hello@bridgewide.com",
+  email: "bill@bridgewide.com",
   location: "San Francisco · remote desks in four regions",
 };
 

@@ -4,8 +4,10 @@ import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { regionFor, textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/Button";
 import { getRole, roles } from "@/content/site";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const dynamicParams = false;
 
@@ -42,6 +44,12 @@ export default async function RolePage({ params }: { params: Promise<{ slug: str
 
   return (
     <>
+      <JsonLd
+        data={breadcrumbs([
+          { name: "Roles", path: "/roles" },
+          { name: role.title, path: `/roles/${role.slug}` },
+        ])}
+      />
       <PageHero
         eyebrow={`${region.code} · ${role.city}`}
         title={role.title}
