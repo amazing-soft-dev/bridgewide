@@ -1,0 +1,106 @@
+# Step 1 of the branch flow: work branch -> dev.
+#
+# Every push to a work branch (fix/*, feat/*, ...) opens a pull request into
+# `dev`, or updates the one already open, labels it by prefix, and turns on
+# auto-merge (squash). GitHub merges it as soon as the required "CI passed"
+# check is green, then deletes the branch.
+#
+# It uses the BridgeWide bot GitHub App token, not GITHUB_TOKEN: pull
+# requests opened with GITHUB_TOKEN do not trigger CI, so they would never
+# get the check auto-merge waits for. Setup: README "CI/CD".
+name: Auto PR to dev
+
+on:
+  push:
+    branches:
+      - "fix/**"
+      - "feat/**"
+      - "chore/**"
+      - "docs/**"
+      - "refactor/**"
+      - "perf/**"
+      - "test/**"
+      - "ci/**"
+      - "build/**"
+      - "style/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: auto-pr-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  open-pr:
+    name: Open or update PR into dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Get bot token
+        id: bot
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Open or update the pull request
+        env:
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
+          BRANCH: ${{ github.ref_name }}
+          BASE: dev
+        run: |
+          set -euo pipefail
+          git fetch --quiet origin "$BASE"
+
+          ahead=$(git rev-list --count "origin/$BASE..HEAD")
+          if [ "$ahead" -eq 0 ]; then
+            echo "No commits ahead of $BASE. Nothing to open."
+            exit 0
+          fi
+
+          prefix="${BRANCH%%/*}"
+          case "$prefix" in
+            feat) label="enhancement"; color="a2eeef" ;;
+            fix)  label="bug";         color="d73a4a" ;;
+            docs) label="documentation"; color="0075ca" ;;
+            *)    label="$prefix";     color="ededed" ;;
+          esac
+          gh label create "$label" --color "$color" --force >/dev/null
+
+          commits=$(git log --reverse --format='- %s (%h)' "origin/$BASE..HEAD")
+          body=$(printf '%s\n\n%s\n\n%s\n' \
+            "Automated pull request for \`$BRANCH\` → \`$BASE\`." \
+            "### Commits" \
+            "$commits")
+          body="$body"$'\n\n'"Merges automatically (squash) when **CI passed** is green. To hold it, run \`gh pr merge --disable-auto\` or click **Disable auto-merge**."
+
+          number=$(gh pr list --head "$BRANCH" --base "$BASE" --state open --json number --jq '.[0].number // empty')
+          if [ -z "$number" ]; then
+            # Title: the oldest commit's subject, e.g. "fix: handle empty region".
+            title=$(git log --reverse --format=%s "origin/$BASE..HEAD" | head -1)
+            url=$(gh pr create --base "$BASE" --head "$BRANCH" --title "$title" --body "$body" --label "$label")
+            number="${url##*/}"
+            echo "Opened PR #$number: $url"
+          else
+            gh pr edit "$number" --body "$body" >/dev/null
+            echo "Updated PR #$number"
+          fi
+
+          # Auto-merge waits for the required "CI passed" check. If the check
+          # already passed, GitHub reports the PR as "clean" and refuses
+          # auto-merge, so merge it directly instead.
+          if ! gh pr merge "$number" --auto --squash --delete-branch; then
+            state=$(gh pr view "$number" --json mergeStateStatus --jq .mergeStateStatus)
+            if [ "$state" = "CLEAN" ]; then
+              gh pr merge "$number" --squash --delete-branch
+            else
+              echo "::error::Could not enable auto-merge on PR #$number (merge state: $state). Check the branch ruleset and repository settings."
+              exit 1
+            fi
+          fi
+          echo "PR #$number merges into $BASE when CI passed is green."

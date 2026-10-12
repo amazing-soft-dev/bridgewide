@@ -1,0 +1,87 @@
+# Step 2 of the branch flow: dev -> main (fully automatic release).
+#
+# Every push to `dev` (normally a merged work-branch PR) opens a single
+# "Release" pull request from `dev` into `main`, or refreshes it, and turns
+# on auto-merge with a merge commit. When "CI passed" is green, GitHub merges
+# it, and the push to `main` runs nextjs.yml, which deploys
+# www.bridgewide.org.
+#
+# A merge commit (not squash) keeps dev's commits on main, so dev and main
+# never drift apart. To pause releases, disable auto-merge on the open
+# Release PR, or disable this workflow under Actions.
+name: Release dev to main
+
+on:
+  push:
+    branches: ["dev"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release-pr:
+    name: Open or update release PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Get bot token
+        id: bot
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Open or update the release pull request
+        env:
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
+        run: |
+          set -euo pipefail
+          git fetch --quiet origin main
+
+          # Commits on dev that main doesn't have yet, merge commits excluded.
+          changes=$(git log --no-merges --reverse --format='- %s (%h)' origin/main..origin/dev)
+          if [ -z "$changes" ]; then
+            echo "main already has everything on dev. Nothing to release."
+            exit 0
+          fi
+
+          gh label create release --color 0e8a16 --force >/dev/null
+          body=$(printf '%s\n\n%s\n\n%s\n\n%s\n' \
+            "Automated release of \`dev\` → \`main\`. Merging deploys https://www.bridgewide.org." \
+            "### Changes" \
+            "$changes" \
+            "Merges automatically (merge commit) when **CI passed** is green.")
+
+          number=$(gh pr list --head dev --base main --state open --json number --jq '.[0].number // empty')
+          if [ -z "$number" ]; then
+            url=$(gh pr create --base main --head dev \
+              --title "Release: dev → main ($(date -u +%Y-%m-%d))" \
+              --body "$body" --label release)
+            number="${url##*/}"
+            echo "Opened release PR #$number: $url"
+          else
+            gh pr edit "$number" --body "$body" >/dev/null
+            echo "Updated release PR #$number"
+          fi
+
+          # Same fallback as auto-pr.yml: merge directly if CI already passed.
+          if ! gh pr merge "$number" --auto --merge; then
+            state=$(gh pr view "$number" --json mergeStateStatus --jq .mergeStateStatus)
+            if [ "$state" = "CLEAN" ]; then
+              gh pr merge "$number" --merge
+            else
+              echo "::error::Could not enable auto-merge on release PR #$number (merge state: $state). Check the main ruleset and repository settings."
+              exit 1
+            fi
+          fi
+          echo "Release PR #$number merges into main when CI passed is green."

@@ -123,20 +123,53 @@ The canonical site URL (used for metadata, sitemap, and Open Graph) is `siteUrl`
 
 ## CI/CD
 
-Branch flow: `fix/*` or `feat/*` → pull request into **`dev`** → pull request from `dev` into **`main`** → deploy.
+Every change ships the same way, and you only do step 1:
+
+1. **You:** create a branch with a type prefix, commit, and push it.
+   ```bash
+   git checkout dev && git pull
+   git checkout -b fix/empty-region      # or feat/, chore/, docs/, refactor/, perf/, test/, ci/, build/, style/
+   git commit -am "fix: handle empty region"
+   git push -u origin fix/empty-region
+   ```
+2. **Auto PR → `dev`:** a pull request into `dev` opens (or updates on later pushes), labelled by prefix, with auto-merge on. CI runs and posts a checks-summary comment. When **CI passed** is green, the PR is squash-merged and the branch deleted.
+3. **Auto release → `main`:** the merge into `dev` opens (or updates) one **Release: dev → main** pull request listing everything not yet on `main`. CI runs again, and when it passes the release merges with a merge commit.
+4. **Deploy:** the push to `main` builds the static site and publishes it to https://www.bridgewide.org.
+
+If CI fails at step 2 or 3, nothing merges. Push a fix to the same branch: the PR updates, CI reruns, and the flow continues.
 
 | Workflow | Runs on | What it does |
 | --- | --- | --- |
-| `.github/workflows/ci.yml` (**CI**) | Pull requests into `dev` or `main`, pushes to `dev` | `npm run lint`, `npm run typecheck`, and two builds: `server` (full app with `/api` routes) and `static` (the GitHub Pages export, with a check that the expected files exist) |
-| `.github/workflows/nextjs.yml` (**Deploy**) | Pushes to `main` | Builds the static export and publishes it to GitHub Pages |
+| `auto-pr.yml` | Push to a work branch (`fix/*`, `feat/*`, ...) | Opens or updates the PR into `dev`, labels it, turns on auto-merge (squash) |
+| `ci.yml` | PRs into `dev` or `main`, pushes to `dev` | Lint, type check, server and static builds. The final **CI passed** job is the single required check and posts the checks-summary comment |
+| `release.yml` | Push to `dev` | Opens or updates the `dev` → `main` release PR, turns on auto-merge (merge commit) |
+| `nextjs.yml` | Push to `main` | Builds the static export and deploys it to GitHub Pages |
 
-Run the same checks locally before opening a pull request:
+Run the same checks locally before pushing:
 
 ```bash
 npm run lint && npm run typecheck && npm run build
 ```
 
-To make CI a merge gate, add a branch protection rule (or ruleset) for `dev` and `main` under **Settings → Branches**. Require pull requests and the status checks `Lint and type check`, `Build (server)` and `Build (static)`.
+**To pause:** click **Disable auto-merge** on an open PR to hold that one change, or disable `release.yml` under **Actions** to stop releases while still collecting changes on `dev`.
+
+**Reviews:** GitHub doesn't let anyone approve their own pull request, and a bot approval would be a rubber stamp. So the gate is the required **CI passed** check plus the summary comment. Rulesets require 0 approvals. If a second person joins, raise `required_approving_review_count` in the `main` ruleset.
+
+### One-time setup
+
+1. **Create the bot GitHub App.** Go to **Settings → Developer settings → GitHub Apps → New GitHub App** on your account.
+   - Name it something like `bridgewide-bot`. Homepage URL: the repo URL. Untick **Webhook → Active**.
+   - Repository permissions: **Contents: Read and write**, **Pull requests: Read and write**, **Issues: Read and write** (for labels), **Workflows: Read and write** (so it can merge changes to `.github/workflows`).
+   - Create the app, note its **App ID**, and under **Private keys** click **Generate a private key**.
+   - Click **Install App** and install it on `amazing-soft-dev/bridgewide` only.
+2. **Add the credentials to the repo.** In **Settings → Secrets and variables → Actions**:
+   - **Variables** tab: `BOT_APP_ID` = the App ID.
+   - **Secrets** tab: `BOT_APP_PRIVATE_KEY` = the full contents of the downloaded `.pem` file.
+
+   The bot token is needed because pull requests opened with the default `GITHUB_TOKEN` don't trigger CI, so auto-merge would wait forever.
+3. **Repository settings.** In **Settings → General → Pull Requests**, tick **Allow merge commits**, **Allow squash merging**, **Allow auto-merge**, and **Automatically delete head branches**.
+4. **Branch rulesets.** In **Settings → Rules → Rulesets → New ruleset → Import a ruleset**, import `.github/rulesets/dev.json`, then `.github/rulesets/main.json`. Both require a pull request and the **CI passed** check and block force pushes and deletion. `dev` allows squash merges only, `main` merge commits only. Run CI once (any PR) before importing, so GitHub knows the **CI passed** check name.
+5. **Pages.** In **Settings → Pages**: Source **GitHub Actions**, custom domain `www.bridgewide.org`, **Enforce HTTPS** on. Under **Settings → Environments → github-pages**, make sure `main` is allowed to deploy.
 
 ## Deployment
 
