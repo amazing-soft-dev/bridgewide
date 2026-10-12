@@ -5,7 +5,9 @@ import { PageSection } from "@/components/pages/PageSection";
 import { Prose } from "@/components/pages/Prose";
 import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getInsight, insights } from "@/content/site";
+import { article, breadcrumbs, isoDate } from "@/lib/structured-data";
 
 export const dynamicParams = false;
 
@@ -23,6 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     description: insight.excerpt,
     path: `/insights/${insight.slug}`,
     type: "article",
+    publishedTime: isoDate(insight.date),
   });
 }
 
@@ -33,6 +36,13 @@ export default async function InsightPage({ params }: { params: Promise<{ slug: 
 
   return (
     <article>
+      <JsonLd data={article(insight)} />
+      <JsonLd
+        data={breadcrumbs([
+          { name: "Insights", path: "/insights" },
+          { name: insight.title, path: `/insights/${insight.slug}` },
+        ])}
+      />
       <PageHero
         eyebrow={insight.kicker}
         title={insight.title}
@@ -59,10 +69,4 @@ export default async function InsightPage({ params }: { params: Promise<{ slug: 
       </PageSection>
     </article>
   );
-}
-
-function isoDate(label: string) {
-  const parsed = new Date(label);
-  if (Number.isNaN(parsed.getTime())) return undefined;
-  return parsed.toISOString().slice(0, 10);
 }

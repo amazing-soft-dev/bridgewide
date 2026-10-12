@@ -5,7 +5,9 @@ import { PageSection } from "@/components/pages/PageSection";
 import { RoleList } from "@/components/pages/RoleList";
 import { rolesIn, textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getRegion, regions } from "@/content/site";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const dynamicParams = false;
 
@@ -40,6 +42,12 @@ export default async function RegionPage({
 
   return (
     <>
+      <JsonLd
+        data={breadcrumbs([
+          { name: "Regions", path: "/regions" },
+          { name: region.name, path: `/regions/${region.slug}` },
+        ])}
+      />
       <PageHero
         eyebrow={region.code}
         title={region.name}

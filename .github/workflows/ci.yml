@@ -36,8 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -58,19 +58,28 @@ jobs:
         # static: the GitHub Pages export, built the same way nextjs.yml builds it.
         target: [server, static]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
       - name: Restore Next.js cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .next/cache
           key: ${{ runner.os }}-nextjs-${{ matrix.target }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'public/**', 'next.config.ts') }}
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ matrix.target }}-${{ hashFiles('package-lock.json') }}-
       - run: npm ci
+      - if: matrix.target == 'static'
+        name: Restore responsive images
+        uses: actions/cache@v6
+        with:
+          path: public/_img
+          key: img-${{ hashFiles('public/images/**', 'src/lib/image-sizes.json', 'scripts/optimize-images.mjs') }}
+      - if: matrix.target == 'static'
+        name: Build responsive images
+        run: npm run images
       - name: Build
         run: npx --no-install next build
         env:
@@ -86,6 +95,11 @@ jobs:
           done
           if [ -d out/api ]; then
             echo "::error::out/api should not exist in the static export"; exit 1
+          fi
+          # Every responsive image referenced by the HTML must have been built.
+          missing=$(grep -rhoE '/_img/[^" ,?]+\.webp' out --include='*.html' | sort -u | while read -r p; do test -f "out$p" || echo "$p"; done)
+          if [ -n "$missing" ]; then
+            echo "::error::Image files referenced in HTML are missing:"; echo "$missing"; exit 1
           fi
           # Asset URLs must match where the site is served (the domain root).
           if grep -q '"/bridgewide/_next/' out/index.html; then

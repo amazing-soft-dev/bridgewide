@@ -5,7 +5,9 @@ import { PageSection } from "@/components/pages/PageSection";
 import { Prose } from "@/components/pages/Prose";
 import { regionFor, textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getStory, stories } from "@/content/site";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const dynamicParams = false;
 
@@ -35,6 +37,12 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
   return (
     <article>
+      <JsonLd
+        data={breadcrumbs([
+          { name: "Stories", path: "/stories" },
+          { name: story.company, path: `/stories/${story.slug}` },
+        ])}
+      />
       <PageHero
         eyebrow={region.name}
         title={story.company}

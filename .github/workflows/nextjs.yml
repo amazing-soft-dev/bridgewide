@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -45,20 +45,20 @@ jobs:
             exit 1
           fi
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
         # No `static_site_generator: next` here. That option only knows how to
         # patch next.config.js/.mjs. This repo uses next.config.ts, so the action
         # wrote a separate next.config.js that overrode it. next.config.ts
         # switches to a static export itself when NEXT_OUTPUT=export (see the
         # build step).
       - name: Restore cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             .next/cache
@@ -69,6 +69,13 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - name: Restore responsive images
+        uses: actions/cache@v6
+        with:
+          path: public/_img
+          key: img-${{ hashFiles('public/images/**', 'src/lib/image-sizes.json', 'scripts/optimize-images.mjs') }}
+      - name: Build responsive images
+        run: npm run images
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
         env:
@@ -86,7 +93,7 @@ jobs:
           NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL || 'https://www.bridgewide.org' }}
           NEXT_TELEMETRY_DISABLED: "1"
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./out
 

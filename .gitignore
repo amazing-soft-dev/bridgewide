@@ -45,3 +45,5 @@ next-env.d.ts
 
 # cursor
 .cursor
+# generated responsive images (npm run images)
+/public/_img/
