@@ -18,13 +18,10 @@ const [upperWing, lowerArch] = markPaths;
 
 /** Previous upper path midpoint was 0.071. Both ribbons share one third of that. */
 const FLOW_SPEED = 0.071 / 3;
-const SPRAY_SIZE = 0.6;
 const TWINKLE = 0.45;
 const FLARE_TWINKLE = 0.2;
-/** A ribbon flare looks like an ambient star until it lands on its line. */
-const IGNITE_SIZE = 3;
-const IGNITE_GLOW = 0.3;
-const IGNITE_START = 0.75;
+/** Ribbon stars wear the outer-spray look until this far into their gather, then take their ribbon look. */
+const LAND_START = 0.75;
 const GATHER_STAGGER = 0.22;
 const GATHER_SPAN = 0.58;
 const FLOW_START = 0.6;
@@ -46,10 +43,16 @@ const WORD_FEATHER = 0.06;
 const WORD_PAD_PX = 32;
 /** Share of fine and ambient stars; the rest are flares. Dust has no flares. */
 const DUST_TIERS = [0.85, 0.15] as const;
-const RIBBON_TIERS = [0.35, 0.55] as const;
-const FINE_COLOR = 0xdfe9f5;
-const ICE_COLOR = 0x9fdcff;
+/** Ribbon: 60% 1px dust, 30% 3px cyan, 10% 8–12px flares. */
+const RIBBON_TIERS = [0.6, 0.3] as const;
+const FINE_COLOR = 0xffffff;
+const ICE_COLOR = 0xaee6ff;
+const AMBER_COLOR = 0xffa366;
 const FLARE_COLOR = 0xffffff;
+/** Stroke width in mark units. Core is 20% of this; mist reaches 120%. */
+const STROKE_WIDTH = 6;
+const CORE_WIDTH = STROKE_WIDTH * 0.2;
+const MIST_WIDTH = STROKE_WIDTH * 1.2;
 
 const STAR_VERTEX = /* glsl */ `
 attribute float size;
@@ -66,13 +69,13 @@ varying float vQuad;
 void main() {
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
   gl_Position = projectionMatrix * mvPosition;
-  vSize = max(size * uPixelRatio * uDepth / -mvPosition.z, 1.0);
-  // The core needs about 2 CSS px of radius even when the star itself is smaller.
-  vQuad = max(vSize, 4.0 * uPixelRatio);
-  gl_PointSize = vQuad;
   vColor = color;
   vGlow = glow;
   vAlpha = alpha;
+  vSize = max(size * uPixelRatio, 1.0);
+  // Halo must reach past the core so neighbours add into one beam.
+  vQuad = max(vSize, mix(2.5, 10.0, vGlow) * uPixelRatio);
+  gl_PointSize = vQuad;
 }
 `;
 
@@ -88,15 +91,22 @@ void main() {
   float d = length(gl_PointCoord - 0.5) * vQuad;
   if (d > vQuad * 0.5) discard;
   float css = d / uPixelRatio;
-  float coreCss = clamp(vSize / uPixelRatio * 0.45, 0.4, 1.4);
+  float sizeCss = vSize / uPixelRatio;
+  float hero = step(0.8, vGlow);
+  float coreCss = mix(
+    clamp(sizeCss * 0.45, 0.4, 1.4),
+    clamp(sizeCss * 0.35, 2.0, 5.0),
+    hero
+  );
   // Under one device pixel the core aliases as it moves, so widen it and keep its energy.
   float coreWidth = max(coreCss, 1.0 / uPixelRatio);
   float c = css / coreWidth;
   float core = (coreCss * coreCss) / (coreWidth * coreWidth) * exp(-2.0 * c * c);
-  float r = min(d / (vSize * 0.5), 1.0);
+  float r = min(d / (vQuad * 0.5), 1.0);
   float edge = 1.0 - r * r;
-  float halo = vGlow * exp(-4.0 * r) * edge * edge;
-  gl_FragColor = vec4(vColor * (core + halo) * vAlpha, 1.0);
+  float halo = (0.35 + vGlow) * exp(-mix(2.2, 1.45, hero) * r) * edge * edge;
+  vec3 hot = vec3(1.0);
+  gl_FragColor = vec4((hot * core + vColor * halo) * vAlpha, 1.0);
 }
 `;
 
@@ -104,14 +114,16 @@ type Sample = { x: number; y: number };
 type Spine = Sample[];
 type Spray = { nx: number; ny: number; z: number };
 type Tier = "fine" | "ambient" | "flare";
-type StarBase = {
-  z: number;
+type Look = {
   tier: Tier;
   /** CSS px on the full 600px mark. */
   size: number;
   glow: number;
   color: number;
   brightness: number;
+};
+type StarBase = Look & {
+  z: number;
   spray: Spray;
   delay: number;
   phase: number;
@@ -119,6 +131,8 @@ type StarBase = {
 };
 type RibbonStar = StarBase & {
   kind: "ribbon";
+  /** Look while the star is out in the side spray, drawn from the dust split. */
+  outer: Look;
   spine: 0 | 1;
   t: number;
   speed: number;
@@ -195,9 +209,11 @@ function pointOnSpine(spine: Spine, t: number, offset: number) {
   const tx = b.x - a.x;
   const ty = b.y - a.y;
   const len = Math.hypot(tx, ty) || 1;
+  const nx = -ty / len;
+  const ny = tx / len;
   return {
-    x: a.x + tx * u + (-ty / len) * offset,
-    y: a.y + ty * u + (tx / len) * offset,
+    x: a.x + tx * u + nx * offset,
+    y: a.y + ty * u + ny * offset,
   };
 }
 
@@ -230,7 +246,13 @@ function bandPoint(side: -1 | 1) {
   return { nx: side * between(BAND_INNER, BAND_OUTER), ny: between(-BAND_Y, BAND_Y) };
 }
 
-function starLook(kind: "ribbon" | "dust") {
+function gaussian(sigma: number) {
+  let u = 0;
+  while (u === 0) u = Math.random();
+  return sigma * Math.sqrt(-2 * Math.log(u)) * Math.cos(Math.PI * 2 * Math.random());
+}
+
+function starLook(kind: "ribbon" | "dust"): Look {
   const dust = kind === "dust";
   const [fine, ambient] = dust ? DUST_TIERS : RIBBON_TIERS;
   const roll = Math.random();
@@ -238,34 +260,52 @@ function starLook(kind: "ribbon" | "dust") {
     return {
       tier: "fine" as const,
       size: between(0.8, 1.5),
-      glow: 0,
+      glow: dust ? 0 : 0.45,
       color: FINE_COLOR,
-      brightness: dust ? between(0.35, 0.65) : between(0.5, 0.8),
+      brightness: dust ? between(0.35, 0.65) : between(0.28, 0.48),
     };
   }
   if (dust || roll < fine + ambient) {
     return {
       tier: "ambient" as const,
-      size: dust ? between(2, 3) : between(2.5, 4),
-      glow: dust ? 0.3 : 0.6,
+      size: dust ? between(2, 3) : between(2.5, 4.5),
+      glow: dust ? 0.3 : 0.8,
       color: ICE_COLOR,
-      brightness: dust ? between(0.4, 0.6) : between(0.9, 1),
+      brightness: dust ? between(0.4, 0.6) : between(0.85, 1),
     };
   }
   return { tier: "flare" as const, size: between(8, 12), glow: 1, color: FLARE_COLOR, brightness: 1 };
 }
 
-/** Distance from the line and depth, in mark units: flares on the line, fine stars at the edges. */
-function ribbonSpread(tier: Tier) {
-  if (tier === "flare") return { offset: between(-1.2, 1.2), z: between(-1.5, 1.5) };
-  if (tier === "ambient") {
-    const centred = Math.random() < 0.5;
-    const offset = centred ? (Math.random() + Math.random() - 1) * 4 : between(-4, 4);
-    return { offset, z: between(-3.5, 3.5) };
-  }
+/** White 60% / icy cyan 30% / amber 10% of the ribbon, with amber on the stroke fringe. */
+function paintRibbon(look: Look): Look {
+  if (look.tier === "flare") return { ...look, color: FLARE_COLOR };
+  const paint = Math.random();
+  if (paint < 0.556) return { ...look, color: FINE_COLOR };
+  if (paint < 0.889) return { ...look, color: ICE_COLOR };
+  return { ...look, color: AMBER_COLOR, glow: Math.max(look.glow, 0.55) };
+}
+
+function spineFade(offset: number) {
+  return clamp01(1 - Math.abs(offset) / MIST_WIDTH) ** 1.35;
+}
+
+function signedWidth(max: number, sigma: number) {
   const side = Math.random() < 0.5 ? -1 : 1;
-  const reach = Math.random() < 1 / 7 ? between(6.5, 8) : between(2.5, 6.5);
-  return { offset: side * reach, z: between(-4.5, 4.5) };
+  return side * Math.min(max, Math.abs(gaussian(sigma)));
+}
+
+/** Gaussian scatter: ~65% on the core (0–20% width), 35% of dust/ice out to 120%. */
+function ribbonSpread(tier: Tier, color: number) {
+  const mist =
+    tier !== "flare" && (color === AMBER_COLOR || Math.random() < 0.3125);
+  if (mist) {
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const span = MIST_WIDTH - CORE_WIDTH;
+    const reach = CORE_WIDTH + Math.min(span, Math.abs(gaussian(span * 0.55)));
+    return { offset: side * reach, z: gaussian(1.6) };
+  }
+  return { offset: signedWidth(CORE_WIDTH, CORE_WIDTH * 0.5), z: gaussian(0.45) };
 }
 
 function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
@@ -280,14 +320,16 @@ function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
 }
 
 function makeRibbon(spine: 0 | 1): RibbonStar {
-  const base = starBase("ribbon", sprayPoint(Math.random() < 0.5 ? -1 : 1));
+  const look = paintRibbon(starLook("ribbon"));
   return {
-    ...base,
+    ...starBase("ribbon", sprayPoint(Math.random() < 0.5 ? -1 : 1)),
+    ...look,
     kind: "ribbon",
+    outer: starLook("dust"),
     spine,
     t: Math.random(),
     speed: FLOW_SPEED * (0.97 + Math.random() * 0.06),
-    ...ribbonSpread(base.tier),
+    ...ribbonSpread(look.tier, look.color === AMBER_COLOR),
   };
 }
 
@@ -351,6 +393,62 @@ export function AstraField() {
       for (let i = 0; i < (counts[1] ?? 720); i++) stars.push(makeRibbon(1));
       for (let i = 0; i < DUST_PER_SIDE; i++) stars.push(makeDust(-1));
       for (let i = 0; i < DUST_PER_SIDE; i++) stars.push(makeDust(1));
+      // #region agent log
+      {
+        const ribbon = stars.filter((s): s is RibbonStar => s.kind === "ribbon");
+        const palette = (c: number) =>
+          c === AMBER_COLOR ? "amber" : c === ICE_COLOR ? "ice" : "white";
+        const colors: Record<string, number> = { white: 0, ice: 0, amber: 0 };
+        const tiers: Record<string, number> = { fine: 0, ambient: 0, flare: 0 };
+        const sizes: Record<string, number[]> = { fine: [], ambient: [], flare: [] };
+        const amberOff: number[] = [];
+        const otherOff: number[] = [];
+        for (const s of ribbon) {
+          colors[palette(s.color)] += 1;
+          tiers[s.tier] += 1;
+          sizes[s.tier].push(s.size);
+          (s.color === AMBER_COLOR ? amberOff : otherOff).push(Math.abs(s.offset));
+        }
+        const mean = (list: number[]) =>
+          list.length ? +(list.reduce((a, b) => a + b, 0) / list.length).toFixed(2) : 0;
+        const range = (list: number[]) => {
+          if (!list.length) return { min: 0, max: 0 };
+          const sorted = [...list].sort((a, b) => a - b);
+          return { min: +sorted[0]!.toFixed(2), max: +sorted[sorted.length - 1]!.toFixed(2) };
+        };
+        fetch("http://127.0.0.1:7294/ingest/d6eebea7-5345-4b53-a2ba-10de4bfce00d", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "48e4f6" },
+          body: JSON.stringify({
+            sessionId: "48e4f6",
+            runId: "post-fix",
+            hypothesisId: "color-size",
+            location: "AstraField.tsx:init",
+            message: "ribbon gaussian core vs mist",
+            data: {
+              n: ribbon.length,
+              corePct: +((100 * ribbon.filter((s) => Math.abs(s.offset) <= CORE_WIDTH).length) / ribbon.length).toFixed(1),
+              mistPct: +((100 * ribbon.filter((s) => Math.abs(s.offset) > CORE_WIDTH).length) / ribbon.length).toFixed(1),
+              flareCorePct: +((100 * ribbon.filter((s) => s.tier === "flare" && Math.abs(s.offset) <= CORE_WIDTH).length) / Math.max(1, ribbon.filter((s) => s.tier === "flare").length)).toFixed(1),
+              maxWidthPct: +((Math.max(...ribbon.map((s) => Math.abs(s.offset))) / STROKE_WIDTH) * 100).toFixed(0),
+              colorPct: {
+                white: +((100 * colors.white) / ribbon.length).toFixed(1),
+                ice: +((100 * colors.ice) / ribbon.length).toFixed(1),
+                amber: +((100 * colors.amber) / ribbon.length).toFixed(1),
+              },
+              sizePct: {
+                fine: +((100 * tiers.fine) / ribbon.length).toFixed(1),
+                ambient: +((100 * tiers.ambient) / ribbon.length).toFixed(1),
+                flare: +((100 * tiers.flare) / ribbon.length).toFixed(1),
+              },
+              sizeRange: { fine: range(sizes.fine), ambient: range(sizes.ambient), flare: range(sizes.flare) },
+              offsetMean: { amber: mean(amberOff), other: mean(otherOff) },
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+      }
+      // #endregion
 
       const restPosition = (star: RibbonStar) => {
         const spine = spines[star.spine];
@@ -366,7 +464,7 @@ export function AstraField() {
         powerPreference: "high-performance",
       });
       renderer.setClearColor(0x050505, 1);
-      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 80);
@@ -381,11 +479,18 @@ export function AstraField() {
       const alphas = new Float32Array(stars.length);
       const nudgeX = new Float32Array(stars.length);
       const nudgeY = new Float32Array(stars.length);
+      const ribbonColors = new Float32Array(stars.length * 3);
+      const outerColors = new Float32Array(stars.length * 3);
+      // Colours stay in display space: the shader writes them without conversion.
+      const writeColor = (out: Float32Array, index: number, look: Look) => {
+        out[index * 3] = (((look.color >> 16) & 255) / 255) * look.brightness;
+        out[index * 3 + 1] = (((look.color >> 8) & 255) / 255) * look.brightness;
+        out[index * 3 + 2] = ((look.color & 255) / 255) * look.brightness;
+      };
       stars.forEach((star, index) => {
-        // Colours stay in display space: the shader writes them without conversion.
-        colors[index * 3] = (((star.color >> 16) & 255) / 255) * star.brightness;
-        colors[index * 3 + 1] = (((star.color >> 8) & 255) / 255) * star.brightness;
-        colors[index * 3 + 2] = ((star.color & 255) / 255) * star.brightness;
+        writeColor(ribbonColors, index, star);
+        writeColor(outerColors, index, star.kind === "ribbon" ? star.outer : star);
+        writeColor(colors, index, star);
         sizes[index] = star.size;
         glows[index] = star.glow;
         alphas[index] = 1;
@@ -401,7 +506,9 @@ export function AstraField() {
       const alphaAttr = new THREE.BufferAttribute(alphas, 1);
       alphaAttr.setUsage(THREE.DynamicDrawUsage);
       geometry.setAttribute("position", positionAttr);
-      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      const colorAttr = new THREE.BufferAttribute(colors, 3);
+      colorAttr.setUsage(THREE.DynamicDrawUsage);
+      geometry.setAttribute("color", colorAttr);
       geometry.setAttribute("size", sizeAttr);
       geometry.setAttribute("glow", glowAttr);
       geometry.setAttribute("alpha", alphaAttr);
@@ -529,6 +636,7 @@ export function AstraField() {
         };
       };
 
+      let debugLast = 0;
       let frame = 0;
       let running = false;
       let previous = performance.now();
@@ -599,13 +707,24 @@ export function AstraField() {
           let x = settled.x;
           let y = settled.y;
           let z = settled.z;
-          const fine = star.tier === "fine";
-          const flare = star.tier === "flare";
-          const ignite = flare ? smoothstep((gather - IGNITE_START) / (1 - IGNITE_START)) : 1;
-          const look = flare ? IGNITE_SIZE + (star.size - IGNITE_SIZE) * ignite : star.size;
-          const size = fine ? look : look * sizeScale * (SPRAY_SIZE + (1 - SPRAY_SIZE) * gather);
-          if (flare) glows[index] = IGNITE_GLOW + (star.glow - IGNITE_GLOW) * ignite;
+          let size = star.size;
+          let tier = star.tier;
           let alpha = 1;
+          if (star.kind === "ribbon") {
+            const land = smoothstep((gather - LAND_START) / (1 - LAND_START));
+            const outer = star.outer;
+            const ribbonSize = star.tier === "fine" ? star.size : star.size * sizeScale;
+            size = outer.size + (ribbonSize - outer.size) * land;
+            glows[index] = outer.glow + (star.glow - outer.glow) * land;
+            for (let c = index * 3; c < index * 3 + 3; c++) {
+              const from = outerColors[c] ?? 0;
+              colors[c] = from + ((ribbonColors[c] ?? 0) - from) * land;
+            }
+            if (land < 0.5) tier = outer.tier;
+            alpha *= 1 - land * (1 - spineFade(star.offset));
+          }
+          const fine = tier === "fine";
+          const flare = tier === "flare";
           if (gather < 1) {
             ndcToLocal(star.spray.nx, star.spray.ny, star.spray.z, sprayed);
             x = sprayed.x + (x - sprayed.x) * gather;
@@ -675,6 +794,31 @@ export function AstraField() {
         sizeAttr.needsUpdate = true;
         glowAttr.needsUpdate = true;
         alphaAttr.needsUpdate = true;
+        colorAttr.needsUpdate = true;
+
+        // #region agent log
+        if (now - debugLast > 2000) {
+          debugLast = now;
+          fetch("http://127.0.0.1:7294/ingest/d6eebea7-5345-4b53-a2ba-10de4bfce00d", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "48e4f6" },
+            body: JSON.stringify({
+              sessionId: "48e4f6",
+              runId: "post-fix",
+              hypothesisId: "blend",
+              location: "AstraField.tsx:draw",
+              message: "additive blending flags",
+              data: {
+                scroll: +scroll.toFixed(3),
+                blending: material.blending === THREE.AdditiveBlending,
+                transparent: material.transparent,
+                depthWrite: material.depthWrite,
+              },
+              timestamp: Date.now(),
+            }),
+          }).catch(() => {});
+        }
+        // #endregion
 
         renderer.render(scene, camera);
         if (running) frame = requestAnimationFrame(draw);

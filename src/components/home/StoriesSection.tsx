@@ -2,14 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "motion/react";
-import { useState } from "react";
 import {
-  SectionHeading,
-  sectionContainer,
-} from "@/components/ui/SectionHeading";
-import { usePrefersReducedMotion } from "@/lib/motion";
-import { stories } from "@/content/site";
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+} from "react";
+import { sectionContainer } from "@/components/ui/SectionHeading";
+import { getRegion, stories } from "@/content/site";
 
 const storyAlt: Record<string, string> = {
   "northline-ledger-owner": "People in a meeting around a table",
@@ -18,97 +19,168 @@ const storyAlt: Record<string, string> = {
   "keel-systems-paved-path": "A team working side by side",
 };
 
+const count = stories.length;
+const motionGate = "(max-width: 899px), (prefers-reduced-motion: reduce)";
+
+function subscribeGate(onChange: () => void) {
+  const gate = window.matchMedia(motionGate);
+  gate.addEventListener("change", onChange);
+  return () => gate.removeEventListener("change", onChange);
+}
+
+const pad = (value: number) => String(value).padStart(2, "0");
+
 export default function StoriesSection() {
-  const [index, setIndex] = useState(0);
-  const reduced = usePrefersReducedMotion();
-  const count = stories.length;
-  const previous = () => setIndex((current) => (current - 1 + count) % count);
-  const next = () => setIndex((current) => (current + 1) % count);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef(0);
+  const [active, setActive] = useState(0);
+  const pinned = useSyncExternalStore(
+    subscribeGate,
+    () => !window.matchMedia(motionGate).matches,
+    () => false,
+  );
+
+  useEffect(() => {
+    const track = trackRef.current;
+    const stage = stageRef.current;
+    if (!track || !stage) return;
+
+    const gate = window.matchMedia(motionGate);
+    let frame = 0;
+
+    const apply = () => {
+      frame = 0;
+      if (gate.matches) return;
+
+      const rect = track.getBoundingClientRect();
+      const scrollable = rect.height - window.innerHeight;
+      const passed = Math.min(Math.max(-rect.top, 0), Math.max(scrollable, 0));
+      const pp = scrollable > 0 ? passed / scrollable : 0;
+      const u = Math.min(1, Math.max(0, (pp - 0.06) / 0.88));
+      const s = u * (count - 1);
+
+      stage.style.setProperty("--s", s.toFixed(4));
+
+      const next = Math.min(count - 1, Math.round(s));
+      if (activeRef.current !== next) {
+        activeRef.current = next;
+        setActive(next);
+      }
+    };
+
+    const request = () => {
+      if (!frame) frame = requestAnimationFrame(apply);
+    };
+
+    const syncListener = () => {
+      if (gate.matches) {
+        window.removeEventListener("scroll", request);
+        return;
+      }
+      window.addEventListener("scroll", request, { passive: true });
+      request();
+    };
+
+    syncListener();
+    window.addEventListener("resize", request);
+    gate.addEventListener("change", syncListener);
+
+    return () => {
+      window.removeEventListener("scroll", request);
+      window.removeEventListener("resize", request);
+      gate.removeEventListener("change", syncListener);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
 
   return (
     <section
-      className="seam-right relative z-10 bg-cloud-soft pt-24 pb-20 md:pt-28 md:pb-24"
+      className="seam-right relative z-10 bg-ink text-cloud"
       aria-labelledby="stories-heading"
     >
-      <div className={sectionContainer}>
-        <SectionHeading
-          id="stories-heading"
-          eyebrow="From hiring managers"
-          title="Employer stories"
-          lede="What the companies said after the engineer started."
-        />
-      </div>
-      <div className="story-stack relative mt-10 h-[32rem] overflow-hidden sm:h-[36rem]">
-        {stories.map((story, storyIndex) => {
-          const offset = storyIndex - index;
-          const active = storyIndex === index;
-          return (
-            <motion.article
-              key={story.slug}
-              className="absolute inset-0"
-              data-motion="story"
-              aria-hidden={!reduced && !active}
-              animate={
-                reduced
-                  ? { y: "0%", scale: 1, opacity: 1 }
-                  : {
-                      y: active ? "0%" : offset > 0 ? "104%" : "-6%",
-                      scale: offset < 0 ? 0.96 : 1,
-                      opacity: active || offset === -1 ? 1 : 0,
-                    }
-              }
-              transition={{ duration: reduced ? 0 : 0.55, ease: [0.22, 1, 0.36, 1] }}
-              style={{ zIndex: active ? 3 : offset < 0 ? 2 : 1 }}
-            >
-              <Image
-                src={story.image}
-                alt={storyAlt[story.slug] ?? story.company}
-                fill
-                loading="lazy"
-                sizes="100vw"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/25" />
-              <div className={`${sectionContainer} relative flex h-full flex-col justify-end pb-8 text-cloud`}>
-                <p className="font-mono text-xs tracking-[0.16em] text-brand uppercase">
-                  {story.metric} · {story.company}
-                </p>
-                <h3 className="mt-3 max-w-3xl font-display text-3xl leading-tight text-cloud md:text-5xl">
-                  {story.result}
-                </h3>
-                <blockquote className="mt-4 max-w-2xl text-base leading-7 text-cloud md:text-lg">
-                  “{story.quote}”
-                </blockquote>
-                <p className="mt-3 text-sm text-cloud/85">{story.attribution}</p>
-                <Link
-                  href={`/stories/${story.slug}`}
-                  className="mt-4 inline-block font-mono text-xs tracking-[0.16em] text-brand uppercase no-underline hover:text-cloud"
-                >
-                  Read the story
-                </Link>
-              </div>
-            </motion.article>
-          );
-        })}
-      </div>
-      <div className={`${sectionContainer} mt-4 flex items-center justify-between gap-4`}>
-        <button
-          type="button"
-          className="border border-ink px-4 py-2 text-sm text-ink"
-          onClick={previous}
-        >
-          Previous
-        </button>
-        <p className="font-mono text-xs tracking-[0.16em] text-ink uppercase">
-          {index + 1} / {count}
-        </p>
-        <button
-          type="button"
-          className="border border-ink bg-ink px-4 py-2 text-sm text-brand"
-          onClick={next}
-        >
-          Next
-        </button>
+      <h2 id="stories-heading" className="sr-only">
+        Employer stories
+      </h2>
+      <div ref={trackRef} className="stories-track" style={{ "--n": count } as CSSProperties}>
+        <div ref={stageRef} className="stories-stage" style={{ "--s": 0 } as CSSProperties}>
+          {stories.map((story, index) => {
+            const hidden = pinned && index !== active;
+            const [figure, ...unit] = story.metric.split(" ");
+            const region = getRegion(story.region);
+            return (
+              <article
+                key={story.slug}
+                className="story-slide"
+                aria-hidden={hidden || undefined}
+                style={{ "--i": index, zIndex: index } as CSSProperties}
+              >
+                <div className="story-bg">
+                  <Image
+                    src={story.image}
+                    alt={storyAlt[story.slug] ?? story.company}
+                    fill
+                    loading="lazy"
+                    sizes="100vw"
+                    className="object-cover"
+                  />
+                </div>
+                <div className="story-veil" aria-hidden />
+                <div className={`story-body ${sectionContainer}`}>
+                  <div className="story-copy">
+                    <p className="inline-flex items-center gap-2.5 border border-brand/70 bg-ink/40 px-3 py-1.5 font-mono text-[11px] tracking-[0.16em] text-cloud uppercase">
+                      <span aria-hidden className="size-1.5 rounded-full bg-brand" />
+                      Employer stories
+                      <span className="text-cloud/60">
+                        {pad(index + 1)} / {pad(count)}
+                      </span>
+                    </p>
+                    <h3 className="mt-5 font-mono text-[11px] tracking-[0.16em] text-cloud/70 uppercase">
+                      {story.company} · {region?.name}
+                    </h3>
+                    <figure className="mt-4">
+                      <blockquote className="max-w-[36rem] font-display text-[clamp(1.85rem,3.3vw,3rem)] leading-[1.06] tracking-tight text-cloud">
+                        “{story.quote}”
+                      </blockquote>
+                      <figcaption className="mt-5 text-sm text-cloud/80">
+                        {story.attribution}
+                      </figcaption>
+                    </figure>
+                    <Link
+                      href={`/stories/${story.slug}`}
+                      tabIndex={hidden ? -1 : undefined}
+                      className="group mt-8 mr-4 inline-flex items-center gap-5 border border-cloud/35 bg-cloud/5 py-2.5 pl-4 text-sm font-semibold text-cloud no-underline backdrop-blur-md transition-colors hover:border-cloud/70"
+                    >
+                      Read the story
+                      <span
+                        aria-hidden
+                        className="-mr-4 grid size-8 rotate-45 place-items-center bg-cloud text-ink transition-colors group-hover:bg-brand group-hover:text-cloud"
+                      >
+                        <span className="-rotate-45 text-sm leading-none">↗</span>
+                      </span>
+                    </Link>
+                  </div>
+                  <div className="story-side">
+                    <div className="story-stat">
+                      <p className="font-display text-6xl leading-none tracking-tight text-brand">
+                        {figure}
+                      </p>
+                      <p className="mt-3 text-sm font-semibold">
+                        {unit.join(" ")} from brief to start
+                      </p>
+                      <p className="mt-3 border-t border-dashed border-stone/50 pt-2 font-mono text-[10px] tracking-[0.16em] text-stone uppercase">
+                        {region?.code} placement
+                      </p>
+                    </div>
+                    <p className="mt-4 max-w-[16rem] text-sm leading-6 text-cloud/85">
+                      {story.result}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

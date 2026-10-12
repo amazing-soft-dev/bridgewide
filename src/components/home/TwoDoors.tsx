@@ -58,15 +58,16 @@ export function TwoDoors() {
         {doors.map((door, index) => {
           const dimmed = active !== null && active !== index && !reduced;
           const grow =
-            wide && !reduced && active !== null ? (active === index ? 1.45 : 0.68) : 1;
+            wide && !reduced && active !== null ? (active === index ? 1.12 : 0.9) : 1;
+          const transition = { duration: reduced ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] as const };
 
           return (
             <motion.article
               key={door.href}
-              className="relative min-h-[28rem] min-w-0 overflow-hidden text-cloud md:min-h-[36rem] md:flex-1 md:basis-0"
+              className="relative min-h-[28rem] min-w-0 overflow-hidden bg-ink text-cloud md:min-h-[36rem] md:flex-1 md:basis-0"
               data-motion="door"
-              animate={{ flexGrow: grow, opacity: dimmed ? 0.5 : 1 }}
-              transition={{ duration: reduced ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
+              animate={{ flexGrow: grow }}
+              transition={transition}
               onMouseEnter={() => setActive(index)}
             >
               <Image
@@ -96,6 +97,13 @@ export function TwoDoors() {
                   </Button>
                 </div>
               </div>
+              <motion.div
+                className="pointer-events-none absolute inset-0 bg-ink"
+                aria-hidden
+                initial={false}
+                animate={{ opacity: dimmed ? 0.45 : 0 }}
+                transition={transition}
+              />
             </motion.article>
           );
         })}
