@@ -1,0 +1,82 @@
+# Continuous integration.
+#
+# Runs on every pull request into `dev` or `main`, and on pushes to `dev`.
+# Deployment to GitHub Pages is separate: see nextjs.yml, which runs on pushes
+# to `main`.
+#
+# Branch flow: fix/* or feat/*  ->  dev  ->  main (deploys)
+name: CI
+
+on:
+  pull_request:
+    branches: ["dev", "main"]
+  push:
+    branches: ["dev"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One run per branch or PR. A newer push cancels the older run.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  quality:
+    name: Lint and type check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+
+  build:
+    name: Build (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # server: the full app with the /api form routes (Vercel or a Node host).
+        # static: the GitHub Pages export, built the same way nextjs.yml builds it.
+        target: [server, static]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Restore Next.js cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ matrix.target }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'public/**', 'next.config.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ matrix.target }}-${{ hashFiles('package-lock.json') }}-
+      - run: npm ci
+      - name: Build
+        run: npx --no-install next build
+        env:
+          NEXT_OUTPUT: ${{ matrix.target == 'static' && 'export' || '' }}
+          PAGES_BASE_PATH: ${{ matrix.target == 'static' && '/bridgewide' || '' }}
+      - name: Check static export output
+        if: matrix.target == 'static'
+        run: |
+          for f in index.html 404.html sitemap.xml robots.txt apple-icon opengraph-image; do
+            test -e "out/$f" || { echo "::error::out/$f is missing from the static export"; exit 1; }
+          done
+          if [ -d out/api ]; then
+            echo "::error::out/api should not exist in the static export"; exit 1
+          fi
