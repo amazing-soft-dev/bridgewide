@@ -122,7 +122,25 @@ The canonical site URL (used for metadata, sitemap, and Open Graph) is `siteUrl`
 
 ## Deployment
 
-This is a standard Next.js app, so it can run on Vercel or any Node host (`npm run build && npm run start`). Set the three environment variables in the host. Before going live, verify a sending domain in Resend and update `CONTACT_FROM_EMAIL`.
+### Node host (full site)
+
+This is a standard Next.js app, so it can run on Vercel or any Node host (`npm run build && npm run start`). Set the three environment variables in the host. Before going live, verify a sending domain in Resend and update `CONTACT_FROM_EMAIL`. This is the only target where the forms send email.
+
+### GitHub Pages (static preview)
+
+`.github/workflows/nextjs.yml` deploys a static export to GitHub Pages on every push to `main`. It builds with:
+
+```bash
+NEXT_OUTPUT=export PAGES_BASE_PATH=/bridgewide npx next build   # writes ./out
+```
+
+- `NEXT_OUTPUT=export` makes `next.config.ts` switch to `output: "export"`, set `basePath`, and use the custom image loader in `src/lib/static-image-loader.ts`.
+- `PAGES_BASE_PATH` comes from `actions/configure-pages` (`/bridgewide` for a project site, empty for a custom domain).
+- Route files that produce files (`sitemap.ts`, `robots.ts`, `apple-icon.tsx`, `opengraph-image.tsx`) set `dynamic = "force-static"` so they prerender.
+- Pages has no server, so `/api/*` is left out of the export. On the static site the forms skip sending and tell visitors to email `hello@bridgewide.com` instead.
+- Don't add `static_site_generator: next` back to the Pages step. It only patches `next.config.js`, so with this repo's `next.config.ts` it writes a second config that overrides ours.
+
+In the repo settings, set **Pages → Source** to **GitHub Actions**.
 
 ## License
 
