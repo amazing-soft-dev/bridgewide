@@ -4,7 +4,12 @@
 # Deployment to GitHub Pages is separate: see nextjs.yml, which runs on pushes
 # to `main`.
 #
-# Branch flow: fix/* or feat/*  ->  dev  ->  main (deploys)
+# Branch flow (see README "CI/CD"):
+#   fix/* feat/* ... --auto-pr.yml-->  dev  --release.yml-->  main --nextjs.yml--> Pages
+#
+# "CI passed" is the one status check branch rules require. It fails unless
+# every other job succeeded, so jobs can be added here without touching the
+# rules. On pull requests it also posts a checks-summary comment.
 name: CI
 
 on:
@@ -86,3 +91,69 @@ jobs:
           if grep -q '"/bridgewide/_next/' out/index.html; then
             echo "::error::index.html references /bridgewide/_next/ but the site is served from the domain root"; exit 1
           fi
+
+  ci-passed:
+    name: CI passed
+    needs: [quality, build]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Post checks summary on the pull request
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          QUALITY: ${{ needs.quality.result }}
+          BUILD: ${{ needs.build.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          icon() { case "$1" in success) echo "✅";; skipped) echo "⏭️";; cancelled) echo "⚪";; *) echo "❌";; esac; }
+          if [ "$QUALITY" = success ] && [ "$BUILD" = success ]; then
+            verdict="✅ **All checks passed.** This PR will merge automatically."
+          else
+            verdict="❌ **Checks failed.** Push a fix to this branch; the PR updates and CI runs again."
+          fi
+          # shellcheck disable=SC2016  # the backticks are Markdown, not command substitution
+          files=$(gh pr diff "$PR" --repo "$REPO" --name-only | head -50 | sed 's/^/- `/; s/$/`/')
+          count=$(gh pr diff "$PR" --repo "$REPO" --name-only | wc -l)
+          marker="<!-- ci-summary -->"
+          body=$(cat <<BODY
+          $marker
+          ### CI summary for \`${SHA:0:7}\`
+
+          $verdict
+
+          | Check | Result |
+          | --- | --- |
+          | Lint and type check | $(icon "$QUALITY") $QUALITY |
+          | Builds (server, static) | $(icon "$BUILD") $BUILD |
+
+          <details><summary>Changed files ($count)</summary>
+
+          $files
+          </details>
+
+          [Full run log]($RUN_URL)
+          BODY
+          )
+          body=$(printf '%s\n' "$body" | sed 's/^          //')
+          # Update the existing summary comment instead of adding a new one each push.
+          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | tail -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" >/dev/null
+          else
+            gh pr comment "$PR" --repo "$REPO" --body "$body"
+          fi
+      - name: Fail unless every job succeeded
+        if: needs.quality.result != 'success' || needs.build.result != 'success'
+        run: |
+          echo "::error::Lint and type check: ${{ needs.quality.result }}, builds: ${{ needs.build.result }}"
+          exit 1
