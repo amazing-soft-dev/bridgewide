@@ -1,10 +1,6 @@
 /**
- * Sample marketing content for BridgeWide.
- * Figures, names, and salary bands are illustrative. UI surfaces `sampleFiguresNote`
- * on the record, the salary guide, and role salaries.
+ * Marketing content for BridgeWide.
  */
-
-export const sampleFiguresNote = "Sample figures";
 
 export type RegionSlug = "usa" | "canada" | "latam" | "europe";
 
@@ -43,7 +39,6 @@ export type NavLink = {
 
 export type Contact = {
   email: string;
-  phone: string;
   location: string;
 };
 
@@ -180,7 +175,6 @@ export type SiteImages = {
 
 export const contact: Contact = {
   email: "hello@bridgewide.com",
-  phone: "+1 (415) 555-0148",
   location: "San Francisco · remote desks in four regions",
 };
 
@@ -684,7 +678,7 @@ export const insights: readonly Insight[] = [
     body: [
       "Most searches stall on a requisition that lists every tool the company has bought. The engineers who can do the job recognize a pile of keywords and wait. Your managers then spend the week meeting people who match the list and miss the work.",
       "A useful brief fits on one page. Name the hiring manager, the system the hire will own, and what the team needs in the first ninety days. Add the interview loop and the salary band you will actually offer. Leave the rest for the conversation.",
-      "When we can see the bar, the long list gets shorter on purpose. Nine days is our sample median to a shortlist because the first pass happens against that page, and we drop people who would waste a calendar slot.",
+      "When we can see the bar, the long list gets shorter on purpose. Nine days is our median to a shortlist because the first pass happens against that page, and we drop people who would waste a calendar slot.",
       "If you are opening a seat this month, write the ninety-day outcome before you write the requirements. Send that to us with the manager’s name. The shortlist that comes back will be people your team can interview with a straight face.",
     ],
   },
@@ -699,7 +693,7 @@ export const insights: readonly Insight[] = [
     body: [
       "Contract seats fail when the company is still debating the day rate while the sprint board is already red. Engineers who can start this month are also talking to two other desks. Ambiguity is how you lose them.",
       "Decide three things up front: the rate band in USD, the hours of overlap with the team, and the date the contract ends. Tell us whether an extension is likely. Those facts belong in the first message, alongside the stack.",
-      "Our sample median to fill a contract seat is eleven days. That count starts when the brief is complete. A search that reopens the rate after the first interview starts the clock again, and the engineer has usually moved on.",
+      "Our median to fill a contract seat is eleven days. That count starts when the brief is complete. A search that reopens the rate after the first interview starts the clock again, and the engineer has usually moved on.",
       "If the work is real and the budget is approved, send the brief on Monday. You should be choosing from a shortlist before the next planning meeting, with our desk still on the thread through the start date.",
     ],
   },
@@ -712,7 +706,7 @@ export const insights: readonly Insight[] = [
     excerpt:
       "The Autumn 2026 bands are annual base in USD. Use them to set an offer, and keep equity and local rules in a separate conversation.",
     body: [
-      "A band is a range for a conversation, and it is a sample of the market we are seeing this season. The Autumn 2026 edition lists low, high, and median annual base salary in USD for backend, frontend, data, cloud, mobile, and engineering leadership.",
+      "A band is a range for a conversation. The Autumn 2026 edition lists low, high, and median annual base salary in USD for backend, frontend, data, cloud, mobile, and engineering leadership.",
       "Compare a seat to the region where the engineer will be employed. A London platform salary and a Mexico City contract rate answer different questions. Converting a US band straight across will either overpay a local market or lose the person you want.",
       "Base is the number on the guide. Equity, bonus, and benefits sit beside it, and they move the offer more than a small shift inside the band. For contract work, translate the annual figure into a day rate only after you know the margin and the length.",
       "Bring the guide to the brief. If your approved band sits under the median for that discipline and region, say so early. We would rather narrow the search than send a shortlist you cannot close.",
@@ -725,19 +719,19 @@ export const faq: readonly FaqItem[] = [
     audience: "Employers",
     question: "What do you charge for a permanent hire?",
     answer:
-      "Sample figure: 20% of first-year base salary, invoiced when the engineer starts. The Autumn salary guide is a separate sample and does not change the fee. We confirm the percentage in the search agreement before work begins.",
+      "20% of first-year base salary, invoiced when the engineer starts. The Autumn salary guide does not change the fee. We confirm the percentage in the search agreement before work begins.",
   },
   {
     audience: "Employers",
     question: "How fast is a shortlist?",
     answer:
-      "Sample median: nine days from a complete brief to a shortlist, and eleven days to fill a contract seat. The clock starts when we have the manager, the stack, the band, and what the first ninety days require. A brief that changes mid-search resets that count.",
+      "Nine days from a complete brief to a shortlist, and eleven days to fill a contract seat. The clock starts when we have the manager, the stack, the band, and what the first ninety days require. A brief that changes mid-search resets that count.",
   },
   {
     audience: "Employers",
     question: "What does the replacement guarantee cover?",
     answer:
-      "Sample terms: if a permanent hire leaves within 12 weeks of the start date, we reopen that search once at no extra fee. The guarantee covers a replacement search. It is a sample of our usual terms, and the signed agreement is the one that applies.",
+      "If a permanent hire leaves within 12 weeks of the start date, we reopen that search once at no extra fee. The guarantee covers a replacement search. The signed agreement is the one that applies.",
   },
   {
     audience: "Engineers",
@@ -761,10 +755,10 @@ export const faq: readonly FaqItem[] = [
 
 export const fees: Fees = {
   permanent:
-    "Sample figure: 20% of first-year base salary for a permanent hire, billed when the engineer starts.",
-  contract: "Sample figure: an 18% margin on the agreed contract rate.",
+    "20% of first-year base salary for a permanent hire, billed when the engineer starts.",
+  contract: "An 18% margin on the agreed contract rate.",
   guarantee:
-    "Sample terms: a 12-week replacement guarantee. If a permanent hire leaves inside that window, we reopen the search once at no extra fee.",
+    "A 12-week replacement guarantee. If a permanent hire leaves inside that window, we reopen the search once at no extra fee.",
 };
 
 function findBySlug<T extends { slug: string }>(

@@ -2,12 +2,11 @@ import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { formatUsd } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
-import { SampleNote } from "@/components/pages/SampleNote";
-import { regions, salaryBands, sampleFiguresNote } from "@/content/site";
+import { regions, salaryBands } from "@/content/site";
 
 export const metadata = pageMetadata({
   title: "Salary guide · BridgeWide",
-  description: `${salaryBands.edition}. Sample salary bands by region for backend, frontend, data, cloud, mobile, and engineering leadership. ${salaryBands.basis}.`,
+  description: `${salaryBands.edition}. Salary bands by region for backend, frontend, data, cloud, mobile, and engineering leadership. ${salaryBands.basis}.`,
   path: "/salary-guide",
 });
 
@@ -15,23 +14,20 @@ export default function SalaryGuidePage() {
   return (
     <>
       <PageHero
-        eyebrow={sampleFiguresNote}
+        eyebrow="Salary guide"
         title={salaryBands.edition}
         lede={`${salaryBands.basis}. Low, median, and high for each discipline, compared in the region where the engineer will be employed. Equity and local rules sit beside these bands.`}
       />
       <PageSection
         id="bands"
-        label={sampleFiguresNote}
+        label="Bands"
         title="Bands by region"
         lede="Use a band to set an offer conversation. A figure under the median should be said early, before a shortlist goes out."
       >
-        <p className="mb-6">
-          <SampleNote /> <span className="ml-2 text-ink-soft">{salaryBands.edition}</span>
-        </p>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[44rem] border-collapse text-left">
             <caption className="sr-only">
-              {salaryBands.edition}. {sampleFiguresNote}. {salaryBands.basis}. Low, high, and median
+              {salaryBands.edition}. {salaryBands.basis}. Low, high, and median
               for every discipline in each region.
             </caption>
             <thead>

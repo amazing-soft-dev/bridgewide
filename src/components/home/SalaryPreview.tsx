@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { RevealItem, RevealGroup } from "@/components/ui/Reveal";
 import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
-import { regions, salaryBands, sampleFiguresNote } from "@/content/site";
+import { regions, salaryBands } from "@/content/site";
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -29,10 +29,7 @@ export default function SalaryPreview() {
             Full salary guide
           </Button>
         </div>
-        <p className="mt-8 font-mono text-xs tracking-[0.18em] text-ink uppercase">
-          {sampleFiguresNote}
-        </p>
-        <RevealGroup className="mt-6 grid gap-6">
+        <RevealGroup className="mt-8 grid gap-6">
           {preview.map((discipline) => (
             <RevealItem key={discipline.slug}>
               <article className="border-t border-ink/15 pt-5">

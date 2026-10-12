@@ -3,12 +3,12 @@ import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { pageMetadata } from "@/components/pages/metadata";
 import { Button } from "@/components/ui/Button";
-import { fees, images, sampleFiguresNote, week } from "@/content/site";
+import { fees, images, week } from "@/content/site";
 
 export const metadata = pageMetadata({
   title: "Employers · BridgeWide",
   description:
-    "How a company hires with BridgeWide: a week from brief to offer, sample fees, and a form to open a search.",
+    "How a company hires with BridgeWide: a week from brief to offer, fees, and a form to open a search.",
   path: "/employers",
 });
 
@@ -77,9 +77,9 @@ export default function EmployersPage() {
       </PageSection>
       <PageSection
         id="fees"
-        label={sampleFiguresNote}
+        label="The fee"
         title="Fees"
-        lede="These figures are a sample of usual terms. The signed search agreement is the one that applies."
+        lede="The signed search agreement is the one that applies."
       >
         <ul className="grid gap-6 md:grid-cols-3">
           <li className="border-t border-brand pt-4">

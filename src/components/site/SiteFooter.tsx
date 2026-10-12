@@ -1,10 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
-import { contact, nav, sampleFiguresNote } from "@/content/site";
-
-function telHref(phone: string) {
-  return `tel:${phone.replace(/[^\d+]/g, "")}`;
-}
+import { contact, nav } from "@/content/site";
 
 const linkClass = "text-sm text-cloud no-underline hover:text-brand";
 
@@ -34,11 +30,6 @@ export function SiteFooter() {
             </a>
           </li>
           <li>
-            <a href={telHref(contact.phone)} className={linkClass}>
-              {contact.phone}
-            </a>
-          </li>
-          <li>
             <Link href="/privacy" className={linkClass}>
               Privacy
             </Link>
@@ -49,15 +40,6 @@ export function SiteFooter() {
             </Link>
           </li>
         </ul>
-      </div>
-      <div className="border-t border-ink-soft">
-        <p className="mx-auto w-full max-w-6xl px-4 py-4 text-sm leading-6 text-cloud">
-          <span className="font-mono tracking-wide text-brand uppercase">
-            {sampleFiguresNote}.
-          </span>{" "}
-          Placement counts, salary bands, retention stats, and team names on
-          this site are illustrative.
-        </p>
       </div>
     </footer>
   );

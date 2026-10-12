@@ -4,7 +4,6 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { photoSecondaryClass } from "@/components/ui/SectionHeading";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import { hero, images } from "@/content/site";
 
@@ -28,8 +27,8 @@ const doors = [
     copy: "Live seats in the USA, Canada, Latin America, and Europe. You do not pay a fee to be introduced, and your consultant shares the band before your name goes across.",
     image: images.engineers,
     alt: "Engineers working at a row of screens",
-    variant: "secondary" as const,
-    className: photoSecondaryClass,
+    variant: "onDark" as const,
+    className: "",
   },
 ];
 

@@ -2,13 +2,13 @@ import Link from "next/link";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
-import { telHref, textLink } from "@/components/pages/format";
+import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { contact } from "@/content/site";
 
 export const metadata = pageMetadata({
   title: "Contact · BridgeWide",
-  description: `Write to ${contact.email} or call ${contact.phone}. ${contact.location}.`,
+  description: `Write to ${contact.email}. ${contact.location}.`,
   path: "/contact",
 });
 
@@ -23,7 +23,7 @@ export default function ContactPage() {
       <PageSection
         id="reach"
         label="Reach us"
-        title="Phone, email, or a note"
+        title="Email or a note"
         lede={
           <>
             Hiring managers can open a search on the{" "}
@@ -45,11 +45,6 @@ export default function ContactPage() {
               <li>
                 <a href={`mailto:${contact.email}`} className={textLink}>
                   {contact.email}
-                </a>
-              </li>
-              <li>
-                <a href={telHref(contact.phone)} className={textLink}>
-                  {contact.phone}
                 </a>
               </li>
               <li className="text-ink-soft">{contact.location}</li>

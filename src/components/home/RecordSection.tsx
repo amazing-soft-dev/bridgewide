@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
-import { sampleFiguresNote, stats } from "@/content/site";
+import { stats } from "@/content/site";
 
 function FlapCell({
   char,
@@ -110,11 +110,6 @@ export default function RecordSection() {
           tone="dark"
           eyebrow="The record"
           title="Numbers we would put on a departures board."
-          lede={
-            <span className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
-              {sampleFiguresNote}
-            </span>
-          }
         />
         <ul className="grid grid-cols-2 gap-x-8 gap-y-8">
           {stats.map((stat, index) => (

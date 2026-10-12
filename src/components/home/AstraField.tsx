@@ -329,7 +329,7 @@ function makeRibbon(spine: 0 | 1): RibbonStar {
     spine,
     t: Math.random(),
     speed: FLOW_SPEED * (0.97 + Math.random() * 0.06),
-    ...ribbonSpread(look.tier, look.color === AMBER_COLOR),
+    ...ribbonSpread(look.tier, look.color),
   };
 }
 
@@ -393,62 +393,6 @@ export function AstraField() {
       for (let i = 0; i < (counts[1] ?? 720); i++) stars.push(makeRibbon(1));
       for (let i = 0; i < DUST_PER_SIDE; i++) stars.push(makeDust(-1));
       for (let i = 0; i < DUST_PER_SIDE; i++) stars.push(makeDust(1));
-      // #region agent log
-      {
-        const ribbon = stars.filter((s): s is RibbonStar => s.kind === "ribbon");
-        const palette = (c: number) =>
-          c === AMBER_COLOR ? "amber" : c === ICE_COLOR ? "ice" : "white";
-        const colors: Record<string, number> = { white: 0, ice: 0, amber: 0 };
-        const tiers: Record<string, number> = { fine: 0, ambient: 0, flare: 0 };
-        const sizes: Record<string, number[]> = { fine: [], ambient: [], flare: [] };
-        const amberOff: number[] = [];
-        const otherOff: number[] = [];
-        for (const s of ribbon) {
-          colors[palette(s.color)] += 1;
-          tiers[s.tier] += 1;
-          sizes[s.tier].push(s.size);
-          (s.color === AMBER_COLOR ? amberOff : otherOff).push(Math.abs(s.offset));
-        }
-        const mean = (list: number[]) =>
-          list.length ? +(list.reduce((a, b) => a + b, 0) / list.length).toFixed(2) : 0;
-        const range = (list: number[]) => {
-          if (!list.length) return { min: 0, max: 0 };
-          const sorted = [...list].sort((a, b) => a - b);
-          return { min: +sorted[0]!.toFixed(2), max: +sorted[sorted.length - 1]!.toFixed(2) };
-        };
-        fetch("http://127.0.0.1:7294/ingest/d6eebea7-5345-4b53-a2ba-10de4bfce00d", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "48e4f6" },
-          body: JSON.stringify({
-            sessionId: "48e4f6",
-            runId: "post-fix",
-            hypothesisId: "color-size",
-            location: "AstraField.tsx:init",
-            message: "ribbon gaussian core vs mist",
-            data: {
-              n: ribbon.length,
-              corePct: +((100 * ribbon.filter((s) => Math.abs(s.offset) <= CORE_WIDTH).length) / ribbon.length).toFixed(1),
-              mistPct: +((100 * ribbon.filter((s) => Math.abs(s.offset) > CORE_WIDTH).length) / ribbon.length).toFixed(1),
-              flareCorePct: +((100 * ribbon.filter((s) => s.tier === "flare" && Math.abs(s.offset) <= CORE_WIDTH).length) / Math.max(1, ribbon.filter((s) => s.tier === "flare").length)).toFixed(1),
-              maxWidthPct: +((Math.max(...ribbon.map((s) => Math.abs(s.offset))) / STROKE_WIDTH) * 100).toFixed(0),
-              colorPct: {
-                white: +((100 * colors.white) / ribbon.length).toFixed(1),
-                ice: +((100 * colors.ice) / ribbon.length).toFixed(1),
-                amber: +((100 * colors.amber) / ribbon.length).toFixed(1),
-              },
-              sizePct: {
-                fine: +((100 * tiers.fine) / ribbon.length).toFixed(1),
-                ambient: +((100 * tiers.ambient) / ribbon.length).toFixed(1),
-                flare: +((100 * tiers.flare) / ribbon.length).toFixed(1),
-              },
-              sizeRange: { fine: range(sizes.fine), ambient: range(sizes.ambient), flare: range(sizes.flare) },
-              offsetMean: { amber: mean(amberOff), other: mean(otherOff) },
-            },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-      }
-      // #endregion
 
       const restPosition = (star: RibbonStar) => {
         const spine = spines[star.spine];
@@ -636,7 +580,6 @@ export function AstraField() {
         };
       };
 
-      let debugLast = 0;
       let frame = 0;
       let running = false;
       let previous = performance.now();
@@ -795,30 +738,6 @@ export function AstraField() {
         glowAttr.needsUpdate = true;
         alphaAttr.needsUpdate = true;
         colorAttr.needsUpdate = true;
-
-        // #region agent log
-        if (now - debugLast > 2000) {
-          debugLast = now;
-          fetch("http://127.0.0.1:7294/ingest/d6eebea7-5345-4b53-a2ba-10de4bfce00d", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "48e4f6" },
-            body: JSON.stringify({
-              sessionId: "48e4f6",
-              runId: "post-fix",
-              hypothesisId: "blend",
-              location: "AstraField.tsx:draw",
-              message: "additive blending flags",
-              data: {
-                scroll: +scroll.toFixed(3),
-                blending: material.blending === THREE.AdditiveBlending,
-                transparent: material.transparent,
-                depthWrite: material.depthWrite,
-              },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {});
-        }
-        // #endregion
 
         renderer.render(scene, camera);
         if (running) frame = requestAnimationFrame(draw);
