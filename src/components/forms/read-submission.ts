@@ -1,3 +1,5 @@
+import { contact } from "@/content/site";
+
 export type Submission = { ok: true } | { ok: false; error: string };
 
 export async function readSubmission(response: Response): Promise<Submission> {
@@ -30,7 +32,16 @@ export async function readSubmission(response: Response): Promise<Submission> {
   return { ok: false, error };
 }
 
+/**
+ * The static export (GitHub Pages) has no server, so the /api form routes do
+ * not exist there. Say so instead of posting to a URL that returns 404/405.
+ */
+const staticExport = process.env.NEXT_PUBLIC_STATIC_EXPORT === "1";
+
+const staticExportError = `Online forms are not available on this version of the site. Email ${contact.email} instead.`;
+
 export async function submitJson(url: string, payload: unknown): Promise<Submission> {
+  if (staticExport) return { ok: false, error: staticExportError };
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -44,6 +55,7 @@ export async function submitJson(url: string, payload: unknown): Promise<Submiss
 }
 
 export async function submitForm(url: string, body: FormData): Promise<Submission> {
+  if (staticExport) return { ok: false, error: staticExportError };
   try {
     const response = await fetch(url, {
       method: "POST",

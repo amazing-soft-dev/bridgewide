@@ -2,6 +2,9 @@ import type { MetadataRoute } from "next";
 import { siteUrl } from "@/components/pages/metadata";
 import { insights, regions, roles, stories } from "@/content/site";
 
+// Prerender at build time so this also works in the static export.
+export const dynamic = "force-static";
+
 const staticPaths = [
   "/",
   "/employers",

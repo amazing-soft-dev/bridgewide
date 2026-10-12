@@ -1,6 +1,9 @@
 import { ImageResponse } from "next/og";
 import { markPath, markViewBox } from "@/components/brand/mark";
 
+// Prerender at build time so this also works in the static export.
+export const dynamic = "force-static";
+
 export const alt =
   "BridgeWide. Hiring engineers across the USA, Canada, LATAM, and Europe.";
 
