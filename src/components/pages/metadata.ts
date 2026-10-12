@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 
-export const siteUrl = "https://bridgewide.com";
+/**
+ * Public origin of the site, used for canonical URLs, Open Graph, the sitemap
+ * and robots.txt. Set NEXT_PUBLIC_SITE_URL at build time to override.
+ */
+export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.bridgewide.org").replace(
+  /\/+$/,
+  "",
+);
 
 export function pageMetadata({
   title,
