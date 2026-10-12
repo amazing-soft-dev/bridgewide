@@ -39,12 +39,13 @@ jobs:
     steps:
       - name: Get bot token
         id: bot
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.BOT_APP_ID }}
+          # Client ID is preferred; the App ID still works as a fallback.
+          client-id: ${{ vars.BOT_APP_CLIENT_ID || vars.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -55,6 +56,14 @@ jobs:
           BASE: dev
         run: |
           set -euo pipefail
+          # Recreate dev from main if it is missing (for example, deleted by
+          # "Automatically delete head branches" after a release PR merged).
+          if ! git ls-remote --exit-code --heads origin "$BASE" >/dev/null; then
+            git fetch --quiet origin main
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" \
+              -f ref="refs/heads/$BASE" -f sha="$(git rev-parse origin/main)" >/dev/null
+            echo "::warning::$BASE was missing. Recreated it from main."
+          fi
           git fetch --quiet origin "$BASE"
 
           ahead=$(git rev-list --count "origin/$BASE..HEAD")

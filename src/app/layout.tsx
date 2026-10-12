@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Geist, IBM_Plex_Mono } from "next/font/google";
 import { siteUrl } from "@/components/pages/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { siteGraph } from "@/lib/structured-data";
 import { AnnouncementBar } from "@/components/site/AnnouncementBar";
 import { FooterMark } from "@/components/site/FooterMark";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -29,6 +31,23 @@ export const metadata: Metadata = {
   title: "BridgeWide",
   description:
     "BridgeWide places software engineers for companies across the USA, Canada, LATAM, and Europe.",
+  applicationName: "BridgeWide",
+  authors: [{ name: "BridgeWide", url: siteUrl }],
+  creator: "BridgeWide",
+  publisher: "BridgeWide",
+  category: "Recruitment",
+  formatDetection: { email: false, address: false, telephone: false },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -38,6 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geist.variable} ${display.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <JsonLd data={siteGraph()} />
         <AnnouncementBar />
         <SiteHeader />
         <main className="flex-1">{children}</main>

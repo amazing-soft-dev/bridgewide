@@ -14,24 +14,38 @@ export function pageMetadata({
   description,
   path,
   type = "website",
+  publishedTime,
 }: {
   title: string;
   description: string;
   path: string;
   type?: "website" | "article";
+  /** ISO date; added to Open Graph for articles. */
+  publishedTime?: string;
 }): Metadata {
   const url = new URL(path, siteUrl).toString();
 
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      // Points AI crawlers at the plain-text summary (src/app/llms.txt).
+      types: { "text/plain": [{ url: "/llms.txt", title: "LLM-readable site summary" }] },
+    },
     openGraph: {
       title,
       description,
       url,
       siteName: "BridgeWide",
+      locale: "en_US",
       type,
+      ...(type === "article" && publishedTime ? { publishedTime } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
     },
   };
 }

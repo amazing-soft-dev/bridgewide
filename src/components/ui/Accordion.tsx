@@ -1,8 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
 import { useId, useState } from "react";
-import { usePrefersReducedMotion } from "@/lib/motion";
 
 export type AccordionItem = {
   id: string;
@@ -11,9 +9,13 @@ export type AccordionItem = {
   answer: string;
 };
 
+/**
+ * Answers stay in the HTML when collapsed (only visually hidden and `inert`),
+ * so search engines and AI crawlers can read them. The open/close animation is
+ * CSS-only (grid rows 0fr -> 1fr) and is turned off for reduced motion.
+ */
 export function Accordion({ items }: { items: readonly AccordionItem[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
-  const reduced = usePrefersReducedMotion();
   const baseId = useId();
 
   return (
@@ -49,26 +51,18 @@ export function Accordion({ items }: { items: readonly AccordionItem[] }) {
                 </span>
               </button>
             </h3>
-            <div id={panelId} role="region" aria-labelledby={buttonId}>
-              <AnimatePresence initial={false}>
-                {open ? (
-                  <motion.div
-                    key={item.id}
-                    initial={reduced ? false : { height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{
-                      duration: reduced ? 0 : 0.28,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}
-                    className="overflow-hidden"
-                  >
-                    <p className="max-w-3xl pb-6 text-base leading-7 text-ink-soft">
-                      {item.answer}
-                    </p>
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
+            <div
+              id={panelId}
+              role="region"
+              aria-labelledby={buttonId}
+              inert={!open}
+              className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+                open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+              }`}
+            >
+              <div className="overflow-hidden">
+                <p className="max-w-3xl pb-6 text-base leading-7 text-ink-soft">{item.answer}</p>
+              </div>
             </div>
           </div>
         );

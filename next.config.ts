@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import imageSizes from "./src/lib/image-sizes.json";
 
 /**
  * Two build targets:
@@ -23,10 +24,12 @@ const nextConfig: NextConfig = {
     output: "export",
     basePath,
     images: {
-      // The default optimizer needs a server. This loader serves the
-      // pre-sized WebP files from public/ as they are, under basePath.
+      // The default optimizer needs a server. `npm run images` pre-builds a
+      // WebP for each of these widths, and this loader points srcset at them.
       loader: "custom",
       loaderFile: "./src/lib/static-image-loader.ts",
+      deviceSizes: imageSizes.deviceSizes,
+      imageSizes: imageSizes.imageSizes,
     },
   }),
 };
