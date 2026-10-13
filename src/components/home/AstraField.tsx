@@ -16,13 +16,18 @@ const REST_YAW = 0.62;
 const REST_PITCH = -0.18;
 const [upperWing, lowerArch] = markPaths;
 
-/** Flow speed along the route, in mark units per second. */
-const FLOW_UNITS = 8.6;
-/** Route distance (mark units) over which stars shrink and fade into a crossing. */
-const CROSSING_FADE = 11;
-/** Depth of the route's wave, in mark units: gives the mark a real 3D body. */
-const DEPTH_AMPLITUDE = 15;
-const DEPTH_WAVES = 2;
+/** Flow speed along each path, in mark units per second (each star varies +-15%). */
+const FLOW_UNITS = 8;
+/** Distance (mark units) over which a star grows in after it spawns at a path's start. */
+const SPAWN_FADE = 5;
+/** Distance (mark units) over which a star shrinks and fades out into the meeting point at a path's end. */
+const MEET_FADE = 11;
+/** Smallest size a star shrinks to before it disappears at a meeting point. */
+const MEET_MIN_SCALE = 0.12;
+/** Depth of the mark's curved surface, in mark units: gives it a real 3D body when turned. */
+const DEPTH_AMPLITUDE = 13;
+/** Ribbon stars per mark unit of path length. */
+const STARS_PER_UNIT = 3.2;
 /** A star's offset from the line is spread over a tube: this much of it goes into depth. */
 const TUBE_DEPTH = 3;
 /** Twinkle never takes a star below 1 - depth of its brightness, so lines never drop out. */
@@ -62,10 +67,10 @@ const HERO_SHARE = 0.25;
 /** Star palette: cool blue-white majority with warm accents. Weights sum to 1. */
 const PALETTE = [
   { color: 0xc4dcff, weight: 0.36 }, // blue-white
-  { color: 0xf2f6ff, weight: 0.13 }, // white
-  { color: 0x8fcdff, weight: 0.28 }, // ice
-  { color: 0xffbf8f, weight: 0.13 }, // peach
-  { color: 0xff8a45, weight: 0.1 }, // amber
+  { color: 0xf2f6ff, weight: 0.14 }, // white
+  { color: 0x8fcdff, weight: 0.22 }, // ice
+  { color: 0xffbf8f, weight: 0.16 }, // peach
+  { color: 0xff8a45, weight: 0.12 }, // amber
 ] as const;
 const DUST_COLOR = 0xc9dcff;
 /** Pre-tone-mapping sky colour. ACES crushes darks, so this lands at about #08101a on screen. */
@@ -126,7 +131,7 @@ void main() {
   // Soft halo that fades to exactly zero at the quad edge (no hard rim).
   // Small and mid stars get a faint halo; only hero stars (glow 1) carry a real glow.
   float heroGlow = smoothstep(0.85, 1.0, vGlow);
-  float halo = mix(0.09, 0.4, heroGlow) * vGlow * exp(-6.5 * r * r) * (1.0 - smoothstep(0.5, 1.0, r));
+  float halo = mix(0.08, 0.24, heroGlow) * vGlow * exp(-6.5 * r * r) * (1.0 - smoothstep(0.5, 1.0, r));
   // Keep the star's colour in the core, warmed toward white at the centre.
   vec3 coreColor = mix(vColor, vec3(1.0), 0.18 * core);
   gl_FragColor = vec4((coreColor * core + vColor * halo) * vAlpha, 1.0);
@@ -138,12 +143,10 @@ type Spine = Sample[];
 /** Per-sample smoothed normal and local radius of curvature (mark units). */
 type Frame = { nx: number; ny: number; radius: number };
 /**
- * One closed path through the whole mark. It runs around both ribbons and
- * crosses between them at their two closest points. `vis` is 0 at a
- * crossing and on the hidden hop between the ribbons, rising to 1 along the
- * ribbon; `z` is the route's depth.
+ * One open stream through part of the mark (paths A-E). Stars spawn at the
+ * start, flow to the end, and shrink away into the meeting point there.
  */
-type Route = { points: Spine; frames: Frame[]; vis: Float32Array; z: Float32Array; length: number };
+type FlowPath = { name: string; points: Spine; frames: Frame[]; z: Float32Array; length: number };
 type Spray = { nx: number; ny: number; z: number };
 type Tier = "fine" | "ambient" | "flare";
 type Look = {
@@ -165,8 +168,11 @@ type RibbonStar = StarBase & {
   kind: "ribbon";
   /** Look while the star is out in the side spray, drawn from the dust split. */
   outer: Look;
-  /** Position along the route, 0-1. */
-  t: number;
+  /** Which flow path (index into the paths list) the star travels. */
+  path: number;
+  /** Distance along that path, in mark units. */
+  s: number;
+  /** Mark units per second. */
   speed: number;
   offset: number;
   /** Angle of the offset around the line: in-plane at 0, into depth at pi/2. */
@@ -220,85 +226,27 @@ function sampleSpine(d: string, steps: number): Spine {
   return samples;
 }
 
-function spineLength(spine: Spine) {
-  let length = 0;
-  for (let i = 0; i < spine.length; i++) {
-    const a = spine[i];
-    const b = spine[(i + 1) % spine.length];
-    if (!a || !b) continue;
-    length += Math.hypot(b.x - a.x, b.y - a.y);
-  }
-  return length;
-}
-
-/**
- * Normals from a tangent averaged over a window of samples, plus the local
- * radius of curvature. A per-segment normal flips at the mark's sharp folds
- * (the nose beside "Wide"), which flung offset stars off the line and left a
- * faint gap there.
- */
-function spineFrames(spine: Spine, window = 6): Frame[] {
-  const n = spine.length;
-  const at = (i: number) => spine[((i % n) + n) % n] ?? { x: 0, y: 0 };
-  return spine.map((_, i) => {
-    const prev = at(i - window);
-    const here = at(i);
-    const next = at(i + window);
-    const tx = next.x - prev.x;
-    const ty = next.y - prev.y;
-    const len = Math.hypot(tx, ty) || 1;
-    const ax = here.x - prev.x;
-    const ay = here.y - prev.y;
-    const bx = next.x - here.x;
-    const by = next.y - here.y;
-    const turn = Math.abs(Math.atan2(ax * by - ay * bx, ax * bx + ay * by));
-    const chord = Math.hypot(next.x - prev.x, next.y - prev.y);
-    const radius = turn > 1e-3 ? chord / (2 * Math.sin(turn / 2)) : Infinity;
-    return { nx: -ty / len, ny: tx / len, radius };
-  });
-}
-
-function pointOnSpine(spine: Spine, frames: Frame[], t: number, offset: number) {
-  const n = spine.length;
-  const wrapped = ((t % 1) + 1) % 1;
-  const f = wrapped * n;
-  const i = Math.floor(f) % n;
-  const u = f - Math.floor(f);
-  const a = spine[i];
-  const b = spine[(i + 1) % n];
-  const fa = frames[i];
-  const fb = frames[(i + 1) % n];
-  if (!a || !b || !fa || !fb) return { x: 84, y: 50 };
-  let nx = fa.nx + (fb.nx - fa.nx) * u;
-  let ny = fa.ny + (fb.ny - fa.ny) * u;
-  const nlen = Math.hypot(nx, ny) || 1;
-  nx /= nlen;
-  ny /= nlen;
-  // Tight bends: keep the offset inside the curve radius so stars stay on the line.
-  const radius = Math.min(fa.radius, fb.radius);
-  const limit = Number.isFinite(radius) ? Math.max(0.35, radius * 0.6) : Infinity;
-  const kept = Math.sign(offset) * Math.min(Math.abs(offset), limit);
-  return {
-    x: a.x + (b.x - a.x) * u + nx * kept,
-    y: a.y + (b.y - a.y) * u + ny * kept,
-  };
-}
-
-/** Index pair (upper, lower) of the closest points, with the upper point inside xRange. */
-function closestPair(upper: Spine, lower: Spine, xMin: number, xMax: number) {
+/** Index of the sample closest to (x, y). */
+function nearestIndex(spine: Spine, x: number, y: number) {
   let best = Infinity;
-  let pair: [number, number] = [0, 0];
-  upper.forEach((a, i) => {
-    if (a.x < xMin || a.x > xMax) return;
-    lower.forEach((b, j) => {
-      const d = (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
-      if (d < best) {
-        best = d;
-        pair = [i, j];
-      }
-    });
+  let index = 0;
+  spine.forEach((p, i) => {
+    const d = (p.x - x) ** 2 + (p.y - y) ** 2;
+    if (d < best) {
+      best = d;
+      index = i;
+    }
   });
-  return pair;
+  return index;
+}
+
+/** Index of the right-most sample. */
+function rightmostIndex(spine: Spine) {
+  let index = 0;
+  spine.forEach((p, i) => {
+    if (p.x > (spine[index]?.x ?? -Infinity)) index = i;
+  });
+  return index;
 }
 
 /** Samples from index `from` to `to` (inclusive), walking `dir` around a closed spine. */
@@ -314,83 +262,121 @@ function arc(spine: Spine, from: number, to: number, dir: 1 | -1): Spine {
 }
 
 /**
- * Figure-eight route: upper arc A->B, hop down at B, lower arc B'->A', hop up
- * at A', the other upper arc A->B, hop down, the other lower arc, hop up.
- * Every ribbon edge is covered once and stars always cross the same way at
- * each joint, so the whole mark flows as one continuous stream.
+ * Depth of the mark's surface at a point. A function of position (not of the
+ * path), so paths that meet sit at the same depth and join without a step.
  */
-function buildRoute(upper: Spine, lower: Spine): Route {
-  const [ua, la] = closestPair(upper, lower, 70, 135); // middle joint
-  const [ub, lb] = closestPair(upper, lower, 140, 168); // right joint, beside "Wide"
-  type Piece = { points: Spine; hidden: boolean };
-  const hop = (a?: Sample, b?: Sample): Piece => ({ points: a && b ? [a, b] : [], hidden: true });
-  const pieces: Piece[] = [
-    { points: arc(upper, ua, ub, 1), hidden: false },
-    hop(upper[ub], lower[lb]),
-    { points: arc(lower, lb, la, 1), hidden: false },
-    hop(lower[la], upper[ua]),
-    { points: arc(upper, ua, ub, -1), hidden: false },
-    hop(upper[ub], lower[lb]),
-    { points: arc(lower, lb, la, -1), hidden: false },
-    hop(lower[la], upper[ua]),
-  ];
+function surfaceDepth(x: number, y: number) {
+  return DEPTH_AMPLITUDE * Math.sin((x / MARK_WIDTH) * Math.PI * 1.5 - 0.4) * Math.cos((y / MARK_HEIGHT - 0.5) * 1.6);
+}
 
-  // Flatten, then resample to an even spacing so t maps linearly to distance.
-  const raw: { x: number; y: number; hidden: boolean }[] = [];
-  for (const piece of pieces) for (const p of piece.points) raw.push({ ...p, hidden: piece.hidden });
+/** Smoothed normals for an open polyline (window clamped at the ends). */
+function openFrames(points: Spine, window = 6): Frame[] {
+  const n = points.length;
+  const at = (i: number) => points[clamp(i, 0, n - 1)] ?? { x: 0, y: 0 };
+  return points.map((_, i) => {
+    const prev = at(i - window);
+    const here = at(i);
+    const next = at(i + window);
+    const tx = next.x - prev.x;
+    const ty = next.y - prev.y;
+    const len = Math.hypot(tx, ty) || 1;
+    const ax = here.x - prev.x;
+    const ay = here.y - prev.y;
+    const bx = next.x - here.x;
+    const by = next.y - here.y;
+    const turn = Math.abs(Math.atan2(ax * by - ay * bx, ax * bx + ay * by));
+    const chord = Math.hypot(tx, ty);
+    const radius = turn > 1e-3 ? chord / (2 * Math.sin(turn / 2)) : Infinity;
+    return { nx: -ty / len, ny: tx / len, radius };
+  });
+}
+
+/** Even 0.4-unit spacing, so distance along the path maps linearly to sample index. */
+function makePath(name: string, raw: Spine): FlowPath {
   const cumulative = [0];
   for (let i = 1; i < raw.length; i++) {
     const a = raw[i - 1];
     const b = raw[i];
     cumulative.push((cumulative[i - 1] ?? 0) + (a && b ? Math.hypot(b.x - a.x, b.y - a.y) : 0));
   }
-  const first = raw[0];
-  const last = raw[raw.length - 1];
-  const length = (cumulative[cumulative.length - 1] ?? 0) + (first && last ? Math.hypot(first.x - last.x, first.y - last.y) : 0);
-  const count = Math.max(64, Math.round(length / 0.4));
+  const length = cumulative[cumulative.length - 1] ?? 0;
+  const count = Math.max(8, Math.round(length / 0.4) + 1);
   const points: Spine = [];
-  const hidden: boolean[] = [];
   let k = 0;
   for (let i = 0; i < count; i++) {
-    const s = (i / count) * length;
-    while (k < raw.length - 2 && (cumulative[k + 1] ?? 0) < s) k++;
+    const target = (i / (count - 1)) * length;
+    while (k < raw.length - 2 && (cumulative[k + 1] ?? 0) < target) k++;
     const a = raw[k];
-    const b = raw[k + 1] ?? first;
+    const b = raw[k + 1] ?? a;
     if (!a || !b) continue;
     const span = (cumulative[k + 1] ?? length) - (cumulative[k] ?? 0) || 1;
-    const u = clamp01((s - (cumulative[k] ?? 0)) / span);
+    const u = clamp01((target - (cumulative[k] ?? 0)) / span);
     points.push({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u });
-    hidden.push(a.hidden && b.hidden ? true : a.hidden || b.hidden ? u < 0.5 ? a.hidden : b.hidden : false);
   }
-
-  // Distance along the route to the nearest hidden sample, both directions.
-  const n = points.length;
-  const step = length / n;
-  const near = new Float32Array(n).fill(Infinity);
-  for (let pass = 0; pass < 2; pass++) {
-    let since = Infinity;
-    for (let c = 0; c < 2 * n; c++) {
-      const i = pass === 0 ? c % n : (2 * n - 1 - c) % n;
-      since = hidden[i] ? 0 : since + step;
-      near[i] = Math.min(near[i] ?? Infinity, since);
-    }
-  }
-  const vis = new Float32Array(n);
-  const z = new Float32Array(n);
-  for (let i = 0; i < n; i++) {
-    vis[i] = hidden[i] ? 0 : smoothstep((near[i] ?? 0) / CROSSING_FADE);
-    z[i] = DEPTH_AMPLITUDE * Math.sin((i / n) * Math.PI * 2 * DEPTH_WAVES);
-  }
-  return { points, frames: spineFrames(points), vis, z, length };
+  const z = new Float32Array(points.length);
+  points.forEach((p, i) => (z[i] = surfaceDepth(p.x, p.y)));
+  return { name, points, frames: openFrames(points), z, length };
 }
 
-/** Value of a per-sample array at route position t (0-1), linearly interpolated. */
-function sampleAt(values: Float32Array, t: number) {
-  const n = values.length;
-  const f = (((t % 1) + 1) % 1) * n;
-  const i = Math.floor(f) % n;
-  const u = f - Math.floor(f);
-  return (values[i] ?? 0) * (1 - u) + (values[(i + 1) % n] ?? 0) * u;
+/**
+ * The five streams. Each ribbon outline is split at its junctions so every
+ * edge is covered exactly once:
+ *   Upper wing (outline starts at its top-left tip):
+ *     A  outer roof    top-left tip -> along the top -> down the right hook -> fold beside "Wide"
+ *     B  inner shelf   top-left tip -> interior diagonal -> flat shelf -> same fold
+ *   Lower arch:
+ *     C  ramp          bottom-left tip -> up and right -> along the top -> far right of the loop
+ *     D  pillar        centre-bottom -> straight up -> over the inner dome -> along the base -> bottom-left tip (where C spawns)
+ *     E  bottom hook   centre-bottom -> right along the bottom -> around the loop -> far right (meets C)
+ */
+function buildPaths(upper: Spine, lower: Spine): FlowPath[] {
+  const topLeft = nearestIndex(upper, 13.7, 1.9);
+  const fold = nearestIndex(upper, 163.5, 55.3);
+  const bottomLeft = nearestIndex(lower, 2.7, 96);
+  const centreBottom = nearestIndex(lower, 111.8, 98.1);
+  const farRight = rightmostIndex(lower);
+  return [
+    makePath("A outer roof", arc(upper, topLeft, fold, 1)),
+    makePath("B inner shelf", arc(upper, topLeft, fold, -1)),
+    makePath("C ramp", arc(lower, bottomLeft, farRight, 1)),
+    makePath("D pillar", arc(lower, centreBottom, bottomLeft, 1)),
+    makePath("E bottom hook", arc(lower, centreBottom, farRight, -1)),
+  ];
+}
+
+/** Point on an open path at distance `s`, pushed `offset` along the smoothed normal. */
+function pointOnPath(path: FlowPath, s: number, offset: number) {
+  const n = path.points.length;
+  const f = clamp(s / (path.length || 1), 0, 1) * (n - 1);
+  const i = Math.min(n - 2, Math.floor(f));
+  const u = f - i;
+  const a = path.points[i];
+  const b = path.points[i + 1];
+  const fa = path.frames[i];
+  const fb = path.frames[i + 1];
+  if (!a || !b || !fa || !fb) return { x: 84, y: 50, z: 0 };
+  let nx = fa.nx + (fb.nx - fa.nx) * u;
+  let ny = fa.ny + (fb.ny - fa.ny) * u;
+  const nlen = Math.hypot(nx, ny) || 1;
+  nx /= nlen;
+  ny /= nlen;
+  // Tight bends: keep the offset inside the curve radius so stars stay on the line.
+  const radius = Math.min(fa.radius, fb.radius);
+  const limit = Number.isFinite(radius) ? Math.max(0.35, radius * 0.6) : Infinity;
+  const kept = Math.sign(offset) * Math.min(Math.abs(offset), limit);
+  return {
+    x: a.x + (b.x - a.x) * u + nx * kept,
+    y: a.y + (b.y - a.y) * u + ny * kept,
+    z: (path.z[i] ?? 0) * (1 - u) + (path.z[i + 1] ?? 0) * u,
+  };
+}
+
+/**
+ * 0 at a path's spawn point and at its meeting point, 1 in between: stars
+ * grow in after they spawn and shrink away into the meeting point.
+ */
+function streamEnvelope(path: FlowPath, s: number) {
+  return smoothstep(s / SPAWN_FADE) * smoothstep((path.length - s) / MEET_FADE);
 }
 
 function toWorld(x: number, y: number, z: number) {
@@ -461,16 +447,16 @@ function starLook(kind: "ribbon" | "dust"): Look {
   const roll = Math.random();
   if (roll < fine) {
     // Small, but bright enough to stay visible next to the big stars.
-    return { tier: "fine", size: between(1.3, 2), glow: 0.3, color: paletteColor(), brightness: between(0.55, 0.8) };
+    return { tier: "fine", size: between(1.3, 2.1), glow: 0.3, color: paletteColor(), brightness: between(0.65, 0.9) };
   }
   if (roll < fine + ambient) {
     return { tier: "ambient", size: between(2.4, 3.8), glow: 0.55, color: paletteColor(), brightness: between(0.65, 0.9) };
   }
   const warm = Math.random() < 0.2;
   if (Math.random() < HERO_SHARE) {
-    return { tier: "flare", size: between(9, 13), glow: 1, color: warm ? 0xffc9a0 : 0xcfe4ff, brightness: 1.05 };
+    return { tier: "flare", size: between(6.5, 9.5), glow: 1, color: warm ? 0xffc9a0 : 0xcfe4ff, brightness: 1 };
   }
-  return { tier: "flare", size: between(5, 7.5), glow: 0.9, color: warm ? 0xffbb8a : 0xbcdcff, brightness: 0.95 };
+  return { tier: "flare", size: between(4, 6), glow: 0.9, color: warm ? 0xffbb8a : 0xbcdcff, brightness: 0.95 };
 }
 
 /** Mist stars fade with distance from the centre line, but never below 35%. */
@@ -506,15 +492,16 @@ function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
   };
 }
 
-function makeRibbon(routeLength: number): RibbonStar {
+function makeRibbon(path: number, length: number): RibbonStar {
   const look = starLook("ribbon");
   return {
     ...starBase("ribbon", sprayPoint(Math.random() < 0.5 ? -1 : 1)),
     ...look,
     kind: "ribbon",
     outer: starLook("dust"),
-    t: Math.random(),
-    speed: (FLOW_UNITS / routeLength) * (0.97 + Math.random() * 0.06),
+    path,
+    s: Math.random() * length,
+    speed: FLOW_UNITS * between(0.85, 1.15),
     ...ribbonSpread(look.tier),
   };
 }
@@ -572,24 +559,26 @@ export function AstraField() {
 
       const upperSpine = sampleSpine(upperWing, 880);
       const lowerSpine = sampleSpine(lowerArch, 1040);
-      const route = buildRoute(upperSpine, lowerSpine);
+      const paths = buildPaths(upperSpine, lowerSpine);
       const leftWord = wrap.querySelector("[data-astra-left]");
       const rightWord = wrap.querySelector("[data-astra-right]");
 
-      // One stream over the whole route (both ribbons plus the hidden hops).
-      const ribbonCount = Math.round(
-        Math.max(2200, Math.min(5200, (spineLength(upperSpine) + spineLength(lowerSpine)) * 2.9)),
-      );
+      // Stars per path follow its length, so every stream has the same density.
       const stars: Star[] = [];
-      for (let i = 0; i < ribbonCount; i++) stars.push(makeRibbon(route.length));
+      paths.forEach((path, index) => {
+        const count = Math.round(path.length * STARS_PER_UNIT);
+        for (let i = 0; i < count; i++) stars.push(makeRibbon(index, path.length));
+      });
       for (let i = 0; i < DUST_PER_SIDE; i++) stars.push(makeDust(-1));
       for (let i = 0; i < DUST_PER_SIDE; i++) stars.push(makeDust(1));
 
       const restPosition = (star: RibbonStar) => {
         const inPlane = star.offset * Math.cos(star.angle);
         const depth = star.offset * Math.sin(star.angle) * TUBE_DEPTH;
-        const point = pointOnSpine(route.points, route.frames, star.t, inPlane);
-        return toWorld(point.x, point.y, sampleAt(route.z, star.t) + depth + star.z);
+        const path = paths[star.path];
+        if (!path) return [0, 0, 0] as const;
+        const point = pointOnPath(path, star.s, inPlane);
+        return toWorld(point.x, point.y, point.z + depth + star.z);
       };
 
       const renderer = new THREE.WebGLRenderer({
@@ -852,9 +841,11 @@ export function AstraField() {
             : smoothstep((scroll - star.delay * GATHER_STAGGER) / GATHER_SPAN);
 
           if (star.kind === "ribbon") {
-            if (flow > 0) {
-              star.t += star.speed * dt * flow;
-              if (star.t >= 1) star.t -= 1;
+            const path = paths[star.path];
+            if (flow > 0 && path) {
+              // Past the meeting point the star respawns at the path's start.
+              star.s += star.speed * dt * flow;
+              if (star.s >= path.length) star.s -= path.length;
             }
             const [tx, ty, tz] = restPosition(star);
             settled.set(tx, ty, tz);
@@ -880,11 +871,17 @@ export function AstraField() {
             }
             if (land < 0.5) tier = outer.tier;
             alpha *= 1 - land * (1 - spineFade(star.offset));
-            // Approaching a crossing, a star shrinks and fades out; it passes
-            // through hidden and grows back in on the other ribbon.
-            const pass = sampleAt(route.vis, star.t);
-            size *= 1 - land * (1 - (0.2 + 0.8 * pass));
-            alpha *= 1 - land * (1 - pass * pass);
+            // Once the stream flows, a star grows in after it spawns and shrinks
+            // away as it reaches its path's meeting point. Before that (and with
+            // reduced motion) the whole mark stays fully drawn.
+            const path = paths[star.path];
+            const envelope = path ? streamEnvelope(path, star.s) : 1;
+            const stream = land * flow;
+            // Size follows the whole envelope; brightness holds until the last
+            // stretch, so a star visibly shrinks first, then vanishes at the point.
+            const fadeOut = smoothstep(envelope / 0.4);
+            size *= 1 - stream * (1 - (MEET_MIN_SCALE + (1 - MEET_MIN_SCALE) * envelope));
+            alpha *= 1 - stream * (1 - fadeOut);
           }
           const fine = tier === "fine";
           const flare = tier === "flare";
@@ -1053,13 +1050,13 @@ export function AstraField() {
         />
         <p
           data-astra-left
-          className="pointer-events-none absolute top-1/2 left-1/2 z-10 -translate-x-[112%] -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:left-[15%] md:translate-x-0 md:text-6xl"
+          className="pointer-events-none absolute top-[24%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-[15%] md:translate-x-0 md:text-6xl"
         >
           Bridge
         </p>
         <p
           data-astra-right
-          className="pointer-events-none absolute top-1/2 left-1/2 z-10 translate-x-[12%] -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:left-auto md:right-[15%] md:translate-x-0 md:text-6xl"
+          className="pointer-events-none absolute top-[76%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-auto md:right-[15%] md:translate-x-0 md:text-6xl"
         >
           Wide
         </p>
