@@ -133,7 +133,7 @@ Every change ships the same way, and you only do step 1:
    git commit -am "fix: handle empty region"
    git push -u origin fix/empty-region
    ```
-2. **Auto PR → `dev`:** a pull request into `dev` opens (or updates on later pushes), labelled by prefix, with auto-merge on. CI runs and posts a checks-summary comment. When **CI passed** is green, the PR is squash-merged and `branch-housekeeping.yml` deletes the work branch. A branch whose changes are already in `dev` gets no PR.
+2. **Auto PR → `dev`:** a pull request into `dev` opens (or updates on later pushes), labelled by prefix, with auto-merge on. CI runs and posts a checks-summary comment. When **CI passed** is green, the PR is merged with a merge commit (the branch joins `dev` in the history graph) and `branch-housekeeping.yml` deletes the work branch. A branch whose changes are already in `dev` gets no PR.
 3. **Auto release → `main`:** the merge into `dev` opens (or updates) one **Release: dev → main** pull request listing everything not yet on `main`. CI runs again, and when it passes the release merges with a merge commit.
 4. **Deploy:** the push to `main` builds the static site and publishes it to https://www.bridgewide.org.
 
@@ -141,7 +141,7 @@ If CI fails at step 2 or 3, nothing merges. Push a fix to the same branch: the P
 
 | Workflow | Runs on | What it does |
 | --- | --- | --- |
-| `auto-pr.yml` | Push to a work branch (`fix/*`, `feat/*`, ...) | Opens or updates the PR into `dev`, labels it, turns on auto-merge (squash) |
+| `auto-pr.yml` | Push to a work branch (`fix/*`, `feat/*`, ...) | Opens or updates the PR into `dev`, labels it, turns on auto-merge (merge commit) |
 | `ci.yml` | PRs into `dev` or `main`, pushes to `dev` | Lint, type check, server and static builds. The final **CI passed** job is the single required check and posts the checks-summary comment |
 | `release.yml` | Push to `dev` | Opens or updates the `dev` → `main` release PR, turns on auto-merge (merge commit) |
 | `branch-housekeeping.yml` | PR merged into `dev`, push to `main` | Deletes merged work branches; recreates `dev` from `main` if it is ever missing |
@@ -169,8 +169,8 @@ npm run lint && npm run typecheck && npm run build
    - **Secrets** tab: `BOT_APP_PRIVATE_KEY` = the full contents of the downloaded `.pem` file.
 
    The bot token is needed because pull requests opened with the default `GITHUB_TOKEN` don't trigger CI, so auto-merge would wait forever.
-3. **Repository settings.** In **Settings → General → Pull Requests**, tick **Allow merge commits**, **Allow squash merging** and **Allow auto-merge**. Leave **Automatically delete head branches** **off**. Every release PR's source branch is `dev`, so that setting deletes `dev` after each release. `branch-housekeeping.yml` deletes merged work branches instead.
-4. **Branch rulesets.** In **Settings → Rules → Rulesets → New ruleset → Import a ruleset**, import `.github/rulesets/dev.json`, then `.github/rulesets/main.json`. Both require a pull request and the **CI passed** check and block force pushes and deletion. The deletion block matters: **Automatically delete head branches** would otherwise delete `dev` after every release PR, because `dev` is that PR's head branch. If `dev` ever goes missing, the next work-branch push recreates it from `main`. `dev` allows squash merges only, `main` merge commits only. Run CI once (any PR) before importing, so GitHub knows the **CI passed** check name.
+3. **Repository settings.** In **Settings → General → Pull Requests**, tick **Allow merge commits** and **Allow auto-merge** (squash merging is not used). Leave **Automatically delete head branches** **off**. Every release PR's source branch is `dev`, so that setting deletes `dev` after each release. `branch-housekeeping.yml` deletes merged work branches instead.
+4. **Branch rulesets.** In **Settings → Rules → Rulesets → New ruleset → Import a ruleset**, import `.github/rulesets/dev.json`, then `.github/rulesets/main.json`. Both require a pull request and the **CI passed** check and block force pushes and deletion. The deletion block matters: **Automatically delete head branches** would otherwise delete `dev` after every release PR, because `dev` is that PR's head branch. If `dev` ever goes missing, the next work-branch push recreates it from `main`. Both allow merge commits only, so every PR shows as a branch joining its target. Run CI once (any PR) before importing, so GitHub knows the **CI passed** check name.
 5. **Pages.** In **Settings → Pages**: Source **GitHub Actions**, custom domain `www.bridgewide.org`, **Enforce HTTPS** on. Under **Settings → Environments → github-pages**, make sure `main` is allowed to deploy.
 
 ## Performance and CDN

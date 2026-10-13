@@ -6,7 +6,7 @@
 # it, and the push to `main` runs nextjs.yml, which deploys
 # www.bridgewide.org.
 #
-# A merge commit (not squash) keeps dev's commits on main, so dev and main
+# A merge commit keeps dev's commits on main, so dev and main
 # never drift apart. To pause releases, disable auto-merge on the open
 # Release PR, or disable this workflow under Actions.
 name: Release dev to main
