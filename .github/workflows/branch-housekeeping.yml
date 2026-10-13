@@ -1,0 +1,61 @@
+# Keeps the long-lived branches in place and cleans up work branches.
+#
+# Turn OFF Settings -> General -> "Automatically delete head branches".
+# That setting deletes a PR's source branch when it merges, and every release
+# PR's source branch is `dev`, so it deleted dev after each release. This
+# workflow deletes only merged work branches (fix/*, feat/*, ...) instead.
+name: Branch housekeeping
+
+on:
+  pull_request:
+    types: [closed]
+    branches: ["dev"]
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: write
+
+jobs:
+  delete-merged-work-branch:
+    name: Delete merged work branch
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref != 'dev' &&
+      github.event.pull_request.head.ref != 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Delete the branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$BRANCH" 2>/dev/null; then
+            echo "Deleted $BRANCH."
+          else
+            echo "$BRANCH was already deleted."
+          fi
+
+  ensure-dev:
+    name: Make sure dev exists
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Safety net: if dev was deleted anyway (for example, the setting above
+      # is still on), recreate it from main right after the release lands.
+      # GITHUB_TOKEN is used on purpose: creating the branch with it does not
+      # start CI or another release run.
+      - name: Recreate dev from main if it is missing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/dev" >/dev/null 2>&1; then
+            echo "dev exists."
+          else
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref=refs/heads/dev -f sha="$GITHUB_SHA" >/dev/null
+            echo "::warning::dev was missing. Recreated it from main ($GITHUB_SHA). Turn off 'Automatically delete head branches' in Settings -> General."
+          fi
