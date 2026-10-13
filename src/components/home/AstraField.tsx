@@ -18,8 +18,10 @@ const [upperWing, lowerArch] = markPaths;
 
 /** Previous upper path midpoint was 0.071. Both ribbons share one third of that. */
 const FLOW_SPEED = 0.071 / 3;
-const TWINKLE = 0.45;
-const FLARE_TWINKLE = 0.2;
+/** Twinkle never takes a star below 1 - depth of its brightness, so lines never drop out. */
+const TWINKLE = 0.22;
+const FLARE_TWINKLE = 0.12;
+const FINE_TWINKLE = 0.1;
 /** Ribbon stars wear the outer-spray look until this far into their gather, then take their ribbon look. */
 const LAND_START = 0.75;
 const GATHER_STAGGER = 0.22;
@@ -43,14 +45,30 @@ const WORD_FEATHER = 0.06;
 const WORD_PAD_PX = 32;
 /** Share of fine and ambient stars; the rest are flares. Dust has no flares. */
 const DUST_TIERS = [0.85, 0.15] as const;
-/** Ribbon: 60% 1px dust, 30% 3px cyan, 10% 8–12px flares. */
-const RIBBON_TIERS = [0.6, 0.3] as const;
-const FINE_COLOR = 0xffffff;
-const ICE_COLOR = 0xaee6ff;
-const AMBER_COLOR = 0xffa366;
-const FLARE_COLOR = 0xffffff;
+/**
+ * Ribbon: 48% fine, 38% ambient, 14% bright; a quarter of the bright ones are
+ * large "hero" stars. A wide size range with no invisible specks is what makes
+ * the line read as a glowing ribbon instead of a string of equal beads.
+ */
+const RIBBON_TIERS = [0.48, 0.38] as const;
+const HERO_SHARE = 0.25;
+/** Star palette: cool blue-white majority with warm accents. Weights sum to 1. */
+const PALETTE = [
+  { color: 0xc4dcff, weight: 0.38 }, // blue-white
+  { color: 0xf2f6ff, weight: 0.17 }, // white
+  { color: 0x8fcdff, weight: 0.22 }, // ice
+  { color: 0xffbf8f, weight: 0.13 }, // peach
+  { color: 0xff8a45, weight: 0.1 }, // amber
+] as const;
+const DUST_COLOR = 0xc9dcff;
+const BACKGROUND = 0x03060c;
+/** Bloom merges neighbouring stars into one glowing ribbon. */
+const BLOOM_STRENGTH = 0.55;
+const BLOOM_RADIUS = 0.35;
+/** Only star centres bloom; faint stars and the sky stay crisp and dark. */
+const BLOOM_THRESHOLD = 0.6;
 /** Stroke width in mark units. Core is 20% of this; mist reaches 120%. */
-const STROKE_WIDTH = 6;
+const STROKE_WIDTH = 7.5;
 const CORE_WIDTH = STROKE_WIDTH * 0.2;
 const MIST_WIDTH = STROKE_WIDTH * 1.2;
 
@@ -59,7 +77,6 @@ attribute float size;
 attribute float glow;
 attribute float alpha;
 uniform float uPixelRatio;
-uniform float uDepth;
 varying vec3 vColor;
 varying float vGlow;
 varying float vAlpha;
@@ -73,8 +90,8 @@ void main() {
   vGlow = glow;
   vAlpha = alpha;
   vSize = max(size * uPixelRatio, 1.0);
-  // Halo must reach past the core so neighbours add into one beam.
-  vQuad = max(vSize, mix(2.5, 10.0, vGlow) * uPixelRatio);
+  // The halo scales with the star, so large stars carry large soft glows.
+  vQuad = max(vSize * mix(2.0, 4.2, vGlow), 4.0 * uPixelRatio);
   gl_PointSize = vQuad;
 }
 `;
@@ -89,29 +106,24 @@ varying float vQuad;
 
 void main() {
   float d = length(gl_PointCoord - 0.5) * vQuad;
-  if (d > vQuad * 0.5) discard;
-  float css = d / uPixelRatio;
-  float sizeCss = vSize / uPixelRatio;
-  float hero = step(0.8, vGlow);
-  float coreCss = mix(
-    clamp(sizeCss * 0.45, 0.4, 1.4),
-    clamp(sizeCss * 0.35, 2.0, 5.0),
-    hero
-  );
-  // Under one device pixel the core aliases as it moves, so widen it and keep its energy.
-  float coreWidth = max(coreCss, 1.0 / uPixelRatio);
-  float c = css / coreWidth;
-  float core = (coreCss * coreCss) / (coreWidth * coreWidth) * exp(-2.0 * c * c);
-  float r = min(d / (vQuad * 0.5), 1.0);
-  float edge = 1.0 - r * r;
-  float halo = (0.35 + vGlow) * exp(-mix(2.2, 1.45, hero) * r) * edge * edge;
-  vec3 hot = vec3(1.0);
-  gl_FragColor = vec4((hot * core + vColor * halo) * vAlpha, 1.0);
+  float r = d / (vQuad * 0.5);
+  if (r > 1.0) discard;
+  // Gaussian core about the star's own size; at least one device pixel wide so
+  // small stars do not shimmer as they move.
+  float coreRadius = max(vSize * 0.5, 1.0);
+  float core = exp(-2.2 * (d / coreRadius) * (d / coreRadius));
+  // Soft halo that fades to exactly zero at the quad edge (no hard rim).
+  float halo = vGlow * 0.3 * exp(-6.0 * r * r) * (1.0 - smoothstep(0.5, 1.0, r));
+  // Keep the star's colour in the core, warmed toward white at the centre.
+  vec3 coreColor = mix(vColor, vec3(1.0), 0.18 * core);
+  gl_FragColor = vec4((coreColor * core + vColor * halo) * vAlpha, 1.0);
 }
 `;
 
 type Sample = { x: number; y: number };
 type Spine = Sample[];
+/** Per-sample smoothed normal and local radius of curvature (mark units). */
+type Frame = { nx: number; ny: number; radius: number };
 type Spray = { nx: number; ny: number; z: number };
 type Tier = "fine" | "ambient" | "flare";
 type Look = {
@@ -197,7 +209,34 @@ function spineLength(spine: Spine) {
   return length;
 }
 
-function pointOnSpine(spine: Spine, t: number, offset: number) {
+/**
+ * Normals from a tangent averaged over a window of samples, plus the local
+ * radius of curvature. A per-segment normal flips at the mark's sharp folds
+ * (the nose beside "Wide"), which flung offset stars off the line and left a
+ * faint gap there.
+ */
+function spineFrames(spine: Spine, window = 6): Frame[] {
+  const n = spine.length;
+  const at = (i: number) => spine[((i % n) + n) % n] ?? { x: 0, y: 0 };
+  return spine.map((_, i) => {
+    const prev = at(i - window);
+    const here = at(i);
+    const next = at(i + window);
+    const tx = next.x - prev.x;
+    const ty = next.y - prev.y;
+    const len = Math.hypot(tx, ty) || 1;
+    const ax = here.x - prev.x;
+    const ay = here.y - prev.y;
+    const bx = next.x - here.x;
+    const by = next.y - here.y;
+    const turn = Math.abs(Math.atan2(ax * by - ay * bx, ax * bx + ay * by));
+    const chord = Math.hypot(next.x - prev.x, next.y - prev.y);
+    const radius = turn > 1e-3 ? chord / (2 * Math.sin(turn / 2)) : Infinity;
+    return { nx: -ty / len, ny: tx / len, radius };
+  });
+}
+
+function pointOnSpine(spine: Spine, frames: Frame[], t: number, offset: number) {
   const n = spine.length;
   const wrapped = ((t % 1) + 1) % 1;
   const f = wrapped * n;
@@ -205,15 +244,21 @@ function pointOnSpine(spine: Spine, t: number, offset: number) {
   const u = f - Math.floor(f);
   const a = spine[i];
   const b = spine[(i + 1) % n];
-  if (!a || !b) return { x: 84, y: 50 };
-  const tx = b.x - a.x;
-  const ty = b.y - a.y;
-  const len = Math.hypot(tx, ty) || 1;
-  const nx = -ty / len;
-  const ny = tx / len;
+  const fa = frames[i];
+  const fb = frames[(i + 1) % n];
+  if (!a || !b || !fa || !fb) return { x: 84, y: 50 };
+  let nx = fa.nx + (fb.nx - fa.nx) * u;
+  let ny = fa.ny + (fb.ny - fa.ny) * u;
+  const nlen = Math.hypot(nx, ny) || 1;
+  nx /= nlen;
+  ny /= nlen;
+  // Tight bends: keep the offset inside the curve radius so stars stay on the line.
+  const radius = Math.min(fa.radius, fb.radius);
+  const limit = Number.isFinite(radius) ? Math.max(0.35, radius * 0.6) : Infinity;
+  const kept = Math.sign(offset) * Math.min(Math.abs(offset), limit);
   return {
-    x: a.x + tx * u + nx * offset,
-    y: a.y + ty * u + ny * offset,
+    x: a.x + (b.x - a.x) * u + nx * kept,
+    y: a.y + (b.y - a.y) * u + ny * kept,
   };
 }
 
@@ -252,42 +297,54 @@ function gaussian(sigma: number) {
   return sigma * Math.sqrt(-2 * Math.log(u)) * Math.cos(Math.PI * 2 * Math.random());
 }
 
+function paletteColor() {
+  let roll = Math.random();
+  for (const entry of PALETTE) {
+    roll -= entry.weight;
+    if (roll <= 0) return entry.color;
+  }
+  return PALETTE[0].color;
+}
+
 function starLook(kind: "ribbon" | "dust"): Look {
-  const dust = kind === "dust";
-  const [fine, ambient] = dust ? DUST_TIERS : RIBBON_TIERS;
+  if (kind === "dust") {
+    const [fine] = DUST_TIERS;
+    if (Math.random() < fine) {
+      return {
+        tier: "fine",
+        size: between(0.9, 1.6),
+        glow: 0.15,
+        color: DUST_COLOR,
+        brightness: between(0.3, 0.6),
+      };
+    }
+    return {
+      tier: "ambient",
+      size: between(1.8, 2.6),
+      glow: 0.35,
+      color: Math.random() < 0.2 ? 0xffd2b0 : DUST_COLOR,
+      brightness: between(0.45, 0.7),
+    };
+  }
+  const [fine, ambient] = RIBBON_TIERS;
   const roll = Math.random();
   if (roll < fine) {
-    return {
-      tier: "fine" as const,
-      size: between(0.8, 1.5),
-      glow: dust ? 0 : 0.45,
-      color: FINE_COLOR,
-      brightness: dust ? between(0.35, 0.65) : between(0.28, 0.48),
-    };
+    // Small, but bright enough to stay visible next to the big stars.
+    return { tier: "fine", size: between(1.3, 2), glow: 0.3, color: paletteColor(), brightness: between(0.55, 0.8) };
   }
-  if (dust || roll < fine + ambient) {
-    return {
-      tier: "ambient" as const,
-      size: dust ? between(2, 3) : between(2.5, 4.5),
-      glow: dust ? 0.3 : 0.8,
-      color: ICE_COLOR,
-      brightness: dust ? between(0.4, 0.6) : between(0.85, 1),
-    };
+  if (roll < fine + ambient) {
+    return { tier: "ambient", size: between(2.4, 3.8), glow: 0.55, color: paletteColor(), brightness: between(0.65, 0.9) };
   }
-  return { tier: "flare" as const, size: between(8, 12), glow: 1, color: FLARE_COLOR, brightness: 1 };
+  const warm = Math.random() < 0.2;
+  if (Math.random() < HERO_SHARE) {
+    return { tier: "flare", size: between(9, 13), glow: 1, color: warm ? 0xffc9a0 : 0xcfe4ff, brightness: 1.05 };
+  }
+  return { tier: "flare", size: between(5, 7.5), glow: 0.9, color: warm ? 0xffbb8a : 0xbcdcff, brightness: 0.95 };
 }
 
-/** White 60% / icy cyan 30% / amber 10% of the ribbon, with amber on the stroke fringe. */
-function paintRibbon(look: Look): Look {
-  if (look.tier === "flare") return { ...look, color: FLARE_COLOR };
-  const paint = Math.random();
-  if (paint < 0.556) return { ...look, color: FINE_COLOR };
-  if (paint < 0.889) return { ...look, color: ICE_COLOR };
-  return { ...look, color: AMBER_COLOR, glow: Math.max(look.glow, 0.55) };
-}
-
+/** Mist stars fade with distance from the centre line, but never below 35%. */
 function spineFade(offset: number) {
-  return clamp01(1 - Math.abs(offset) / MIST_WIDTH) ** 1.35;
+  return 0.35 + 0.65 * clamp01(1 - Math.abs(offset) / MIST_WIDTH) ** 1.35;
 }
 
 function signedWidth(max: number, sigma: number) {
@@ -296,9 +353,8 @@ function signedWidth(max: number, sigma: number) {
 }
 
 /** Gaussian scatter: ~65% on the core (0–20% width), 35% of dust/ice out to 120%. */
-function ribbonSpread(tier: Tier, color: number) {
-  const mist =
-    tier !== "flare" && (color === AMBER_COLOR || Math.random() < 0.3125);
+function ribbonSpread(tier: Tier) {
+  const mist = tier === "fine" ? Math.random() < 0.45 : tier === "ambient" && Math.random() < 0.2;
   if (mist) {
     const side = Math.random() < 0.5 ? -1 : 1;
     const span = MIST_WIDTH - CORE_WIDTH;
@@ -320,7 +376,7 @@ function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
 }
 
 function makeRibbon(spine: 0 | 1): RibbonStar {
-  const look = paintRibbon(starLook("ribbon"));
+  const look = starLook("ribbon");
   return {
     ...starBase("ribbon", sprayPoint(Math.random() < 0.5 ? -1 : 1)),
     ...look,
@@ -329,7 +385,7 @@ function makeRibbon(spine: 0 | 1): RibbonStar {
     spine,
     t: Math.random(),
     speed: FLOW_SPEED * (0.97 + Math.random() * 0.06),
-    ...ribbonSpread(look.tier, look.color),
+    ...ribbonSpread(look.tier),
   };
 }
 
@@ -375,18 +431,26 @@ export function AstraField() {
     let alive = true;
     let cleanup = () => {};
 
-    void import("three").then((THREE) => {
+    void Promise.all([
+      import("three"),
+      import("three/examples/jsm/postprocessing/EffectComposer.js"),
+      import("three/examples/jsm/postprocessing/RenderPass.js"),
+      import("three/examples/jsm/postprocessing/UnrealBloomPass.js"),
+      import("three/examples/jsm/postprocessing/OutputPass.js"),
+    ]).then(([THREE, { EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }]) => {
       if (!alive) return;
 
       const upperSpine = sampleSpine(upperWing, 880);
       const lowerSpine = sampleSpine(lowerArch, 1040);
       const spines = [upperSpine, lowerSpine];
+      const frames = spines.map((spine) => spineFrames(spine));
       const leftWord = wrap.querySelector("[data-astra-left]");
       const rightWord = wrap.querySelector("[data-astra-right]");
 
+      // Fewer, larger stars than before: bloom fills the line between them.
       const counts = [
-        Math.round(Math.max(1600, Math.min(3600, spineLength(upperSpine) * 4))),
-        Math.round(Math.max(1800, Math.min(4000, spineLength(lowerSpine) * 4))),
+        Math.round(Math.max(1000, Math.min(2200, spineLength(upperSpine) * 2.5))),
+        Math.round(Math.max(1100, Math.min(2500, spineLength(lowerSpine) * 2.5))),
       ];
       const stars: Star[] = [];
       for (let i = 0; i < (counts[0] ?? 640); i++) stars.push(makeRibbon(0));
@@ -396,8 +460,9 @@ export function AstraField() {
 
       const restPosition = (star: RibbonStar) => {
         const spine = spines[star.spine];
-        if (!spine) return [0, 0, 0] as const;
-        const point = pointOnSpine(spine, star.t, star.offset);
+        const frame = frames[star.spine];
+        if (!spine || !frame) return [0, 0, 0] as const;
+        const point = pointOnSpine(spine, frame, star.t, star.offset);
         return toWorld(point.x, point.y, star.z);
       };
 
@@ -407,8 +472,11 @@ export function AstraField() {
         alpha: false,
         powerPreference: "high-performance",
       });
-      renderer.setClearColor(0x050505, 1);
+      renderer.setClearColor(BACKGROUND, 1);
       renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+      // Filmic tone mapping rolls overlapping stars off softly instead of clipping to flat white.
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1;
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 80);
@@ -459,7 +527,6 @@ export function AstraField() {
 
       const uniforms = {
         uPixelRatio: { value: 1 },
-        uDepth: { value: 1 },
       };
       const material = new THREE.ShaderMaterial({
         uniforms,
@@ -474,6 +541,23 @@ export function AstraField() {
       const points = new THREE.Points(geometry, material);
       points.frustumCulled = false;
       group.add(points);
+
+      // Stars render into a half-float target so additive overlaps keep their
+      // range; bloom then spreads the brightest light, and OutputPass applies
+      // tone mapping.
+      const composer = new EffectComposer(
+        renderer,
+        new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType }),
+      );
+      const bloom = new UnrealBloomPass(
+        new THREE.Vector2(1, 1),
+        BLOOM_STRENGTH,
+        BLOOM_RADIUS,
+        BLOOM_THRESHOLD,
+      );
+      composer.addPass(new RenderPass(scene, camera));
+      composer.addPass(bloom);
+      composer.addPass(new OutputPass());
 
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
       const local = new THREE.Vector3();
@@ -535,7 +619,10 @@ export function AstraField() {
         }
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
         renderer.setSize(stageWidth, stageHeight, false);
-        uniforms.uDepth.value = distance;
+        composer.setPixelRatio(renderer.getPixelRatio());
+        composer.setSize(stageWidth, stageHeight);
+        // Smaller stages get a lighter bloom so the mark does not wash out.
+        bloom.strength = BLOOM_STRENGTH * clamp(markPx / MARK_PX, 0.6, 1);
         uniforms.uPixelRatio.value = renderer.getPixelRatio();
         sizeScale = Math.sqrt(markPx / MARK_PX);
       };
@@ -674,8 +761,8 @@ export function AstraField() {
             y = sprayed.y + (y - sprayed.y) * gather;
             z = sprayed.z + (z - sprayed.z) * gather;
           }
-          if (flow > 0 && !fine) {
-            const depth = flare ? FLARE_TWINKLE : TWINKLE;
+          if (flow > 0) {
+            const depth = flare ? FLARE_TWINKLE : fine ? FINE_TWINKLE : TWINKLE;
             alpha *= 1 - depth * flow * (0.5 + 0.5 * Math.sin(time * star.rate + star.phase));
           }
 
@@ -739,7 +826,7 @@ export function AstraField() {
         alphaAttr.needsUpdate = true;
         colorAttr.needsUpdate = true;
 
-        renderer.render(scene, camera);
+        composer.render(dt);
         if (running) frame = requestAnimationFrame(draw);
       };
 
@@ -766,6 +853,8 @@ export function AstraField() {
         observer.disconnect();
         geometry.dispose();
         material.dispose();
+        bloom.dispose();
+        composer.dispose();
         renderer.dispose();
       };
     });
@@ -779,12 +868,12 @@ export function AstraField() {
   return (
     <section
       ref={trackRef}
-      className="relative z-10 h-[220vh] bg-[#050505]"
+      className="relative z-10 h-[220vh] bg-[#03060c]"
       aria-label="BridgeWide mark between the words Bridge and Wide. Drag to turn the mark."
     >
       <div
         ref={wrapRef}
-        className="sticky top-0 h-[100svh] min-h-[36rem] cursor-grab touch-pan-y overflow-hidden bg-[#050505] text-white select-none active:cursor-grabbing"
+        className="sticky top-0 h-[100svh] min-h-[36rem] cursor-grab touch-pan-y overflow-hidden bg-[#03060c] text-white select-none active:cursor-grabbing"
         onPointerDown={(event) => {
           if (event.pointerType === "mouse" && event.button !== 0) return;
           const rect = event.currentTarget.getBoundingClientRect();
@@ -825,6 +914,10 @@ export function AstraField() {
         }}
       >
         <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.55)_100%)]"
+        />
         <p
           data-astra-left
           className="pointer-events-none absolute top-1/2 left-1/2 z-10 -translate-x-[112%] -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:left-[15%] md:translate-x-0 md:text-6xl"
