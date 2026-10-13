@@ -37,9 +37,11 @@ jobs:
           client-id: ${{ vars.BOT_APP_CLIENT_ID || vars.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
 
+      # Check out the pushed commit, not the branch by name: release runs
+      # queue, and a queued run must not fail just because dev moved or was
+      # briefly missing when it started.
       - uses: actions/checkout@v7
         with:
-          ref: dev
           fetch-depth: 0
 
       - name: Open or update the release pull request
@@ -47,7 +49,11 @@ jobs:
           GH_TOKEN: ${{ steps.bot.outputs.token }}
         run: |
           set -euo pipefail
-          git fetch --quiet origin main
+          if ! git ls-remote --exit-code --heads origin dev >/dev/null; then
+            echo "::warning::dev does not exist right now, so there is nothing to release. branch-housekeeping.yml recreates it from main."
+            exit 0
+          fi
+          git fetch --quiet origin main dev
 
           # Commits on dev that main doesn't have yet, merge commits excluded.
           changes=$(git log --no-merges --reverse --format='- %s (%h)' origin/main..origin/dev)
