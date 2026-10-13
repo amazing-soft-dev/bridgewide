@@ -2,7 +2,8 @@
 #
 # Every push to a work branch (fix/*, feat/*, ...) opens a pull request into
 # `dev`, or updates the one already open, labels it by prefix, and turns on
-# auto-merge (squash). GitHub merges it as soon as the required "CI passed"
+# auto-merge with a merge commit, so the branch visibly joins dev in the
+# history graph. GitHub merges it as soon as the required "CI passed"
 # check is green; branch-housekeeping.yml then deletes the work branch.
 #
 # It uses the BridgeWide bot GitHub App token, not GITHUB_TOKEN: pull
@@ -67,7 +68,7 @@ jobs:
           git fetch --quiet origin "$BASE"
 
           # Skip when merging this branch would not change dev. Commit counts
-          # can't tell: after a squash merge the branch's own commits never
+          # can't always tell: after a squash merge (used before) the branch's commits never
           # appear in dev's history, so an already-merged branch still looks
           # "ahead" and would open an empty PR (that is how #16 and #18 happened).
           if merged=$(git merge-tree --write-tree "origin/$BASE" HEAD 2>/dev/null) \
@@ -95,7 +96,7 @@ jobs:
             "Automated pull request for \`$BRANCH\` → \`$BASE\`." \
             "### Commits" \
             "$commits")
-          body="$body"$'\n\n'"Merges automatically (squash) when **CI passed** is green. To hold it, run \`gh pr merge --disable-auto\` or click **Disable auto-merge**."
+          body="$body"$'\n\n'"Merges automatically (merge commit) when **CI passed** is green. To hold it, run \`gh pr merge --disable-auto\` or click **Disable auto-merge**."
 
           number=$(gh pr list --head "$BRANCH" --base "$BASE" --state open --json number --jq '.[0].number // empty')
           if [ -z "$number" ]; then
@@ -112,10 +113,10 @@ jobs:
           # Auto-merge waits for the required "CI passed" check. If the check
           # already passed, GitHub reports the PR as "clean" and refuses
           # auto-merge, so merge it directly instead.
-          if ! gh pr merge "$number" --auto --squash; then
+          if ! gh pr merge "$number" --auto --merge; then
             state=$(gh pr view "$number" --json mergeStateStatus --jq .mergeStateStatus)
             if [ "$state" = "CLEAN" ]; then
-              gh pr merge "$number" --squash
+              gh pr merge "$number" --merge
             else
               echo "::error::Could not enable auto-merge on PR #$number (merge state: $state). Check the branch ruleset and repository settings."
               exit 1
