@@ -90,7 +90,7 @@ jobs:
       - name: Check static export output
         if: matrix.target == 'static'
         run: |
-          for f in index.html 404.html sitemap.xml robots.txt apple-icon opengraph-image; do
+          for f in index.html 404.html sitemap.xml robots.txt favicon.ico favicon-16.png favicon-32.png apple-touch-icon.png icon-192.png icon-512.png manifest.webmanifest opengraph-image; do
             test -e "out/$f" || { echo "::error::out/$f is missing from the static export"; exit 1; }
           done
           if [ -d out/api ]; then

@@ -70,7 +70,7 @@ If any of the three is missing, the form APIs return a 500 that names the missin
 | `/contact` | Contact form |
 | `/privacy`, `/terms` | Placeholder legal pages |
 
-Dynamic routes prerender with `generateStaticParams`. The app also generates `sitemap.xml`, `robots.txt`, an Open Graph image, and app icons (`src/app/sitemap.ts`, `robots.ts`, `opengraph-image.tsx`, `apple-icon.tsx`).
+Dynamic routes prerender with `generateStaticParams`. The app also generates `sitemap.xml`, `robots.txt`, and an Open Graph image (`src/app/sitemap.ts`, `robots.ts`, `opengraph-image.tsx`). Tab, Apple, and home-screen icons are the uploaded files in `public/`, linked from the root metadata.
 
 ### Homepage sections
 
@@ -213,7 +213,7 @@ NEXT_OUTPUT=export NEXT_PUBLIC_SITE_URL=https://www.bridgewide.org npx next buil
 - `NEXT_OUTPUT=export` makes `next.config.ts` switch to `output: "export"`, set `basePath`, and use the custom image loader in `src/lib/static-image-loader.ts`.
 - `PAGES_BASE_PATH` is the sub-path the site is served from. It is empty for the custom domain. Only set it (repository variable `PAGES_BASE_PATH=/bridgewide`) if you serve the site from `https://<owner>.github.io/bridgewide` without a custom domain. A mismatch makes every script, stylesheet, font and image 404.
 - `NEXT_PUBLIC_SITE_URL` sets the canonical origin used in page metadata, `sitemap.xml` and `robots.txt` (default `https://www.bridgewide.org`; override with the repository variable `SITE_URL`).
-- Route files that produce files (`sitemap.ts`, `robots.ts`, `apple-icon.tsx`, `opengraph-image.tsx`) set `dynamic = "force-static"` so they prerender.
+- Route files that produce files (`sitemap.ts`, `robots.ts`, `opengraph-image.tsx`) set `dynamic = "force-static"` so they prerender. Icons are static files in `public/` (`favicon.ico`, `favicon-16.png`, `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, and `manifest.webmanifest`).
 - Pages has no server, so `/api/*` is left out of the export. On the static site the forms skip sending and tell visitors to email `michael.allen@bridgewide.org` instead.
 - Don't add `static_site_generator: next` back to the Pages step. It only patches `next.config.js`, so with this repo's `next.config.ts` it writes a second config that overrides ours.
 

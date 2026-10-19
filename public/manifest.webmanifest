@@ -1,0 +1,21 @@
+{
+  "name": "BridgeWide",
+  "short_name": "BridgeWide",
+  "description": "BridgeWide places software engineers for companies across the USA, Canada, LATAM, and Europe.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
