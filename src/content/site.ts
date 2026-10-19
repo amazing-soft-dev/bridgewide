@@ -206,7 +206,7 @@ export const organization = {
 } as const;
 
 export const contact: Contact = {
-  email: "bill@bridgewide.com",
+  email: "michael.allen@bridgewide.org",
   location: "San Francisco · remote desks in four regions",
 };
 

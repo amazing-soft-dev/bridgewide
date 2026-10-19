@@ -49,7 +49,7 @@ Copy `.env.example` to `.env.local`. Never commit real keys (`.env` and `.env*.l
 | Variable | Purpose |
 | --- | --- |
 | `RESEND_API_KEY` | API key from resend.com |
-| `CONTACT_TO_EMAIL` | Inbox that receives submissions (default `bill@bridgewide.com`) |
+| `CONTACT_TO_EMAIL` | Inbox that receives submissions (default `michael.allen@bridgewide.org`) |
 | `CONTACT_FROM_EMAIL` | Sender address. `onboarding@resend.dev` is Resend's sandbox sender and only delivers to the Resend account owner's address. Switch to a sender on a verified domain for production. |
 
 If any of the three is missing, the form APIs return a 500 that names the missing variable.
@@ -214,7 +214,7 @@ NEXT_OUTPUT=export NEXT_PUBLIC_SITE_URL=https://www.bridgewide.org npx next buil
 - `PAGES_BASE_PATH` is the sub-path the site is served from. It is empty for the custom domain. Only set it (repository variable `PAGES_BASE_PATH=/bridgewide`) if you serve the site from `https://<owner>.github.io/bridgewide` without a custom domain. A mismatch makes every script, stylesheet, font and image 404.
 - `NEXT_PUBLIC_SITE_URL` sets the canonical origin used in page metadata, `sitemap.xml` and `robots.txt` (default `https://www.bridgewide.org`; override with the repository variable `SITE_URL`).
 - Route files that produce files (`sitemap.ts`, `robots.ts`, `apple-icon.tsx`, `opengraph-image.tsx`) set `dynamic = "force-static"` so they prerender.
-- Pages has no server, so `/api/*` is left out of the export. On the static site the forms skip sending and tell visitors to email `bill@bridgewide.com` instead.
+- Pages has no server, so `/api/*` is left out of the export. On the static site the forms skip sending and tell visitors to email `michael.allen@bridgewide.org` instead.
 - Don't add `static_site_generator: next` back to the Pages step. It only patches `next.config.js`, so with this repo's `next.config.ts` it writes a second config that overrides ours.
 
 In the repo settings, set **Pages → Source** to **GitHub Actions**, set the custom domain to `www.bridgewide.org`, and turn on **Enforce HTTPS**.
