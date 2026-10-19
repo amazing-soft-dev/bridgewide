@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Geist, IBM_Plex_Mono } from "next/font/google";
+import { ProductionInsights } from "@/components/analytics/ProductionInsights";
 import { siteUrl } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { siteGraph } from "@/lib/structured-data";
@@ -8,6 +9,10 @@ import { FooterMark } from "@/components/site/FooterMark";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import "./globals.css";
+
+/** Production Vercel only. Preview, local, and the GitHub Pages export stay quiet. */
+const productionInsights =
+  process.env.VERCEL_ENV === "production" && process.env.NEXT_OUTPUT !== "export";
 
 const geist = Geist({
   variable: "--font-geist",
@@ -63,6 +68,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main className="flex-1">{children}</main>
         <SiteFooter />
         <FooterMark />
+        {productionInsights ? <ProductionInsights /> : null}
       </body>
     </html>
   );
