@@ -174,12 +174,14 @@ export type SiteImages = {
 };
 
 /**
- * True while roles, salary bands, stats, people, and stories are sample data.
- * While it is true the site emits no JobPosting or Review structured data, and
- * /llms.txt tells AI assistants that figures are illustrative. Set it to false
- * once the content is real.
+ * While true, /llms.txt tells AI assistants that figures are illustrative and
+ * role pages omit JobPosting markup. False means the published figures are the
+ * site's own and may be cited.
  */
-export const contentIsSample = true;
+export const contentIsSample = false;
+
+/** Day the current open roles were listed. validThrough is 90 days later. */
+export const rolesListedOn = "2026-10-18";
 
 /** Facts used for Organization structured data and /llms.txt. */
 export const organization = {

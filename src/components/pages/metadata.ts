@@ -15,6 +15,7 @@ export function pageMetadata({
   path,
   type = "website",
   publishedTime,
+  robots,
 }: {
   title: string;
   description: string;
@@ -22,6 +23,7 @@ export function pageMetadata({
   type?: "website" | "article";
   /** ISO date; added to Open Graph for articles. */
   publishedTime?: string;
+  robots?: Metadata["robots"];
 }): Metadata {
   const url = new URL(path, siteUrl).toString();
 
@@ -47,5 +49,6 @@ export function pageMetadata({
       title,
       description,
     },
+    ...(robots ? { robots } : {}),
   };
 }

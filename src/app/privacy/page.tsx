@@ -7,6 +7,7 @@ export const metadata = pageMetadata({
   title: "Privacy · BridgeWide",
   description: "Placeholder privacy note for BridgeWide. This page is not legal advice.",
   path: "/privacy",
+  robots: { index: false, follow: true },
 });
 
 export default function PrivacyPage() {

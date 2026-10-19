@@ -7,7 +7,7 @@ import { pageMetadata } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/Button";
 import { getRole, roles } from "@/content/site";
-import { breadcrumbs } from "@/lib/structured-data";
+import { breadcrumbs, jobPosting } from "@/lib/structured-data";
 
 export const dynamicParams = false;
 
@@ -50,6 +50,7 @@ export default async function RolePage({ params }: { params: Promise<{ slug: str
           { name: role.title, path: `/roles/${role.slug}` },
         ])}
       />
+      <JsonLd data={jobPosting(role)} />
       <PageHero
         eyebrow={`${region.code} · ${role.city}`}
         title={role.title}

@@ -6,9 +6,12 @@ import {
   insights,
   organization,
   regions,
+  roles,
+  salaryBands,
   stories,
   week,
 } from "@/content/site";
+import { regionFor, formatUsd } from "@/components/pages/format";
 
 // Prerender at build time so this also works in the static export.
 export const dynamic = "force-static";
@@ -53,10 +56,26 @@ export function GET() {
     `- [For employers](${url("/employers")}): How a company hires with BridgeWide, the five-day process, fees, and the hiring brief form.`,
     `- [For engineers](${url("/engineers")}): The free, confidential path for software engineers, and CV submission.`,
     `- [Open roles](${url("/roles")}): Engineering roles by region, discipline, and engagement type.`,
-    `- [Salary guide](${url("/salary-guide")}): Annual base salary bands in USD by region for backend, frontend, data, cloud, mobile, and engineering leadership.`,
+    `- [Salary guide](${url("/salary-guide")}): ${salaryBands.edition}. ${salaryBands.basis} by region for backend, frontend, data, cloud, mobile, and engineering leadership.`,
     `- [Regions](${url("/regions")}): The four hiring regions.`,
     `- [About](${url("/about")}): The desk and its consultants.`,
     `- [Contact](${url("/contact")}): Send a brief or a question.`,
+    "",
+    "## Open roles",
+    "",
+    ...roles.map((role) => {
+      const region = regionFor(role.region);
+      return `- [${role.title}](${url(`/roles/${role.slug}`)}): ${role.city}, ${region.name}. ${role.engagement}, ${role.workMode}. ${role.salary}.`;
+    }),
+    "",
+    "## Salary bands",
+    "",
+    ...salaryBands.disciplines.flatMap((discipline) =>
+      regions.map((region) => {
+        const band = discipline.bands[region.slug];
+        return `- ${discipline.label}, ${region.name}: low ${formatUsd(band.low)}, median ${formatUsd(band.median)}, high ${formatUsd(band.high)}. [Salary guide](${url("/salary-guide")}).`;
+      }),
+    ),
     "",
     "## Insights",
     "",

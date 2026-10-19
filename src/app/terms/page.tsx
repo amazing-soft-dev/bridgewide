@@ -8,6 +8,7 @@ export const metadata = pageMetadata({
   description:
     "Placeholder terms for BridgeWide. This page is not legal advice and it is not a contract.",
   path: "/terms",
+  robots: { index: false, follow: true },
 });
 
 export default function TermsPage() {
