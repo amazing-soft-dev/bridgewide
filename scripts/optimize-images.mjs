@@ -11,17 +11,19 @@
 // src/lib/image-manifest.json maps each source path to its hash; the static
 // image loader (src/lib/static-image-loader.ts) reads it.
 //
-// It also writes public/logo.png (512x512, from src/app/icon.svg) for the
-// Organization structured data.
+// public/logo.png is the committed Organization logo. If it is missing, this
+// script rebuilds it from public/logo-mark.webp, the raster mark. The header
+// wordmark stays the SVG in src/components/brand/Logo.tsx.
 //
 // Run: npm run images   (CI and the Pages deploy run it before `next build`)
 
 import { createHash } from "node:crypto";
 import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const srcDir = path.join(root, "public", "images");
 const outDir = path.join(root, "public", "_img");
 const manifestPath = path.join(root, "src", "lib", "image-manifest.json");
@@ -69,8 +71,8 @@ if (json !== previous) await writeFile(manifestPath, json);
 
 const logo = path.join(root, "public", "logo.png");
 if (!(await exists(logo))) {
-  await sharp(path.join(root, "src", "app", "icon.svg"), { density: 384 })
-    .resize(512, 512, { fit: "contain", background: { r: 17, g: 17, b: 17, alpha: 1 } })
+  await sharp(path.join(root, "public", "logo-mark.webp"))
+    .resize(512, 512, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toFile(logo);
 }
