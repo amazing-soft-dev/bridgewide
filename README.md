@@ -2,9 +2,9 @@
 
 Marketing website for **BridgeWide**, a firm that places software engineers with companies across four regions: the **USA, Canada, LATAM, and Europe**.
 
-The site serves two audiences. Employers can browse regions, salary bands, and client stories, then send a hiring brief. Engineers can browse open roles and submit a CV. All three forms (hire brief, CV, contact) send real email through [Resend](https://resend.com).
+The site serves two audiences. Employers can browse regions, salary bands, and client stories, then send a hiring brief. Engineers can browse open roles and submit a CV. All three forms (hire brief, CV, contact) send real email through [Resend](https://resend.com) when the app runs on Vercel or another Node host.
 
-> **Note:** Roles, placements, salary bands, stats, people, stories, and articles are sample content. They all live in `src/content/site.ts` and should be replaced with real data before launch.
+All copy and figures live in `src/content/site.ts`. The public contact address is `michael.allen@bridgewide.org`.
 
 ## Tech stack
 
@@ -15,6 +15,7 @@ The site serves two audiences. Employers can browse regions, salary bands, and c
 | Styling | Tailwind CSS v4, configured CSS-first in `src/app/globals.css` (no `tailwind.config`) |
 | Animation | [Motion](https://motion.dev) for scroll reveals and staggers; [three.js](https://threejs.org) for the homepage star-field (`AstraField`) |
 | Email | Resend, called from Next.js route handlers |
+| Analytics | Vercel Web Analytics and Speed Insights, production only (`src/components/analytics/ProductionInsights.tsx`) |
 | Fonts | `next/font`: Geist (UI), Bricolage Grotesque (headlines), IBM Plex Mono (labels) |
 
 > Next.js 16 has breaking changes from earlier versions. Before changing framework-level code, read the guides in `node_modules/next/dist/docs/` (see `AGENTS.md`).
@@ -49,8 +50,8 @@ Copy `.env.example` to `.env.local`. Never commit real keys (`.env` and `.env*.l
 | Variable | Purpose |
 | --- | --- |
 | `RESEND_API_KEY` | API key from resend.com |
-| `CONTACT_TO_EMAIL` | Inbox that receives submissions (default `michael.allen@bridgewide.org`) |
-| `CONTACT_FROM_EMAIL` | Sender address. `onboarding@resend.dev` is Resend's sandbox sender and only delivers to the Resend account owner's address. Switch to a sender on a verified domain for production. |
+| `CONTACT_TO_EMAIL` | Inbox that receives submissions (`michael.allen@bridgewide.org`) |
+| `CONTACT_FROM_EMAIL` | Fixed sender passed to Resend. It is not the visitor's address. Production uses `BridgeWide <noreply@bridgewide.org>` on the verified `bridgewide.org` domain. That mailbox does not need to exist. `onboarding@resend.dev` is only the local sandbox sender, and it delivers solely to the Resend account owner. The visitor's address is set as `replyTo`. |
 
 If any of the three is missing, the form APIs return a 500 that names the missing variable.
 
@@ -68,7 +69,7 @@ If any of the three is missing, the form APIs return a 500 that names the missin
 | `/insights`, `/insights/[slug]` | Short articles |
 | `/about` | The desk and consultants |
 | `/contact` | Contact form |
-| `/privacy`, `/terms` | Placeholder legal pages |
+| `/privacy`, `/terms` | Placeholder legal pages. They are `noindex` and are not in the sitemap. |
 
 Dynamic routes prerender with `generateStaticParams`. The app also generates `sitemap.xml`, `robots.txt`, and an Open Graph image (`src/app/sitemap.ts`, `robots.ts`, `opengraph-image.tsx`). Tab, Apple, and home-screen icons are the uploaded files in `public/`, linked from the root metadata.
 
@@ -102,6 +103,7 @@ src/
     home/               One component per homepage section, plus AstraField
     pages/              Shared inner-page building blocks and metadata helper
     site/               Header, mobile nav, footer, announcement bar
+    analytics/          Production-only Vercel Analytics and Speed Insights
     ui/                 Button, Reveal, Accordion, Marquee, CountUp, etc.
   content/site.ts       All site copy and data
   lib/                  Form validation, CV checks, Resend mailer, motion variants
@@ -135,7 +137,7 @@ Every change ships the same way, and you only do step 1:
    ```
 2. **Auto PR → `dev`:** a pull request into `dev` opens (or updates on later pushes), labelled by prefix, with auto-merge on. CI runs and posts a checks-summary comment. When **CI passed** is green, the PR is merged with a merge commit (the branch joins `dev` in the history graph) and `branch-housekeeping.yml` deletes the work branch. A branch whose changes are already in `dev` gets no PR.
 3. **Auto release → `main`:** the merge into `dev` opens (or updates) one **Release: dev → main** pull request listing everything not yet on `main`. CI runs again, and when it passes the release merges with a merge commit.
-4. **Deploy:** the push to `main` builds the static site and publishes it to https://www.bridgewide.org.
+4. **Deploy:** the push to `main` updates production. Vercel serves https://www.bridgewide.org (forms send email). `nextjs.yml` also publishes a static export to GitHub Pages, where the forms do not send.
 
 If CI fails at step 2 or 3, nothing merges. Push a fix to the same branch: the PR updates, CI reruns, and the flow continues.
 
@@ -187,12 +189,13 @@ npm run lint && npm run typecheck && npm run build
 ## SEO and GEO
 
 - **Metadata:** every page has a title, description, canonical URL, Open Graph and Twitter card tags, and a generated Open Graph image (`src/components/pages/metadata.ts`, `src/app/opengraph-image.tsx`).
-- **Structured data (JSON-LD, `src/lib/structured-data.ts`):** Organization and WebSite on every page, FAQPage on the homepage, BreadcrumbList on detail pages, and Article on insights.
-- **No JobPosting or Review markup** while `contentIsSample` in `src/content/site.ts` is `true`. Search engines penalize markup for jobs or reviews that don't exist. Once roles and stories are real, set it to `false` and add that markup.
+- **Structured data (JSON-LD, `src/lib/structured-data.ts`):** Organization (San Francisco, no street address) and WebSite on every page, FAQPage on the homepage, BreadcrumbList on detail pages, Article on insights, and JobPosting on each role. There is no Review markup.
+- **`contentIsSample`** in `src/content/site.ts` is `false`. Set it back to `true` only if the published figures must not be cited. While it is `true`, `/llms.txt` warns assistants and role pages should not advertise jobs that are not real.
 - **Crawlable FAQ:** FAQ answers are in the HTML even when collapsed, so search engines and AI crawlers can read them.
 - **AI crawlers:** `robots.txt` allows all crawlers and names the main AI ones (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, …).
-- **`/llms.txt`:** a plain-Markdown summary of the site for AI assistants (services, regions, process, key pages, insights, FAQ), generated from `src/content/site.ts`. While `contentIsSample` is `true`, it tells assistants that figures on the site are illustrative.
-- **`sitemap.xml`:** lists every page, with `lastModified` dates for insights.
+- **`/llms.txt`:** a plain-Markdown summary for AI assistants, generated from `src/content/site.ts`. It lists services, regions, every open role, every salary band, insights, and the FAQ, each with a URL.
+- **`sitemap.xml`:** lists the public pages, with `lastModified` dates for insights. `/privacy` and `/terms` are omitted.
+- **Analytics:** Vercel Web Analytics and Speed Insights load only when `VERCEL_ENV` is `production` and the build is not a static export. Do Not Track skips the scripts. Hits with an `email` query are dropped, and other query strings are stripped.
 
 After the next deploy, submit `https://www.bridgewide.org/sitemap.xml` in Google Search Console and Bing Webmaster Tools. Bing's index also feeds ChatGPT search and Copilot.
 
@@ -200,11 +203,19 @@ After the next deploy, submit `https://www.bridgewide.org/sitemap.xml` in Google
 
 ### Node host (full site)
 
-This is a standard Next.js app, so it can run on Vercel or any Node host (`npm run build && npm run start`). Set the three environment variables in the host. Before going live, verify a sending domain in Resend and update `CONTACT_FROM_EMAIL`. This is the only target where the forms send email.
+Production is the Vercel project **bridgewide**, with Production tracking `main` and serving https://www.bridgewide.org. Set these in **Settings → Environment Variables** for Production, then redeploy:
+
+```text
+RESEND_API_KEY=re_...
+CONTACT_TO_EMAIL=michael.allen@bridgewide.org
+CONTACT_FROM_EMAIL=BridgeWide <noreply@bridgewide.org>
+```
+
+`bridgewide.org` is verified in Resend. Do not put these values in GitHub Actions. The same three variables work on any other Node host (`npm run build && npm run start`). This is the only target where the forms send email.
 
 ### GitHub Pages (static preview)
 
-`.github/workflows/nextjs.yml` deploys a static export to GitHub Pages on every push to `main`. The site is served from the custom domain **https://www.bridgewide.org**. The workflow builds with:
+`.github/workflows/nextjs.yml` deploys a static export to GitHub Pages on every push to `main`. It does not serve the form APIs. The workflow builds with:
 
 ```bash
 NEXT_OUTPUT=export NEXT_PUBLIC_SITE_URL=https://www.bridgewide.org npx next build   # writes ./out
