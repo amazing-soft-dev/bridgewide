@@ -1,17 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "motion/react";
 import { HeroPhoto } from "@/components/home/HeroPhoto";
+import { RoleBoard } from "@/components/home/RoleBoard";
 import { Button } from "@/components/ui/Button";
 import { SplitWords } from "@/components/ui/SplitWords";
 import { usePrefersReducedMotion } from "@/lib/motion";
-import { getRegion, hero, images, roles, stats } from "@/content/site";
+import { hero, images, stats } from "@/content/site";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export function Hero() {
-  const liveRoles = roles.slice(0, 5);
   const reduced = usePrefersReducedMotion();
 
   return (
@@ -59,48 +58,7 @@ export function Hero() {
               </Button>
             </motion.div>
           </div>
-          <motion.div
-            className="border border-cloud/25 bg-ink/35 p-5 backdrop-blur-[2px]"
-            data-motion="reveal"
-            initial={reduced ? false : { opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduced ? 0 : 0.6, delay: reduced ? 0 : 0.62, ease }}
-          >
-            <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
-              Live roles
-            </p>
-            <ul className="mt-2 divide-y divide-cloud/15">
-              {liveRoles.map((role, index) => {
-                const code = getRegion(role.region)?.code;
-                return (
-                  <motion.li
-                    key={role.slug}
-                    data-motion="reveal"
-                    initial={reduced ? false : { opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: reduced ? 0 : 0.5, delay: reduced ? 0 : 0.7 + index * 0.05, ease }}
-                  >
-                    <Link
-                      href={`/roles/${role.slug}`}
-                      className="flex items-baseline justify-between gap-4 py-2.5 text-cloud no-underline hover:text-brand"
-                    >
-                      <span className="text-sm leading-6">{role.title}</span>
-                      <span className="shrink-0 font-mono text-[11px] tracking-wide text-cloud/80 uppercase">
-                        {role.city}
-                        {code ? ` · ${code}` : ""}
-                      </span>
-                    </Link>
-                  </motion.li>
-                );
-              })}
-            </ul>
-            <Link
-              href="/roles"
-              className="mt-3 inline-block font-mono text-xs tracking-[0.16em] text-brand uppercase no-underline hover:text-cloud"
-            >
-              All open roles
-            </Link>
-          </motion.div>
+          <RoleBoard />
         </div>
         {stats.length > 0 ? (
           <dl className="grid grid-cols-2 gap-x-6 gap-y-8 border-t border-cloud/20 pt-8 md:grid-cols-4">
