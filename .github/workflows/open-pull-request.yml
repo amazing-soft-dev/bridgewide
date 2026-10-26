@@ -1,0 +1,97 @@
+# Opens a pull request after a push. Feature branches go into dev.
+# A push to dev opens dev into main when dev is ahead.
+# workflow_dispatch always targets dev.
+#
+# Uses the GH_TOKEN secret. The default GITHUB_TOKEN does not start the
+# next workflow after a merge.
+name: Open pull request
+
+on:
+  push:
+    branches:
+      - "feat/**"
+      - "fix/**"
+      - "docs/**"
+      - "ci/**"
+      - "build/**"
+      - "dev"
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Existing branch to open into dev
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: open-pr-${{ github.event.inputs.branch || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  open:
+    name: Open pull request
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Open the pull request
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EVENT: ${{ github.event_name }}
+          INPUT_BRANCH: ${{ inputs.branch }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            HEAD="$INPUT_BRANCH"
+            BASE="dev"
+          elif [ "$REF_NAME" = "dev" ]; then
+            HEAD="dev"
+            BASE="main"
+          else
+            HEAD="$REF_NAME"
+            BASE="dev"
+          fi
+
+          if [ "$HEAD" != "dev" ]; then
+            prefix="${HEAD%%/*}"
+            case "$prefix" in
+              feat|fix|docs|ci|build) ;;
+              *)
+                echo "Branch $HEAD is not eligible"
+                exit 0
+                ;;
+            esac
+          fi
+
+          git fetch --quiet origin "$BASE"
+          if ! git fetch --quiet origin "$HEAD"; then
+            echo "Branch $HEAD does not exist on origin."
+            exit 0
+          fi
+
+          ahead=$(git rev-list --count "origin/$BASE..origin/$HEAD")
+          if [ "$ahead" = "0" ]; then
+            echo "No commits on $HEAD ahead of $BASE."
+            exit 0
+          fi
+
+          existing=$(gh pr list --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$HEAD" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Pull request #$existing is already open."
+            exit 0
+          fi
+
+          title=$(git log -1 --format='%s' "origin/$HEAD")
+          closes=$(git log --format='%B' "origin/$BASE..origin/$HEAD" | grep -E '^(Closes|Fixes|Resolves) #[0-9]+$' || true)
+          body=$(printf 'Opened automatically from `%s`.\n' "$HEAD")
+          if [ -n "$closes" ]; then
+            body=$(printf '%s\n%s\n' "$body" "$closes")
+          fi
+
+          gh pr create --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$HEAD" --title "$title" --body "$body"
