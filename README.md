@@ -126,54 +126,27 @@ The canonical site URL (used for metadata, sitemap, and Open Graph) is `siteUrl`
 
 ## CI/CD
 
-Every change ships the same way, and you only do step 1:
+`dev` is where work lands. `main` is the release branch. Do not push to either one. See `CONTRIBUTING.md`.
 
-1. **You:** create a branch with a type prefix, commit, and push it.
-   ```bash
-   git checkout dev && git pull          # always branch from dev, not from another work branch
-   git checkout -b fix/empty-region      # or feat/, chore/, docs/, refactor/, perf/, test/, ci/, build/, style/
-   git commit -am "fix: handle empty region"
-   git push -u origin fix/empty-region
-   ```
-2. **Auto PR → `dev`:** a pull request into `dev` opens (or updates on later pushes), labelled by prefix, with auto-merge on. CI runs and posts a checks-summary comment. When **CI passed** is green, the PR is merged with a merge commit (the branch joins `dev` in the history graph) and `branch-housekeeping.yml` deletes the work branch. A branch whose changes are already in `dev` gets no PR.
-3. **Auto release → `main`:** the merge into `dev` opens (or updates) one **Release: dev → main** pull request listing everything not yet on `main`. CI runs again, and when it passes the release merges with a merge commit.
-4. **Deploy:** the push to `main` updates production. Vercel serves https://www.bridgewide.org (forms send email). `nextjs.yml` also publishes a static export to GitHub Pages, where the forms do not send.
+1. Create a GitHub issue and note the number.
+2. Branch from `origin/dev` as `feat/`, `fix/`, `docs/`, `ci/`, or `build/`.
+3. Commit with a Conventional Commit subject and a line of its own: `Closes #N`.
+4. Push. `open-pull-request.yml` opens the pull request into `dev`.
+5. `ci.yml` runs. If **CI passed** is green, `merge-passing-pr.yml` merge-commits into `dev`.
+6. That push opens `dev` into `main`. CI runs again and, if it passes, merges into `main`.
+7. GitHub closes the issue when `Closes #N` lands on `main`.
 
-If CI fails at step 2 or 3, nothing merges. Push a fix to the same branch: the PR updates, CI reruns, and the flow continues.
+A merge to `main` only re-runs CI. Vercel deploys https://www.bridgewide.org from its Git connection. GitHub Pages is not published by Actions.
 
 | Workflow | Runs on | What it does |
 | --- | --- | --- |
-| `auto-pr.yml` | Push to a work branch (`fix/*`, `feat/*`, ...) | Opens or updates the PR into `dev`, labels it, turns on auto-merge (merge commit) |
-| `ci.yml` | PRs into `dev` or `main`, pushes to `dev` | Lint, type check, server and static builds. The final **CI passed** job is the single required check and posts the checks-summary comment |
-| `release.yml` | Push to `dev` | Opens or updates the `dev` → `main` release PR, turns on auto-merge (merge commit) |
-| `branch-housekeeping.yml` | PR merged into `dev`, push to `main` | Deletes merged work branches; recreates `dev` from `main` if it is ever missing |
-| `nextjs.yml` | Push to `main` | Builds the static export and deploys it to GitHub Pages |
+| `open-pull-request.yml` | Push to `feat/**`, `fix/**`, `docs/**`, `ci/**`, `build/**`, or `dev` | Opens the branch into `dev`, or `dev` into `main` when `dev` is ahead |
+| `ci.yml` | Pull requests, pushes to `dev` and `main` | Lint, type check, server and static builds. **CI passed** is the required check |
+| `merge-passing-pr.yml` | CI succeeds on a pull request | Merge-commits eligible pull requests if the head commit is still the one CI validated |
 
-Run the same checks locally before pushing:
+Dependabot pull requests are not opened or merged by these workflows.
 
-```bash
-npm run lint && npm run typecheck && npm run build
-```
-
-**To pause:** click **Disable auto-merge** on an open PR to hold that one change, or disable `release.yml` under **Actions** to stop releases while still collecting changes on `dev`.
-
-**Reviews:** GitHub doesn't let anyone approve their own pull request, and a bot approval would be a rubber stamp. So the gate is the required **CI passed** check plus the summary comment. Rulesets require 0 approvals. If a second person joins, raise `required_approving_review_count` in the `main` ruleset.
-
-### One-time setup
-
-1. **Create the bot GitHub App.** Go to **Settings → Developer settings → GitHub Apps → New GitHub App** on your account.
-   - Name it something like `bridgewide-bot`. Homepage URL: the repo URL. Untick **Webhook → Active**.
-   - Repository permissions: **Contents: Read and write**, **Pull requests: Read and write**, **Issues: Read and write** (for labels), **Workflows: Read and write** (so it can merge changes to `.github/workflows`).
-   - Create the app, note its **App ID**, and under **Private keys** click **Generate a private key**.
-   - Click **Install App** and install it on `amazing-soft-dev/bridgewide` only.
-2. **Add the credentials to the repo.** In **Settings → Secrets and variables → Actions**:
-   - **Variables** tab: `BOT_APP_CLIENT_ID` = the app's **Client ID** (shown under the App ID, starts with `Iv`). `BOT_APP_ID` (the numeric App ID) also works as a fallback.
-   - **Secrets** tab: `BOT_APP_PRIVATE_KEY` = the full contents of the downloaded `.pem` file.
-
-   The bot token is needed because pull requests opened with the default `GITHUB_TOKEN` don't trigger CI, so auto-merge would wait forever.
-3. **Repository settings.** In **Settings → General → Pull Requests**, tick **Allow merge commits** and **Allow auto-merge** (squash merging is not used). Leave **Automatically delete head branches** **off**. Every release PR's source branch is `dev`, so that setting deletes `dev` after each release. `branch-housekeeping.yml` deletes merged work branches instead.
-4. **Branch rulesets.** In **Settings → Rules → Rulesets → New ruleset → Import a ruleset**, import `.github/rulesets/dev.json`, then `.github/rulesets/main.json`. Both require a pull request and the **CI passed** check and block force pushes and deletion. The deletion block matters: **Automatically delete head branches** would otherwise delete `dev` after every release PR, because `dev` is that PR's head branch. If `dev` ever goes missing, the next work-branch push recreates it from `main`. Both allow merge commits only, so every PR shows as a branch joining its target. Run CI once (any PR) before importing, so GitHub knows the **CI passed** check name.
-5. **Pages.** In **Settings → Pages**: Source **GitHub Actions**, custom domain `www.bridgewide.org`, **Enforce HTTPS** on. Under **Settings → Environments → github-pages**, make sure `main` is allowed to deploy.
+The workflows call `gh` with the `GH_TOKEN` repository secret, not the default `GITHUB_TOKEN`. In **Settings → General → Pull Requests**, allow merge commits. Leave **Automatically delete head branches** off so a `dev` → `main` merge does not delete `dev`. The rulesets in `.github/rulesets/` require a pull request and **CI passed**, and they allow merge commits only.
 
 ## Performance and CDN
 
@@ -213,9 +186,9 @@ CONTACT_FROM_EMAIL=BridgeWide <noreply@bridgewide.org>
 
 `bridgewide.org` is verified in Resend. Do not put these values in GitHub Actions. The same three variables work on any other Node host (`npm run build && npm run start`). This is the only target where the forms send email.
 
-### GitHub Pages (static preview)
+### Static export
 
-`.github/workflows/nextjs.yml` deploys a static export to GitHub Pages on every push to `main`. It does not serve the form APIs. The workflow builds with:
+CI still builds a static export so the Pages-shaped output stays valid. Actions no longer publishes that export. Locally:
 
 ```bash
 NEXT_OUTPUT=export NEXT_PUBLIC_SITE_URL=https://www.bridgewide.org npx next build   # writes ./out
@@ -225,10 +198,7 @@ NEXT_OUTPUT=export NEXT_PUBLIC_SITE_URL=https://www.bridgewide.org npx next buil
 - `PAGES_BASE_PATH` is the sub-path the site is served from. It is empty for the custom domain. Only set it (repository variable `PAGES_BASE_PATH=/bridgewide`) if you serve the site from `https://<owner>.github.io/bridgewide` without a custom domain. A mismatch makes every script, stylesheet, font and image 404.
 - `NEXT_PUBLIC_SITE_URL` sets the canonical origin used in page metadata, `sitemap.xml` and `robots.txt` (default `https://www.bridgewide.org`; override with the repository variable `SITE_URL`).
 - Route files that produce files (`sitemap.ts`, `robots.ts`, `opengraph-image.tsx`) set `dynamic = "force-static"` so they prerender. Icons are static files in `public/` (`favicon.ico`, `favicon-16.png`, `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, and `manifest.webmanifest`).
-- Pages has no server, so `/api/*` is left out of the export. On the static site the forms skip sending and tell visitors to email `michael.allen@bridgewide.org` instead.
-- Don't add `static_site_generator: next` back to the Pages step. It only patches `next.config.js`, so with this repo's `next.config.ts` it writes a second config that overrides ours.
-
-In the repo settings, set **Pages → Source** to **GitHub Actions**, set the custom domain to `www.bridgewide.org`, and turn on **Enforce HTTPS**.
+- The export has no server, so `/api/*` is left out. A static copy of the site cannot send the forms.
 
 ## License
 

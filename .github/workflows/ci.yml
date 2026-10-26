@@ -1,22 +1,17 @@
 # Continuous integration.
 #
-# Runs on every pull request into `dev` or `main`, and on pushes to `dev`.
-# Deployment to GitHub Pages is separate: see nextjs.yml, which runs on pushes
-# to `main`.
-#
-# Branch flow (see README "CI/CD"):
-#   fix/* feat/* ... --auto-pr.yml-->  dev  --release.yml-->  main --nextjs.yml--> Pages
+# Runs on every pull request, every push to `dev` or `main`, and
+# workflow_dispatch. A newer push to the same ref cancels the older run.
 #
 # "CI passed" is the one status check branch rules require. It fails unless
-# every other job succeeded, so jobs can be added here without touching the
-# rules. On pull requests it also posts a checks-summary comment.
+# every other job succeeded. Merge passing pull request merges the PR only
+# after this workflow finishes with success.
 name: CI
 
 on:
   pull_request:
-    branches: ["dev", "main"]
   push:
-    branches: ["dev"]
+    branches: ["dev", "main"]
   workflow_dispatch:
 
 permissions:
