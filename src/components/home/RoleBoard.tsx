@@ -37,9 +37,13 @@ function FlapTitle({ title }: { title: string }) {
   }, [title]);
 
   return (
-    <span className="hero-flap-track whitespace-nowrap">
+    <span className="flex w-max flex-none flex-nowrap origin-left gap-px whitespace-nowrap">
       {characters.map((character, index) => (
-        <span key={index} data-motion="flap" className={`hero-flap${flipping ? " is-flip" : ""}`}>
+        <span
+          key={index}
+          data-motion="flap"
+          className={`inline-grid h-[0.95rem] w-[0.62rem] flex-none place-items-center bg-cloud/10 font-mono text-[9px] leading-none text-cloud ${flipping ? "animate-flap-fold" : ""}`}
+        >
           {character === " " ? " " : character}
         </span>
       ))}
@@ -80,7 +84,7 @@ function RoleRow({
   return (
     <li
       data-motion="enter"
-      className="hero-row"
+      className="motion-safe:animate-hero-row-in"
       style={{ animationDelay: `${0.5 + index * 0.09}s` }}
       onPointerEnter={(event) => {
         if (event.pointerType === "touch") return;
@@ -106,7 +110,10 @@ function RoleRow({
           <span data-motion="swap" className={`min-w-0 ${fade}`}>
             <FlapTitle title={shown.title} />
           </span>
-          <span aria-hidden className={`hero-row-bar${phase === "out" ? " is-on" : ""}`} />
+          <span
+            aria-hidden
+            className={`absolute top-1/2 left-0 h-1.5 -translate-y-1/2 bg-brand transition-[width] duration-[250ms] ${phase === "out" ? "w-[38%]" : "w-0"}`}
+          />
         </span>
         <span
           data-motion="swap"

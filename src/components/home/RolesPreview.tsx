@@ -10,7 +10,7 @@ export default function RolesPreview() {
 
   return (
     <section
-      className="seam-right relative z-10 bg-cloud pt-24 pb-24 md:pt-28 md:pb-28"
+      className="mt-[calc(var(--seam)*-1)] [clip-path:polygon(0_var(--seam),100%_0,100%_100%,0_100%)] relative z-10 bg-cloud pt-24 pb-24 md:pt-28 md:pb-28"
       aria-labelledby="roles-heading"
     >
       <div className={sectionContainer}>

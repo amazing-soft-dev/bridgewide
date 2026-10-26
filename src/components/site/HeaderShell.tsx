@@ -76,7 +76,7 @@ export function HeaderShell({ children }: { children: ReactNode }) {
     <header
       ref={ref}
       data-tone={tone}
-      className={`sticky top-0 z-50 w-full border-b backdrop-blur-md transition-[transform,background-color,color] duration-300 motion-reduce:transition-none ${toneClass}${hidden ? " -translate-y-full" : ""}`}
+      className={`group/header sticky top-0 z-50 w-full border-b backdrop-blur-md transition-[transform,background-color,color] duration-300 motion-reduce:transition-none data-[tone=dark]:[&_button]:text-cloud ${toneClass}${hidden ? " -translate-y-full" : ""}`}
       onFocus={() => setHidden(false)}
     >
       {children}

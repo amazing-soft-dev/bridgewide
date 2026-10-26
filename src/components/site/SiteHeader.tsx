@@ -16,7 +16,7 @@ export function SiteHeader() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="site-nav-link text-sm text-ink-soft no-underline hover:text-ink focus-visible:outline-ink"
+                  className="text-sm text-ink-soft no-underline hover:text-ink focus-visible:outline-ink group-data-[tone=dark]/header:text-cloud/85 group-data-[tone=dark]/header:hover:text-cloud"
                 >
                   {item.label}
                 </Link>
@@ -25,7 +25,11 @@ export function SiteHeader() {
           </ul>
         </nav>
         <div className="ml-auto hidden items-center gap-2 xl:flex">
-          <Button href="/engineers" variant="secondary">
+          <Button
+            href="/engineers"
+            variant="secondary"
+            className="group-data-[tone=dark]/header:border-[color-mix(in_srgb,#fff_36%,transparent)] group-data-[tone=dark]/header:bg-[color-mix(in_srgb,#fff_8%,transparent)] group-data-[tone=dark]/header:text-white group-data-[tone=dark]/header:hover:border-ink group-data-[tone=dark]/header:focus-visible:border-ink"
+          >
             Find a role
           </Button>
           <Button href="/employers" variant="primary">

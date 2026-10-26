@@ -77,11 +77,15 @@ export function HeroCursor({ sectionRef }: { sectionRef: RefObject<HTMLElement |
   }, [fine, reduced, sectionRef]);
 
   return (
-    <div ref={nodeRef} className="hero-cur" aria-hidden>
-      <span className="hero-cur-dot" />
-      <span className="hero-cur-badge">
-        <i />
-        <b ref={labelRef}>Hire</b>
+    <div
+      ref={nodeRef}
+      className="pointer-events-none fixed top-0 left-0 z-[60] opacity-0 transition-opacity duration-300 [@media(hover:none),(pointer:coarse),(prefers-reduced-motion:reduce)]:hidden"
+      aria-hidden
+    >
+      <span className="absolute top-0 left-0 size-2 -translate-1/2 rounded-full bg-brand shadow-[0_0_0_2px_color-mix(in_srgb,var(--color-cloud)_70%,transparent)]" />
+      <span className="absolute top-3.5 left-3.5 inline-flex items-center gap-[7px] rounded-[5px] bg-cloud py-1.5 pr-2.5 pl-2 font-mono text-xs leading-none font-semibold tracking-[0.18em] whitespace-nowrap text-ink uppercase shadow-[0_10px_30px_rgb(0_0_0/0.18)]">
+        <i className="size-2 rounded-[2px] bg-brand" />
+        <b ref={labelRef} className="font-semibold">Hire</b>
       </span>
     </div>
   );

@@ -66,7 +66,7 @@ export function HeroPhoto({ src, alt }: { src: string; alt: string }) {
           fill
           priority
           sizes="100vw"
-          className="hero-photo object-cover"
+          className="object-cover [filter:saturate(0.9)_contrast(1.05)]"
         />
       </motion.div>
     </div>

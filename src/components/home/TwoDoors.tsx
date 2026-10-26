@@ -46,7 +46,7 @@ export function TwoDoors() {
   }, []);
 
   return (
-    <section className="seam-right relative z-10 bg-cloud" aria-labelledby="doors-heading">
+    <section className="mt-[calc(var(--seam)*-1)] [clip-path:polygon(0_var(--seam),100%_0,100%_100%,0_100%)] relative z-10 bg-cloud" aria-labelledby="doors-heading">
       <h2 id="doors-heading" className="sr-only">
         Employers and engineers
       </h2>
