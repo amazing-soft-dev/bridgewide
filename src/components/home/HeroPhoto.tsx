@@ -66,7 +66,7 @@ export function HeroPhoto({ src, alt }: { src: string; alt: string }) {
           fill
           priority
           sizes="100vw"
-          className="object-cover"
+          className="hero-photo object-cover"
         />
       </motion.div>
     </div>
