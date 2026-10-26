@@ -79,7 +79,7 @@ export default function WeekSection() {
   }, []);
 
   return (
-    <section
+    <section data-header-tone="dark"
       className="seam-left relative z-10 bg-ink text-cloud"
       aria-labelledby="week-heading"
     >

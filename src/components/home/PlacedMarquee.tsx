@@ -5,7 +5,7 @@ import { placements } from "@/content/site";
 
 export default function PlacedMarquee() {
   return (
-    <section
+    <section data-header-tone="dark"
       className="seam-left relative z-10 bg-ink pt-20 pb-16 text-cloud"
       aria-labelledby="placed-heading"
     >

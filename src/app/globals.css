@@ -1100,3 +1100,28 @@
     font-size: 1.5rem;
   }
 }
+
+/* Header on a dark section (data-tone="dark" set by HeaderShell). */
+header[data-tone="dark"] .site-nav-link {
+  color: color-mix(in srgb, var(--color-cloud) 85%, transparent);
+}
+
+header[data-tone="dark"] .site-nav-link:hover {
+  color: var(--color-cloud);
+}
+
+header[data-tone="dark"] button {
+  color: var(--color-cloud);
+}
+
+header[data-tone="dark"] .bw-btn-secondary {
+  border-color: color-mix(in srgb, #fff 36%, transparent);
+  background: color-mix(in srgb, #fff 8%, transparent);
+  color: #fff;
+}
+
+header[data-tone="dark"] .bw-btn-secondary:hover,
+header[data-tone="dark"] .bw-btn-secondary:focus-visible {
+  border-color: #111;
+  color: #fff;
+}

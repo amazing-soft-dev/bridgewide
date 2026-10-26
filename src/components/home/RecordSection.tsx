@@ -95,7 +95,7 @@ function FlapValue({ value, index }: { value: string; index: number }) {
 
 export default function RecordSection() {
   return (
-    <section
+    <section data-header-tone="dark"
       className="seam-left relative z-10 overflow-hidden bg-ink pt-24 pb-24 text-cloud md:pt-28 md:pb-28"
       aria-labelledby="record-heading"
     >

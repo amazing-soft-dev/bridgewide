@@ -7,7 +7,7 @@ import { hero, images } from "@/content/site";
 
 export function ClosingBand() {
   return (
-    <section
+    <section data-header-tone="dark"
       className="seam-left relative z-10 bg-ink pt-28 pb-24 text-cloud md:pt-36 md:pb-32"
       aria-labelledby="close-heading"
     >

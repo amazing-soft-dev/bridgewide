@@ -95,7 +95,7 @@ export default function StoriesSection() {
   }, []);
 
   return (
-    <section
+    <section data-header-tone="dark"
       className="seam-right relative z-10 bg-ink text-cloud"
       aria-labelledby="stories-heading"
     >

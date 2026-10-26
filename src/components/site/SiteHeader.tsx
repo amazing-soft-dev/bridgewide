@@ -16,7 +16,7 @@ export function SiteHeader() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="text-sm text-ink-soft no-underline hover:text-ink focus-visible:outline-ink"
+                  className="site-nav-link text-sm text-ink-soft no-underline hover:text-ink focus-visible:outline-ink"
                 >
                   {item.label}
                 </Link>

@@ -87,7 +87,7 @@ export default function DeskSection() {
   }, []);
 
   return (
-    <section className="relative z-10 text-cloud" aria-labelledby="desk-heading">
+    <section data-header-tone="dark" className="relative z-10 text-cloud" aria-labelledby="desk-heading">
       <div ref={trackRef} className="desk-track">
         <div ref={stageRef} className="desk-stage" style={{ "--u": 0 } as CSSProperties}>
           <div className="desk-bg" aria-hidden>

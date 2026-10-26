@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Marquee } from "@/components/ui/Marquee";
+import { formatCompactSalary } from "@/components/pages/format";
 import { usePrefersReducedMotion } from "@/lib/motion";
-import { getRegion, placements, roles, type Role } from "@/content/site";
+import { placements, roles, type Role } from "@/content/site";
 
 const VISIBLE = 6;
 const SWAP_MS = 1500;
@@ -21,11 +22,10 @@ function formatSfTime(date: Date) {
   }).format(date);
 }
 
+/** Per-letter flip. The title keeps one size; long titles are clipped by the slot, never shrunk. */
 function FlapTitle({ title }: { title: string }) {
   const characters = title.toUpperCase().split("");
-  const trackRef = useRef<HTMLSpanElement>(null);
   const [flipping, setFlipping] = useState(false);
-  const [scale, setScale] = useState(1);
   const previous = useRef(title);
 
   useEffect(() => {
@@ -36,29 +36,11 @@ function FlapTitle({ title }: { title: string }) {
     return () => window.clearTimeout(id);
   }, [title]);
 
-  useLayoutEffect(() => {
-    const track = trackRef.current;
-    const box = track?.closest(".hero-title-slot");
-    if (!track || !(box instanceof HTMLElement)) return;
-
-    const fit = () => {
-      const available = box.clientWidth;
-      const needed = track.scrollWidth;
-      const next = available > 0 && needed > available ? available / needed : 1;
-      setScale((current) => (Math.abs(current - next) < 0.01 ? current : next));
-    };
-
-    fit();
-    const observer = new ResizeObserver(fit);
-    observer.observe(box);
-    return () => observer.disconnect();
-  }, [title]);
-
   return (
-    <span ref={trackRef} className="hero-flap-track" style={{ scale }}>
+    <span className="hero-flap-track whitespace-nowrap">
       {characters.map((character, index) => (
         <span key={index} data-motion="flap" className={`hero-flap${flipping ? " is-flip" : ""}`}>
-          {character === " " ? "\u00a0" : character}
+          {character === " " ? " " : character}
         </span>
       ))}
     </span>
@@ -78,7 +60,6 @@ function RoleRow({
 }) {
   const [shown, setShown] = useState(role);
   const [phase, setPhase] = useState<"idle" | "out">("idle");
-  const code = getRegion(shown.region)?.code ?? "";
 
   useEffect(() => {
     if (role.slug === shown.slug) return;
@@ -93,6 +74,8 @@ function RoleRow({
     }, FADE_MS);
     return () => window.clearTimeout(id);
   }, [reduced, role, shown.slug]);
+
+  const fade = `transition-opacity duration-300 ${phase === "out" ? "opacity-0" : "opacity-100"}`;
 
   return (
     <li
@@ -113,39 +96,41 @@ function RoleRow({
           aria-hidden
           className="absolute inset-y-1 left-0 w-0.5 bg-brand opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
         />
-        <span className="w-10 shrink-0 font-mono text-[10px] tracking-[0.14em] text-cloud/70">
-          {code}
+        <span
+          data-motion="swap"
+          className={`w-12 shrink-0 border border-cloud/30 px-1 py-0.5 text-center font-mono text-[10px] tracking-[0.1em] text-cloud/85 ${fade}`}
+        >
+          {shown.countryCode}
         </span>
-        <span className="hero-title-slot relative flex h-4 min-w-0 flex-1 items-center overflow-hidden">
-          <span
-            data-motion="swap"
-            className={`min-w-0 transition-opacity duration-300 ${phase === "out" ? "opacity-0" : "opacity-100"}`}
-          >
+        <span className="relative flex h-4 min-w-0 flex-1 items-center overflow-hidden">
+          <span data-motion="swap" className={`min-w-0 ${fade}`}>
             <FlapTitle title={shown.title} />
           </span>
           <span aria-hidden className={`hero-row-bar${phase === "out" ? " is-on" : ""}`} />
         </span>
         <span
           data-motion="swap"
-          className={`w-[6.5rem] shrink-0 truncate font-mono text-[11px] text-cloud/75 transition-opacity duration-300 ${phase === "out" ? "opacity-0" : "opacity-100"}`}
+          className={`w-[5.5rem] shrink-0 truncate font-mono text-[11px] text-cloud/75 ${fade}`}
         >
           {shown.city}
         </span>
         <span
           data-motion="swap"
-          className={`w-[7.25rem] shrink-0 text-right font-mono text-[11px] text-cloud transition-opacity duration-300 ${phase === "out" ? "opacity-0" : "opacity-100"}`}
+          className={`w-[4.5rem] shrink-0 text-right font-mono text-[11px] text-cloud ${fade}`}
         >
-          {shown.salary}
+          {formatCompactSalary(shown.salaryMin, shown.salaryUnit)}
         </span>
         {shown.tags?.[0] ? (
           <span
             data-motion="swap"
-            className={`shrink-0 bg-brand px-2 py-1 font-mono text-[10px] tracking-[0.14em] text-white transition-opacity duration-300 ${phase === "out" ? "opacity-0" : "opacity-100"}`}
+            className={`w-[3.25rem] shrink-0 py-1 text-center font-mono text-[10px] tracking-[0.12em] uppercase ${
+              shown.tags[0] === "New" ? "bg-brand text-white" : "bg-cloud/20 text-cloud"
+            } ${fade}`}
           >
             {shown.tags[0]}
           </span>
         ) : (
-          <span className="w-8 shrink-0" />
+          <span className="w-[3.25rem] shrink-0" />
         )}
         <span
           aria-hidden

@@ -17,7 +17,7 @@ export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
 
   return (
-    <section
+    <section data-header-tone="dark"
       ref={sectionRef}
       className="hero-stage relative isolate z-0 overflow-hidden text-cloud lg:h-[calc(100svh-var(--hero-offset))]"
       aria-labelledby="hero-heading"
@@ -33,7 +33,7 @@ export function Hero() {
             </p>
             <h1
               id="hero-heading"
-              className="hero-title mt-4 max-w-3xl font-display text-[clamp(2.25rem,3.2vw,3.75rem)] leading-[1.02] tracking-tight text-cloud"
+              className="hero-title mt-4 max-w-4xl font-display text-[clamp(2.75rem,5.2vw,6rem)] leading-[1.02] tracking-tight text-cloud"
             >
               <SplitWords text={hero.headline} immediate delay={0.12} />
             </h1>
