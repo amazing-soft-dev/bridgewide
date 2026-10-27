@@ -19,7 +19,7 @@ export function Hero() {
   return (
     <section data-header-tone="dark"
       ref={sectionRef}
-      className="relative isolate z-0 overflow-hidden text-cloud min-h-[calc(100svh+var(--seam))] lg:h-[calc(100svh+var(--seam))] [clip-path:polygon(0_0,100%_0,100%_calc(100%_-_var(--seam)),0_100%)] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:cursor-none [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:[&_a]:cursor-none [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:[&_button]:cursor-none"
+      className="relative isolate z-0 overflow-hidden text-cloud min-h-[calc(100svh+var(--seam))] lg:h-[calc(100svh+var(--seam))] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:cursor-none [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:[&_a]:cursor-none [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:[&_button]:cursor-none"
       aria-labelledby="hero-heading"
     >
       <HeroPhoto src={images.hero} alt="Team working together around a laptop" />
@@ -28,20 +28,20 @@ export function Hero() {
         aria-hidden
       />
       <HeroCursor sectionRef={sectionRef} />
-      <div className="relative flex h-full w-full flex-col justify-center px-4 pt-[calc(var(--header-h)+4rem)] pb-[calc(var(--seam)+3rem)] sm:px-6 lg:px-[8vw] lg:pt-[calc(var(--header-h)+2rem)] lg:pb-[calc(var(--seam)+2rem)] xl:justify-start xl:pt-[calc(var(--header-h)+3.5rem)] xl:pl-14 2xl:justify-center 2xl:px-[8vw] 2xl:pt-[calc(var(--header-h)+2rem)] 2xl:pb-[calc(var(--seam)+2rem)]">
-        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,0.95fr)] lg:gap-8">
+      <div className="relative flex h-full w-full flex-col justify-center px-4 pt-[calc(var(--header-h)+2rem)] pb-[calc(var(--seam)+3rem)] lg:h-[100svh] lg:px-[4vw] lg:pt-[calc(var(--header-h)+2rem)] lg:pb-[calc(var(--header-h)+2rem)]">
+        <div className="mx-auto grid w-full max-w-[1520px] items-center gap-10 lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:gap-8">
           <div>
             <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
               <SplitWords text={hero.eyebrow} immediate />
             </p>
             <h1
               id="hero-heading"
-              className="mt-4 max-w-4xl font-display font-extrabold text-[clamp(2.75rem,5.2vw,6rem)] leading-none tracking-[-0.045em] text-cloud min-[1024px]:[@media(max-height:860px)]:text-[2.35rem]"
+              className="mt-4 max-w-4xl font-display font-extrabold text-[clamp(2.875rem,5.6vw,6.125rem)] leading-none tracking-[-0.045em] text-cloud"
             >
               <SplitWords text={hero.headline} immediate delay={0.12} />
             </h1>
             <motion.p
-              className="mt-5 max-w-xl text-lg leading-8 text-cloud min-[1024px]:[@media(max-height:860px)]:mt-3 min-[1024px]:[@media(max-height:860px)]:text-base min-[1024px]:[@media(max-height:860px)]:leading-[1.5]"
+              className="mt-4 max-w-xl text-base leading-7 text-cloud sm:mt-5 sm:text-lg sm:leading-8 min-[1024px]:[@media(max-height:860px)]:mt-3 min-[1024px]:[@media(max-height:860px)]:text-base min-[1024px]:[@media(max-height:860px)]:leading-[1.5]"
               data-motion="reveal"
               initial={reduced ? false : { opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
@@ -50,7 +50,7 @@ export function Hero() {
               {hero.subcopy}
             </motion.p>
             <motion.div
-              className="mt-8 flex flex-wrap gap-3 min-[1024px]:[@media(max-height:860px)]:mt-4"
+              className="mt-6 flex flex-wrap gap-3 sm:mt-8 min-[1024px]:[@media(max-height:860px)]:mt-4"
               data-motion="reveal"
               initial={reduced ? false : { opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
@@ -62,7 +62,7 @@ export function Hero() {
               </Button>
             </motion.div>
             {stats.length > 0 ? (
-              <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-cloud/20 pt-5 min-[1024px]:[@media(max-height:860px)]:mt-4 min-[1024px]:[@media(max-height:860px)]:gap-[0.75rem_1.25rem] min-[1024px]:[@media(max-height:860px)]:pt-3 min-[1024px]:[@media(max-height:860px)]:[&_dd]:text-2xl">
+              <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-cloud/20 pt-4 sm:mt-8 sm:gap-y-5 sm:pt-5 min-[1024px]:[@media(max-height:860px)]:mt-4 min-[1024px]:[@media(max-height:860px)]:gap-[0.75rem_1.25rem] min-[1024px]:[@media(max-height:860px)]:pt-3 min-[1024px]:[@media(max-height:860px)]:[&_dd]:text-2xl">
                 {stats.map((stat) => (
                   <div key={stat.label} className="flex flex-col">
                     <dt className="order-2 mt-1 max-w-[12rem] text-sm leading-5 text-cloud">
