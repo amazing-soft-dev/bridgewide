@@ -237,7 +237,7 @@ export const images: SiteImages = {
 
 export const hero: Hero = {
   eyebrow: "Software engineers for hiring teams",
-  headline: "A shortlist your engineering managers will actually interview.",
+  headline: "A shortlist your managers will actually interview.",
   subcopy:
     "BridgeWide places software engineers for companies. We source from the USA, Canada, LATAM, and Europe, and we stay on the search until the seat is filled.",
   primaryCta: { label: "Hire engineers", href: "/employers" },

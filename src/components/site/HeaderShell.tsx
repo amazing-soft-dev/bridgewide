@@ -1,16 +1,44 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { usePathname } from "next/navigation";
 
-const TOP_ZONE = 80;
+/** Past this scroll depth the bar turns solid and the announcement strip collapses. */
+const SOLID_AT = 48;
+/** The header only hides on scroll-down after this depth. */
+const HIDE_AFTER = 160;
 const DELTA = 6;
 
 type Tone = "light" | "dark";
 
-/** Tone of the marked section under the header (sections set data-header-tone="dark"). */
-function toneUnderHeader(header: HTMLElement): Tone {
-  // Sections start at the header's bottom edge (the header holds its own space in flow).
-  const probe = Math.max(0, header.getBoundingClientRect().bottom) + 1;
+type HeaderUi = {
+  searchOpen: boolean;
+  setSearchOpen: (open: boolean) => void;
+};
+
+const HeaderUiContext = createContext<HeaderUi>({
+  searchOpen: false,
+  setSearchOpen: () => {},
+});
+
+export function useHeaderUi() {
+  return useContext(HeaderUiContext);
+}
+
+/** Tone of the marked section under the bar (sections set data-header-tone="dark"). */
+function toneUnderBar(header: HTMLElement): Tone {
+  const bar = header.querySelector<HTMLElement>("[data-header-bar]");
+  const rect = (bar ?? header).getBoundingClientRect();
+  const probe = Math.max(0, rect.top + rect.height / 2);
   let tone: Tone = "light";
   document.querySelectorAll<HTMLElement>("[data-header-tone]").forEach((el) => {
     const r = el.getBoundingClientRect();
@@ -23,8 +51,23 @@ function toneUnderHeader(header: HTMLElement): Tone {
 
 export function HeaderShell({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLElement>(null);
+  const pathname = usePathname();
   const [hidden, setHidden] = useState(false);
+  const [solid, setSolid] = useState(false);
   const [tone, setTone] = useState<Tone>("light");
+  const [searchOpen, setSearchOpenState] = useState(false);
+
+  const setSearchOpen = useCallback((open: boolean) => {
+    setSearchOpenState(open);
+    if (open) setHidden(false);
+  }, []);
+
+  // Close the search drawer after navigation (adjust state during render, not in an effect).
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
+    setSearchOpenState(false);
+  }
 
   useEffect(() => {
     const header = ref.current;
@@ -35,13 +78,15 @@ export function HeaderShell({ children }: { children: ReactNode }) {
 
     const apply = () => {
       frame = 0;
-      setTone(toneUnderHeader(header));
       const y = window.scrollY;
+      setSolid(y > SOLID_AT);
+      setTone(toneUnderBar(header));
+
       const pinned =
         header.contains(document.activeElement) ||
         header.querySelector('[aria-expanded="true"]') !== null;
 
-      if (y < TOP_ZONE || pinned) {
+      if (y < HIDE_AFTER || pinned) {
         setHidden(false);
         last = y;
         return;
@@ -67,19 +112,30 @@ export function HeaderShell({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const toneClass =
-    tone === "dark"
-      ? "bg-ink/92 text-cloud border-cloud/10"
-      : "bg-cloud/95 text-ink border-ink/10";
+  const ui = useMemo(() => ({ searchOpen, setSearchOpen }), [searchOpen, setSearchOpen]);
+
+  const dark = tone === "dark";
+  const className = [
+    "sthd",
+    dark && !solid ? "is-dark" : "",
+    solid ? "is-solid" : "",
+    solid && dark ? "is-darksolid" : "",
+    hidden && !searchOpen ? "is-hide" : "",
+    searchOpen ? "is-search" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <header
-      ref={ref}
-      data-tone={tone}
-      className={`group/header sticky top-0 z-50 w-full border-b backdrop-blur-md transition-[transform,background-color,color] duration-300 motion-reduce:transition-none data-[tone=dark]:[&_button]:text-cloud ${toneClass}${hidden ? " -translate-y-full" : ""}`}
-      onFocus={() => setHidden(false)}
-    >
-      {children}
-    </header>
+    <HeaderUiContext.Provider value={ui}>
+      <header
+        ref={ref}
+        data-tone={searchOpen ? "light" : tone}
+        className={className}
+        onFocus={() => setHidden(false)}
+      >
+        {children}
+      </header>
+    </HeaderUiContext.Provider>
   );
 }

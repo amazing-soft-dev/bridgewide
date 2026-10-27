@@ -4,7 +4,6 @@ import { ProductionInsights } from "@/components/analytics/ProductionInsights";
 import { siteUrl } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { siteGraph } from "@/lib/structured-data";
-import { AnnouncementBar } from "@/components/site/AnnouncementBar";
 import { FooterMark } from "@/components/site/FooterMark";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
@@ -72,7 +71,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <JsonLd data={siteGraph()} />
-        <AnnouncementBar />
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />

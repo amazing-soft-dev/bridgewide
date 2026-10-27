@@ -6,7 +6,13 @@ import { useEffect, useRef, type ComponentPropsWithoutRef, type ReactNode, type 
 type Variant = "primary" | "secondary" | "onDark";
 
 const base =
-  "group/btn relative inline-flex min-h-12 items-center justify-center gap-3.5 overflow-hidden isolate rounded-lg border-[1.5px] border-transparent pl-[22px] pr-2 text-[13px] font-semibold leading-none tracking-[0.01em] whitespace-nowrap no-underline cursor-pointer [clip-path:polygon(0_0,calc(100%_-_13px)_0,100%_13px,100%_100%,0_100%)] translate-x-[var(--mx,0px)] translate-y-[var(--my,0px)] [transition:translate_0.3s_cubic-bezier(0.2,0.8,0.2,1),scale_0.3s_cubic-bezier(0.2,0.8,0.2,1),color_0.35s_0.05s,border-color_0.35s] hover:translate-y-[calc(var(--my,0px)_-_2px)] focus-visible:translate-y-[calc(var(--my,0px)_-_2px)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:[transition:none] before:absolute before:-inset-[2px] before:-z-1 before:origin-left before:bg-ink before:content-[''] before:[scale:0_1] before:[transition:scale_0.6s_cubic-bezier(0.7,0,0.2,1)] hover:before:[scale:1_1] focus-visible:before:[scale:1_1] motion-reduce:before:[transition:none]";
+  "group/btn relative inline-flex items-center justify-center gap-3.5 overflow-hidden isolate rounded-lg border-[1.5px] border-transparent font-semibold leading-none tracking-[0.01em] whitespace-nowrap no-underline cursor-pointer [clip-path:polygon(0_0,calc(100%_-_13px)_0,100%_13px,100%_100%,0_100%)] translate-x-[var(--mx,0px)] translate-y-[var(--my,0px)] [transition:translate_0.3s_cubic-bezier(0.2,0.8,0.2,1),scale_0.3s_cubic-bezier(0.2,0.8,0.2,1),color_0.35s_0.05s,border-color_0.35s] hover:translate-y-[calc(var(--my,0px)_-_2px)] focus-visible:translate-y-[calc(var(--my,0px)_-_2px)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:[transition:none] before:absolute before:-inset-[2px] before:-z-1 before:origin-left before:bg-ink before:content-[''] before:[scale:0_1] before:[transition:scale_0.6s_cubic-bezier(0.7,0,0.2,1)] hover:before:[scale:1_1] focus-visible:before:[scale:1_1] motion-reduce:before:[transition:none]";
+
+/** Size and padding. `arrow: false` drops the arrow chip, so the label gets even padding. */
+function sizeClass(arrow: boolean, compact: boolean) {
+  if (compact) return "min-h-11 px-[18px] text-[12.5px]";
+  return arrow ? "min-h-12 pl-[22px] pr-2 text-[13px]" : "min-h-12 px-[22px] text-[13px]";
+}
 
 const variantClass: Record<Variant, string> = {
   primary: "bg-brand text-white",
@@ -30,6 +36,10 @@ const labelLine =
 
 type CommonProps = {
   variant?: Variant;
+  /** Show the arrow chip (default). Set false for the plain header button. */
+  arrow?: boolean;
+  /** 44px tall, 12.5px label. Used by the header call to action. */
+  compact?: boolean;
   className?: string;
   children: ReactNode;
 };
@@ -104,16 +114,27 @@ export function Button(props: LinkButtonProps | NativeButtonProps) {
   const ref = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
   useMagnet(ref);
   const variant = props.variant ?? "primary";
-  const className = [base, variantClass[variant], props.className].filter(Boolean).join(" ");
+  const arrow = props.arrow ?? true;
+  const compact = props.compact ?? false;
+  const className = [base, sizeClass(arrow, compact), variantClass[variant], props.className]
+    .filter(Boolean)
+    .join(" ");
   const body = (
     <>
       <Label>{props.children}</Label>
-      <Arrow variant={variant} />
+      {arrow ? <Arrow variant={variant} /> : null}
     </>
   );
 
   if ("href" in props && props.href != null) {
-    const { variant: _variant, className: _className, children: _children, ...linkProps } = props;
+    const {
+      variant: _variant,
+      arrow: _arrow,
+      compact: _compact,
+      className: _className,
+      children: _children,
+      ...linkProps
+    } = props;
     return (
       <Link
         ref={ref as RefObject<HTMLAnchorElement>}
@@ -127,6 +148,8 @@ export function Button(props: LinkButtonProps | NativeButtonProps) {
 
   const {
     variant: _variant,
+    arrow: _arrow,
+    compact: _compact,
     className: _className,
     children: _children,
     type = "button",
