@@ -19,7 +19,7 @@ export function Hero() {
   return (
     <section data-header-tone="dark"
       ref={sectionRef}
-      className="relative isolate z-0 overflow-hidden text-cloud lg:h-svh [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:cursor-none [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:[&_a]:cursor-none [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:[&_button]:cursor-none"
+      className="relative isolate z-0 overflow-hidden text-cloud min-h-[calc(100svh+var(--seam))] lg:h-[calc(100svh+var(--seam))] [clip-path:polygon(0_0,100%_0,100%_calc(100%_-_var(--seam)),0_100%)] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:cursor-none [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:[&_a]:cursor-none [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:[&_button]:cursor-none"
       aria-labelledby="hero-heading"
     >
       <HeroPhoto src={images.hero} alt="Team working together around a laptop" />
@@ -28,7 +28,7 @@ export function Hero() {
         aria-hidden
       />
       <HeroCursor sectionRef={sectionRef} />
-      <div className="relative flex h-full w-full flex-col justify-center px-4 pt-[calc(var(--header-h)+4rem)] pb-16 sm:px-6 lg:px-[8vw] lg:pt-[calc(var(--header-h)+2rem)] lg:pb-8 xl:justify-start xl:pt-[calc(var(--header-h)+3.5rem)] xl:pl-14 2xl:justify-center 2xl:px-[8vw] 2xl:pt-[calc(var(--header-h)+2rem)] 2xl:pb-8">
+      <div className="relative flex h-full w-full flex-col justify-center px-4 pt-[calc(var(--header-h)+4rem)] pb-[calc(var(--seam)+3rem)] sm:px-6 lg:px-[8vw] lg:pt-[calc(var(--header-h)+2rem)] lg:pb-[calc(var(--seam)+2rem)] xl:justify-start xl:pt-[calc(var(--header-h)+3.5rem)] xl:pl-14 2xl:justify-center 2xl:px-[8vw] 2xl:pt-[calc(var(--header-h)+2rem)] 2xl:pb-[calc(var(--seam)+2rem)]">
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,0.95fr)] lg:gap-8">
           <div>
             <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
