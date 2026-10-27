@@ -118,7 +118,7 @@ function RoleRow({
     >
       <Link
         href={`/roles/${role.slug}`}
-        className={`group relative grid min-h-[50px] grid-cols-[38px_minmax(0,1fr)_18px] items-center gap-x-2 gap-y-1.5 overflow-hidden rounded-md bg-white/4 py-2.5 pr-3 pl-3.5 text-cloud no-underline transition-[background-color,translate] duration-500 ease-[cubic-bezier(0.2,0.9,0.2,1)] hover:translate-x-1 hover:bg-white/9 focus-visible:bg-white/9 @[600px]:h-[50px] @[600px]:grid-cols-[38px_minmax(0,1fr)_112px_62px_112px_18px] @[600px]:gap-y-0 @[600px]:py-0`}
+        className={`group relative grid min-h-[50px] grid-cols-[38px_minmax(0,1fr)_18px] items-center gap-x-2 gap-y-1 overflow-hidden rounded-md bg-white/4 py-2 pr-3 pl-3.5 sm:gap-y-1.5 sm:py-2.5 text-cloud no-underline transition-[background-color,translate] duration-500 ease-[cubic-bezier(0.2,0.9,0.2,1)] hover:translate-x-1 hover:bg-white/9 focus-visible:bg-white/9 @[600px]:h-[50px] @[600px]:grid-cols-[38px_minmax(0,1fr)_112px_62px_112px_18px] @[600px]:gap-y-0 @[600px]:py-0`}
       >
         <span
           aria-hidden
@@ -217,7 +217,7 @@ export function RoleBoard() {
   const placement = placements[feedIndex];
 
   return (
-    <div className="@container relative rounded-xl border border-white/12 bg-[#080c1c]/74 p-1.5 text-cloud shadow-[0_40px_100px_rgba(8,12,28,0.55),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-[18px] [clip-path:polygon(0_0,calc(100%_-_26px)_0,100%_26px,100%_100%,0_100%)] motion-safe:animate-sth-board-in lg:mt-8 [&_*]:box-border [&_*]:min-w-0">
+    <div className="@container relative rounded-xl border border-white/12 bg-[#080c1c]/74 p-1.5 text-cloud shadow-[0_40px_100px_rgba(8,12,28,0.55),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-[18px] [clip-path:polygon(0_0,calc(100%_-_26px)_0,100%_26px,100%_100%,0_100%)] motion-safe:animate-sth-board-in [&_*]:box-border [&_*]:min-w-0">
       <div className="flex items-center justify-between gap-3 px-3.5 pt-3 pb-2.5">
         <p className="flex items-center gap-2.5 font-mono text-[12px] tracking-[0.16em] text-cloud/80 uppercase">
           <span
@@ -237,7 +237,7 @@ export function RoleBoard() {
         </p>
       </div>
 
-      <ul className="flex flex-col gap-[3px]">
+      <ul className="flex flex-col gap-[3px] max-sm:[&>li:nth-child(n+5)]:hidden">
         {slots.map((roleIndex, row) => (
           <RoleRow
             key={row}
