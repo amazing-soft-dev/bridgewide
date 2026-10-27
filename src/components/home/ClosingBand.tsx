@@ -7,8 +7,8 @@ import { hero, images } from "@/content/site";
 
 export function ClosingBand() {
   return (
-    <section
-      className="seam-left relative z-10 bg-ink pt-28 pb-24 text-cloud md:pt-36 md:pb-32"
+    <section data-header-tone="dark"
+      className="mt-[calc(var(--seam)*-1)] [clip-path:polygon(0_0,100%_var(--seam),100%_100%,0_100%)] relative z-10 bg-ink pt-28 pb-24 text-cloud md:pt-36 md:pb-32"
       aria-labelledby="close-heading"
     >
       <div className="absolute inset-0">

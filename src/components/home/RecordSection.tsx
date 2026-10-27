@@ -72,7 +72,11 @@ function FlapCell({
   return (
     <span
       ref={ref}
-      className={`flap-cell${symbol ? " is-sym" : ""}${flipping ? " is-flip" : ""}`}
+      className={`relative inline-grid h-[1.28em] place-items-center text-[clamp(2.5rem,4.6vw,4.25rem)] leading-none font-semibold text-cloud after:absolute after:top-1/2 after:right-0 after:left-0 after:h-[1.5px] after:bg-[rgb(243_1_0/0.7)] after:content-[''] ${
+        symbol
+          ? "w-[0.55em] bg-transparent shadow-none after:hidden"
+          : "w-[0.8em] rounded-[5px] bg-ink shadow-[inset_0_1px_0_rgb(244_240_232/0.1),0_8px_22px_rgb(0_0_0/0.3)]"
+      } ${flipping ? "animate-flap-fold" : ""}`}
     >
       {shown}
     </span>
@@ -81,7 +85,7 @@ function FlapCell({
 
 function FlapValue({ value, index }: { value: string; index: number }) {
   return (
-    <span className="flap-num" aria-label={value}>
+    <span className="flex gap-[3px] font-mono" aria-label={value}>
       {value.split("").map((char, digit) => (
         <FlapCell
           key={`${value}-${digit}`}
@@ -95,11 +99,14 @@ function FlapValue({ value, index }: { value: string; index: number }) {
 
 export default function RecordSection() {
   return (
-    <section
-      className="seam-left relative z-10 overflow-hidden bg-ink pt-24 pb-24 text-cloud md:pt-28 md:pb-28"
+    <section data-header-tone="dark"
+      className="relative z-10 mt-[calc(var(--seam)*-1)] overflow-hidden bg-ink pt-24 pb-24 text-cloud [clip-path:polygon(0_0,100%_var(--seam),100%_100%,0_100%)] md:pt-28 md:pb-28"
       aria-labelledby="record-heading"
     >
-      <p className="record-back" aria-hidden>
+      <p
+        className="absolute top-1/2 left-0 -translate-y-1/2 whitespace-nowrap font-display text-[clamp(5rem,18vw,16rem)] leading-none font-extrabold tracking-[-0.04em] text-transparent pointer-events-none [-webkit-text-stroke:1.5px_rgb(244_240_232/0.16)] max-[899px]:hidden motion-reduce:hidden"
+        aria-hidden
+      >
         PLACED · PLACED · PLACED
       </p>
       <div
