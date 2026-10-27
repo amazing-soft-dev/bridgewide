@@ -100,7 +100,7 @@ function FlapValue({ value, index }: { value: string; index: number }) {
 export default function RecordSection() {
   return (
     <section data-header-tone="dark"
-      className="relative z-10 mt-[calc(var(--seam)*-1)] overflow-hidden bg-ink pt-24 pb-24 text-cloud [clip-path:polygon(0_0,100%_var(--seam),100%_100%,0_100%)] md:pt-28 md:pb-28"
+      className="relative z-10 mt-[calc(var(--seam)*-1)] flex min-h-[calc(100vh+var(--seam))] flex-col justify-center overflow-hidden bg-ink pt-24 pb-24 text-cloud [clip-path:polygon(0_0,100%_var(--seam),100%_100%,0_100%)] md:pt-28 md:pb-28"
       aria-labelledby="record-heading"
     >
       <p
