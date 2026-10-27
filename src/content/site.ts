@@ -75,11 +75,18 @@ export type Region = {
   image: string;
 };
 
+export type SalaryUnit = "year" | "day" | "hour";
+
 export type Role = {
   slug: string;
   title: string;
   region: RegionSlug;
   city: string;
+  country: string;
+  countryCode: string;
+  salaryMin: number;
+  salaryMax: number;
+  salaryUnit: SalaryUnit;
   workMode: WorkMode;
   engagement: Engagement;
   salary: string;
@@ -230,7 +237,7 @@ export const images: SiteImages = {
 
 export const hero: Hero = {
   eyebrow: "Software engineers for hiring teams",
-  headline: "A shortlist your engineering managers will actually interview.",
+  headline: "A shortlist your managers will actually interview.",
   subcopy:
     "BridgeWide places software engineers for companies. We source from the USA, Canada, LATAM, and Europe, and we stay on the search until the seat is filled.",
   primaryCta: { label: "Hire engineers", href: "/employers" },
@@ -357,9 +364,14 @@ export const roles: readonly Role[] = [
     title: "Staff Backend Engineer",
     region: "usa",
     city: "San Francisco",
+    country: "United States",
+    countryCode: "USA",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$210,000–$245,000",
+    salaryMin: 210000,
+    salaryMax: 245000,
+    salaryUnit: "year",
     discipline: "Backend",
     summary:
       "A staff backend seat for a San Francisco payments team that needs one owner for a ledger service. The engineer should have shipped Go or Java in production and be ready to review design with the people already on the team.",
@@ -371,9 +383,14 @@ export const roles: readonly Role[] = [
     title: "Senior Frontend Engineer",
     region: "usa",
     city: "Austin",
+    country: "United States",
+    countryCode: "USA",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$165,000–$190,000",
+    salaryMin: 165000,
+    salaryMax: 190000,
+    salaryUnit: "year",
     discipline: "Frontend",
     summary:
       "Hybrid frontend seat in Austin on a product surface that operations staff use all day. We are shortlisting senior engineers who have owned a design system and can work beside an existing React team.",
@@ -385,9 +402,14 @@ export const roles: readonly Role[] = [
     title: "Engineering Manager",
     region: "usa",
     city: "New York",
+    country: "United States",
+    countryCode: "USA",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$240,000–$280,000",
+    salaryMin: 240000,
+    salaryMax: 280000,
+    salaryUnit: "year",
     discipline: "Leadership",
     summary:
       "A manager seat in New York for a group of eight product engineers and a roadmap the company has already shared internally. The search is for a manager who has run a team of engineers and who will hire into that team after they start.",
@@ -398,9 +420,14 @@ export const roles: readonly Role[] = [
     title: "Senior Data Engineer",
     region: "canada",
     city: "Toronto",
+    country: "Canada",
+    countryCode: "CAN",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$150,000–$175,000",
+    salaryMin: 150000,
+    salaryMax: 175000,
+    salaryUnit: "year",
     discipline: "Data",
     summary:
       "Toronto hybrid seat on a warehouse that feeds finance and product reporting. The brief calls for a senior data engineer who has run dbt and a cloud warehouse in production.",
@@ -412,9 +439,14 @@ export const roles: readonly Role[] = [
     title: "Cloud Engineer",
     region: "canada",
     city: "Vancouver",
+    country: "Canada",
+    countryCode: "CAN",
     workMode: "Remote",
     engagement: "Contract",
     salary: "$850–$980 / day",
+    salaryMin: 850,
+    salaryMax: 980,
+    salaryUnit: "day",
     discipline: "Cloud",
     summary:
       "A contract cloud seat, remote in Canada, to finish a platform cutover before year end. The engineer should be comfortable owning Terraform, a Kubernetes cluster, and the on-call that comes with both.",
@@ -426,9 +458,14 @@ export const roles: readonly Role[] = [
     title: "Senior Backend Engineer",
     region: "latam",
     city: "Mexico City",
+    country: "Mexico",
+    countryCode: "MEX",
     workMode: "Remote",
     engagement: "Contract",
     salary: "$650–$780 / day",
+    salaryMin: 650,
+    salaryMax: 780,
+    salaryUnit: "day",
     discipline: "Backend",
     summary:
       "Contract backend seat in Mexico City, overlapped with US Pacific hours, for an API that is already in market. We want a senior engineer who can pick up a Go service and ship without a long ramp.",
@@ -440,9 +477,14 @@ export const roles: readonly Role[] = [
     title: "Mobile Engineer",
     region: "latam",
     city: "São Paulo",
+    country: "Brazil",
+    countryCode: "BRA",
     workMode: "Remote",
     engagement: "Permanent",
     salary: "$95,000–$120,000",
+    salaryMin: 95000,
+    salaryMax: 120000,
+    salaryUnit: "year",
     discipline: "Mobile",
     summary:
       "Permanent mobile seat in São Paulo for a health product with iOS and Android already in the stores. The hire joins a small app team and is expected to own releases as well as tickets.",
@@ -453,9 +495,14 @@ export const roles: readonly Role[] = [
     title: "Frontend Engineer",
     region: "latam",
     city: "Bogotá",
+    country: "Colombia",
+    countryCode: "COL",
     workMode: "Remote",
     engagement: "Contract",
     salary: "$480–$620 / day",
+    salaryMin: 480,
+    salaryMax: 620,
+    salaryUnit: "day",
     discipline: "Frontend",
     summary:
       "Contract frontend seat in Bogotá for a dashboard that account managers live in. The engineer should know React well enough to improve a mature codebase in place.",
@@ -467,9 +514,14 @@ export const roles: readonly Role[] = [
     title: "Staff Platform Engineer",
     region: "europe",
     city: "London",
+    country: "England",
+    countryCode: "ENG",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$160,000–$190,000",
+    salaryMin: 160000,
+    salaryMax: 190000,
+    salaryUnit: "year",
     discipline: "Cloud",
     summary:
       "Hybrid staff platform seat in London for a company whose product engineers are blocked on internal tooling. The hire sets the paved path: CI, environments, and the libraries other teams are expected to use.",
@@ -481,9 +533,14 @@ export const roles: readonly Role[] = [
     title: "Data Engineer",
     region: "europe",
     city: "Berlin",
+    country: "Germany",
+    countryCode: "DEU",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$120,000–$145,000",
+    salaryMin: 120000,
+    salaryMax: 145000,
+    salaryUnit: "year",
     discipline: "Data",
     summary:
       "Hybrid data seat in Berlin on event pipelines that feed product analytics and a customer-facing report. We are looking for an engineer who has operated streaming jobs in production.",
@@ -494,9 +551,14 @@ export const roles: readonly Role[] = [
     title: "iOS Engineer",
     region: "europe",
     city: "Amsterdam",
+    country: "Netherlands",
+    countryCode: "NLD",
     workMode: "Remote",
     engagement: "Contract",
     salary: "$700–$860 / day",
+    salaryMin: 700,
+    salaryMax: 860,
+    salaryUnit: "day",
     discipline: "Mobile",
     summary:
       "Remote contract iOS seat in Amsterdam to ship a regulated feature before a fixed release window. The engineer should have taken an app through App Store review and be used to working with a backend team in another city.",
@@ -508,9 +570,14 @@ export const roles: readonly Role[] = [
     title: "Director of Engineering",
     region: "europe",
     city: "Dublin",
+    country: "Ireland",
+    countryCode: "IRL",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$200,000–$240,000",
+    salaryMin: 200000,
+    salaryMax: 240000,
+    salaryUnit: "year",
     discipline: "Leadership",
     summary:
       "A director seat in Dublin for a product org of about forty engineers across three groups. The search starts confidential, and the hire is expected to reset planning with the managers already in place.",

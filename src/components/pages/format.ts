@@ -27,3 +27,11 @@ export const textLink =
 
 export const lightTextLink =
   "text-cloud underline decoration-brand underline-offset-4 hover:text-brand";
+
+/** Compact salary for tight lists: 140000 -> "$140k", 850 a day -> "$850/day". */
+export function formatCompactSalary(amount: number, unit: "year" | "day" | "hour"): string {
+  const shown = amount >= 1000 ? `$${Math.round(amount / 1000)}k` : `$${amount}`;
+  if (unit === "day") return `${shown}/day`;
+  if (unit === "hour") return `${shown}/hr`;
+  return shown;
+}
