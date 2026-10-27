@@ -7,12 +7,12 @@ import { usePrefersReducedMotion } from "@/lib/motion";
 import { placements, roles, type Role } from "@/content/site";
 
 const VISIBLE = 6;
-const SWAP_MS = 1500;
+const SWAP_MS = 2000;
 const FEED_MS = 4000;
 const FLIP_MS = 300;
 const TILES = 20;
 /** Each tile starts its flip this much after the previous one, so the title flows across the row. */
-const TILE_STEP_MS = 30;
+const TILE_STEP_MS = 45;
 
 function formatSfTime(date: Date) {
   return new Intl.DateTimeFormat("en-GB", {
@@ -28,8 +28,10 @@ function toTiles(title: string) {
   return title.slice(0, TILES).toUpperCase().padEnd(TILES, " ");
 }
 
+/** Country name only. US roles show the state instead, for example "Texas, USA". */
 function locationLabel(role: Role) {
-  return role.workMode === "Remote" ? `Remote · ${role.countryCode}` : role.city;
+  if (role.countryCode === "USA" && role.state) return `${role.state}, USA`;
+  return role.country;
 }
 
 /**

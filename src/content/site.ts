@@ -87,6 +87,8 @@ export type Role = {
   boardCode: string;
   region: RegionSlug;
   city: string;
+  /** US roles only: the state shown in the board location, for example Texas. */
+  state?: string;
   country: string;
   countryCode: string;
   salaryMin: number;
@@ -371,6 +373,7 @@ export const roles: readonly Role[] = [
     boardCode: "ENG",
     region: "usa",
     city: "San Francisco",
+    state: "California",
     country: "United States",
     countryCode: "USA",
     workMode: "Hybrid",
@@ -392,6 +395,7 @@ export const roles: readonly Role[] = [
     boardCode: "ENG",
     region: "usa",
     city: "Austin",
+    state: "Texas",
     country: "United States",
     countryCode: "USA",
     workMode: "Hybrid",
@@ -413,6 +417,7 @@ export const roles: readonly Role[] = [
     boardCode: "MGT",
     region: "usa",
     city: "New York",
+    state: "New York",
     country: "United States",
     countryCode: "USA",
     workMode: "Hybrid",
