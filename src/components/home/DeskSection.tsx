@@ -122,7 +122,7 @@ export default function DeskSection() {
                 Meet the team
               </Button>
             </div>
-            <ul className="m-0 grid list-none grid-cols-5 gap-3 p-0 [perspective:900px] [&>li]:flex gate:flex gate:-mx-5 gate:snap-x gate:snap-mandatory gate:overflow-x-auto gate:px-5 gate:pt-8 gate:pb-2 gate:[&>li]:snap-start gate:[&>li]:[flex:0_0_min(68vw,17rem)]">
+            <ul className="m-0 grid list-none grid-cols-5 gap-3 p-0 [perspective:900px] [&>li]:flex gate:flex gate:-mx-4 gate:snap-x gate:snap-mandatory gate:overflow-x-auto gate:px-4 gate:pt-8 gate:pb-2 gate:[&>li]:snap-start gate:[&>li]:[flex:0_0_min(68vw,17rem)]">
               {people.map((person) => (
                 <li key={person.id}>
                   <Link
