@@ -8,7 +8,7 @@ export type RegionCode = "USA" | "CAN" | "LATAM" | "EUR";
 
 export type WorkMode = "Hybrid" | "Remote";
 
-export type Engagement = "Permanent" | "Contract";
+export type Engagement = "Permanent" | "Contract" | "Temp" | "Exec search";
 
 export type Discipline =
   | "Backend"
@@ -18,7 +18,8 @@ export type Discipline =
   | "Mobile"
   | "Leadership";
 
-export type RoleTag = "New" | "Hot";
+/** Status shown on a role row and role page. "New" uses the accent fill; the rest are neutral. */
+export type RoleTag = "New" | "Hot" | "2 Left" | "6 Seats" | "12 Seats" | "Confidential";
 
 export type FaqAudience = "Employers" | "Engineers";
 
@@ -80,8 +81,14 @@ export type SalaryUnit = "year" | "day" | "hour";
 export type Role = {
   slug: string;
   title: string;
+  /** Short title for the open-roles board. 20 characters or fewer. */
+  boardTitle: string;
+  /** Sector code for the open-roles board. 3 capital letters. */
+  boardCode: string;
   region: RegionSlug;
   city: string;
+  /** US roles only: the state shown in the board location, for example Texas. */
+  state?: string;
   country: string;
   countryCode: string;
   salaryMin: number;
@@ -362,8 +369,11 @@ export const roles: readonly Role[] = [
   {
     slug: "staff-backend-engineer-san-francisco",
     title: "Staff Backend Engineer",
+    boardTitle: "Staff Backend",
+    boardCode: "ENG",
     region: "usa",
     city: "San Francisco",
+    state: "California",
     country: "United States",
     countryCode: "USA",
     workMode: "Hybrid",
@@ -381,8 +391,11 @@ export const roles: readonly Role[] = [
   {
     slug: "senior-frontend-engineer-austin",
     title: "Senior Frontend Engineer",
+    boardTitle: "Senior Frontend",
+    boardCode: "ENG",
     region: "usa",
     city: "Austin",
+    state: "Texas",
     country: "United States",
     countryCode: "USA",
     workMode: "Hybrid",
@@ -400,8 +413,11 @@ export const roles: readonly Role[] = [
   {
     slug: "engineering-manager-new-york",
     title: "Engineering Manager",
+    boardTitle: "Engineering Manager",
+    boardCode: "MGT",
     region: "usa",
     city: "New York",
+    state: "New York",
     country: "United States",
     countryCode: "USA",
     workMode: "Hybrid",
@@ -414,10 +430,13 @@ export const roles: readonly Role[] = [
     summary:
       "A manager seat in New York for a group of eight product engineers and a roadmap the company has already shared internally. The search is for a manager who has run a team of engineers and who will hire into that team after they start.",
     consultantName: "Priya Raman",
+    tags: ["2 Left"],
   },
   {
     slug: "senior-data-engineer-toronto",
     title: "Senior Data Engineer",
+    boardTitle: "Senior Data Engineer",
+    boardCode: "DAT",
     region: "canada",
     city: "Toronto",
     country: "Canada",
@@ -437,6 +456,8 @@ export const roles: readonly Role[] = [
   {
     slug: "cloud-engineer-vancouver",
     title: "Cloud Engineer",
+    boardTitle: "Cloud Engineer",
+    boardCode: "CLD",
     region: "canada",
     city: "Vancouver",
     country: "Canada",
@@ -456,6 +477,8 @@ export const roles: readonly Role[] = [
   {
     slug: "senior-backend-engineer-mexico-city",
     title: "Senior Backend Engineer",
+    boardTitle: "Senior Backend",
+    boardCode: "ENG",
     region: "latam",
     city: "Mexico City",
     country: "Mexico",
@@ -475,6 +498,8 @@ export const roles: readonly Role[] = [
   {
     slug: "mobile-engineer-sao-paulo",
     title: "Mobile Engineer",
+    boardTitle: "Mobile Engineer",
+    boardCode: "MOB",
     region: "latam",
     city: "São Paulo",
     country: "Brazil",
@@ -489,10 +514,13 @@ export const roles: readonly Role[] = [
     summary:
       "Permanent mobile seat in São Paulo for a health product with iOS and Android already in the stores. The hire joins a small app team and is expected to own releases as well as tickets.",
     consultantName: "Sofia Navarro",
+    tags: ["12 Seats"],
   },
   {
     slug: "frontend-engineer-bogota",
     title: "Frontend Engineer",
+    boardTitle: "Frontend Engineer",
+    boardCode: "ENG",
     region: "latam",
     city: "Bogotá",
     country: "Colombia",
@@ -507,11 +535,13 @@ export const roles: readonly Role[] = [
     summary:
       "Contract frontend seat in Bogotá for a dashboard that account managers live in. The engineer should know React well enough to improve a mature codebase in place.",
     consultantName: "Sofia Navarro",
-    tags: ["New"],
+    tags: ["6 Seats"],
   },
   {
     slug: "staff-platform-engineer-london",
     title: "Staff Platform Engineer",
+    boardTitle: "Staff Platform",
+    boardCode: "CLD",
     region: "europe",
     city: "London",
     country: "England",
@@ -531,6 +561,8 @@ export const roles: readonly Role[] = [
   {
     slug: "data-engineer-berlin",
     title: "Data Engineer",
+    boardTitle: "Data Engineer",
+    boardCode: "DAT",
     region: "europe",
     city: "Berlin",
     country: "Germany",
@@ -545,10 +577,13 @@ export const roles: readonly Role[] = [
     summary:
       "Hybrid data seat in Berlin on event pipelines that feed product analytics and a customer-facing report. We are looking for an engineer who has operated streaming jobs in production.",
     consultantName: "Marcus Adeyemi",
+    tags: ["Confidential"],
   },
   {
     slug: "ios-engineer-amsterdam",
     title: "iOS Engineer",
+    boardTitle: "iOS Engineer",
+    boardCode: "MOB",
     region: "europe",
     city: "Amsterdam",
     country: "Netherlands",
@@ -568,6 +603,8 @@ export const roles: readonly Role[] = [
   {
     slug: "director-of-engineering-dublin",
     title: "Director of Engineering",
+    boardTitle: "Engineering Director",
+    boardCode: "EXE",
     region: "europe",
     city: "Dublin",
     country: "Ireland",
@@ -582,6 +619,7 @@ export const roles: readonly Role[] = [
     summary:
       "A director seat in Dublin for a product org of about forty engineers across three groups. The search starts confidential, and the hire is expected to reset planning with the managers already in place.",
     consultantName: "Priya Raman",
+    tags: ["Confidential"],
   },
 ];
 
