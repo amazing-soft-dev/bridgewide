@@ -28,6 +28,9 @@ export default function TermsPage() {
             Nothing on this page limits liability, grants a licence, or sets rules for using the site. Those clauses belong in a document a lawyer has reviewed.
           </p>
           <p>
+            AI-training candidates are paid by the platform they work with. BridgeWide does not take a cut of those earnings. A profile is introduced only after the candidate agrees.
+          </p>
+          <p>
             BridgeWide will replace this note before anyone is asked to accept terms. Until then, treat the page as a draft and not as legal advice.
           </p>
         </Prose>

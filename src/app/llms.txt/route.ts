@@ -1,5 +1,12 @@
 import { siteUrl } from "@/components/pages/metadata";
 import {
+  platforms,
+  trainingFaq,
+  trainingHero,
+  trainingRegions,
+  trainingSteps,
+} from "@/content/ai-training";
+import {
   contact,
   contentIsSample,
   faq,
@@ -89,6 +96,28 @@ export function GET() {
     ...stories.map((story) => `- [${story.company}](${url(`/stories/${story.slug}`)}): ${story.result}`),
     `- [Sitemap](${url("/sitemap.xml")})`,
     "",
+    "## AI training",
+    "",
+    trainingHero.subcopy,
+    "",
+    "Example roles, pay ranges, and talent portraits on the AI training pages are illustrative.",
+    "",
+    ...trainingSteps.map((step) => `- ${step.title}: ${step.copy}`),
+    "",
+    ...trainingRegions.map(
+      (region) => `- [${region.name}](${url(`/ai-training/${region.slug}`)}): ${region.summary}`,
+    ),
+    "",
+    ...platforms.map(
+      (platform) =>
+        `- [${platform.name}](${url(`/ai-training/platforms/${platform.slug}`)}): ${platform.summary}`,
+    ),
+    "",
+    `- [AI training](${url("/ai-training")}): The candidate offer, example roles, and platform directory.`,
+    `- [For candidates](${url("/ai-training/for-candidates")}): The application form.`,
+    `- [For partners](${url("/ai-training/for-partners")}): The partner inquiry.`,
+    "",
+    ...trainingFaq.flatMap((item) => [`### ${item.question}`, "", item.answer, ""]),
     "## Contact",
     "",
     `- Email: ${contact.email}`,
