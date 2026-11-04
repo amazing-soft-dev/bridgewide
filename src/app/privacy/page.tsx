@@ -27,6 +27,9 @@ export default function PrivacyPage() {
             The hire, CV, and contact forms send the details you type to the desk by email so someone can reply. That is a description of the form, not a promise about retention, sharing, or your legal rights.
           </p>
           <p>
+            AI-training applications from those pages are emailed to the desk the same way. A candidate profile is introduced to a platform only after that candidate agrees. The platform pays the candidate.
+          </p>
+          <p>
             If you need advice about privacy law, ask a lawyer. This text was written as a placeholder for the marketing site.
           </p>
         </Prose>

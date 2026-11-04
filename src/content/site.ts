@@ -201,7 +201,7 @@ export const rolesListedOn = "2026-10-18";
 export const organization = {
   name: "BridgeWide",
   description:
-    "BridgeWide is a recruitment firm that places software engineers with companies, sourcing from the United States, Canada, Latin America, and Europe on permanent and contract terms.",
+    "BridgeWide is a recruitment firm that places software engineers with companies, sourcing from the United States, Canada, Latin America, and Europe on permanent and contract terms. BridgeWide also matches candidates to remote AI-training work on specialist platforms, worldwide, including the United States.",
   areaServed: ["United States", "Canada", "Latin America", "Europe"],
   knowsAbout: [
     "Software engineering recruitment",
@@ -216,6 +216,7 @@ export const organization = {
     "Contract software engineer placement",
     "Confidential engineering searches",
     "Engineering leadership searches",
+    "Matching candidates to AI-training platforms",
   ],
 } as const;
 
@@ -226,6 +227,7 @@ export const contact: Contact = {
 
 export const nav: readonly NavLink[] = [
   { label: "Employers", href: "/employers" },
+  { label: "AI training", href: "/ai-training" },
   { label: "Regions", href: "/regions" },
   { label: "Roles", href: "/roles" },
   { label: "Salary guide", href: "/salary-guide" },
