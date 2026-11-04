@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
 import { pageMetadata } from "@/components/pages/metadata";
+import { AiTrainingBand } from "@/components/home/AiTrainingBand";
 import { ClosingBand } from "@/components/home/ClosingBand";
 import { Hero } from "@/components/home/Hero";
 import { TwoDoors } from "@/components/home/TwoDoors";
@@ -78,6 +79,7 @@ export default function HomePage() {
       <JsonLd data={faqPage()} />
       <Hero />
       <TwoDoors />
+      <AiTrainingBand />
       <PlacedMarquee />
       <RegionsSection />
       <WeekSection />

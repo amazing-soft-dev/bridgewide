@@ -4,7 +4,6 @@ import {
   faq,
   organization,
   rolesListedOn,
-  type FaqItem,
   type Insight,
   type Role,
 } from "@/content/site";
@@ -65,7 +64,7 @@ export function siteGraph() {
   };
 }
 
-export function faqPage(items: readonly FaqItem[] = faq) {
+export function faqPage(items: readonly { question: string; answer: string }[] = faq) {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
