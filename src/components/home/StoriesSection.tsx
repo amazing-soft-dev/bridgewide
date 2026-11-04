@@ -105,7 +105,7 @@ export default function StoriesSection() {
       </h2>
       <div
         ref={trackRef}
-        className="h-[calc(var(--n)*100vh)] gate:h-auto"
+        className="h-[calc((1+(var(--n)-1)*1.4)*100vh)] gate:h-auto"
         style={{ "--n": count } as CSSProperties}
       >
         <div
