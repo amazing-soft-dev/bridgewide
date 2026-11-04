@@ -11,7 +11,7 @@ const base =
 /** Size and padding. `arrow: false` drops the arrow chip, so the label gets even padding. */
 function sizeClass(arrow: boolean, compact: boolean) {
   if (compact) return "min-h-11 px-[18px] text-[12.5px]";
-  return arrow ? "min-h-12 pl-[22px] pr-2 text-[13px]" : "min-h-12 px-[22px] text-[13px]";
+  return arrow ? "min-h-[60px] pl-[22px] pr-4 text-[13px]" : "min-h-12 px-[22px] text-[13px]";
 }
 
 const variantClass: Record<Variant, string> = {

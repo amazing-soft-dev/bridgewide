@@ -38,6 +38,16 @@ export type NavLink = {
   href: string;
 };
 
+export type FooterItem = {
+  label: string;
+  href?: string;
+};
+
+export type FooterColumn = {
+  title: string;
+  items: readonly FooterItem[];
+};
+
 export type Contact = {
   email: string;
   location: string;
@@ -234,6 +244,53 @@ export const nav: readonly NavLink[] = [
   { label: "Insights", href: "/insights" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
+];
+
+export const footerColumns: readonly FooterColumn[] = [
+  {
+    title: "Company",
+    items: [
+      { label: "About", href: "/about" },
+      { label: "Regions", href: "/regions" },
+      { label: "Insights", href: "/insights" },
+      { label: "Contact", href: "/contact" },
+    ],
+  },
+  {
+    title: "For employers",
+    items: [
+      { label: "Hire engineers", href: "/employers" },
+      { label: "How hiring works", href: "/employers#how" },
+      { label: "Salary guide", href: "/salary-guide" },
+      { label: "Contact the desk", href: "/contact" },
+    ],
+  },
+  {
+    title: "For candidates",
+    items: [
+      { label: "Open roles", href: "/roles" },
+      { label: "Send a CV", href: "/engineers" },
+      { label: "Insights", href: "/insights" },
+      { label: "Privacy", href: "/privacy" },
+    ],
+  },
+  {
+    title: "AI training",
+    items: [
+      { label: "Overview", href: "/ai-training" },
+      { label: "For candidates", href: "/ai-training/for-candidates" },
+      { label: "Jobs", href: "/ai-training/jobs" },
+      { label: "How it works", href: "/ai-training/how-it-works" },
+    ],
+  },
+  {
+    title: "The Desk",
+    items: [
+      { label: contact.email, href: `mailto:${contact.email}` },
+      { label: contact.location },
+      { label: "Terms", href: "/terms" },
+    ],
+  },
 ];
 
 export const images: SiteImages = {
