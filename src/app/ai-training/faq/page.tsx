@@ -1,8 +1,8 @@
+import { QuestionDesk } from "@/components/ai-training/QuestionDesk";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { pageMetadata } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { Accordion } from "@/components/ui/Accordion";
 import { trainingFaq } from "@/content/ai-training";
 import { faqPage } from "@/lib/structured-data";
 
@@ -23,7 +23,7 @@ export default function AiTrainingFaqPage() {
         lede="Pay, sharing, regions, and what the listed roles are."
       />
       <PageSection id="questions" label="Questions" title="Candidates and partners.">
-        <Accordion
+        <QuestionDesk
           items={trainingFaq.map((item, index) => ({
             id: `q${index + 1}`,
             question: item.question,

@@ -1,12 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
-import { textLink } from "@/components/pages/format";
+import { TrainingRoleTicket } from "@/components/ai-training/TrainingRoleTicket";
 import {
-  formatHourly,
   trainingRegions,
-  workTypeLabel,
   workTypes,
   type TrainingRegionSlug,
   type TrainingRole,
@@ -67,24 +64,12 @@ export function JobBoard({ roles }: { roles: readonly TrainingRole[] }) {
       {visible.length === 0 ? (
         <p className="text-ink-soft">No roles match those filters.</p>
       ) : (
-        <ul className="grid gap-4">
-          {visible.map((role) => {
-            const place = trainingRegions.find((item) => item.slug === role.region);
-            return (
-              <li key={role.slug} className="border-t border-brand pt-4">
-                <p className="font-mono text-xs tracking-[0.16em] text-stone uppercase">
-                  {place?.name} · {workTypeLabel(role.workType)}
-                </p>
-                <h3 className="font-display mt-3 text-2xl">
-                  <Link href={`/ai-training/jobs/${role.slug}`} className={textLink}>
-                    {role.title}
-                  </Link>
-                </h3>
-                <p className="mt-2 text-ink-soft">{role.summary}</p>
-                <p className="mt-2 font-mono text-sm text-ink">{formatHourly(role.payMin, role.payMax)}</p>
-              </li>
-            );
-          })}
+        <ul className="grid list-none gap-1.5 p-0">
+          {visible.map((role) => (
+            <li key={role.slug}>
+              <TrainingRoleTicket role={role} />
+            </li>
+          ))}
         </ul>
       )}
     </div>

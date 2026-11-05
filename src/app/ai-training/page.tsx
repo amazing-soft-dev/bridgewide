@@ -4,6 +4,7 @@ import { MissionBand } from "@/components/ai-training/MissionBand";
 import { PathSteps } from "@/components/ai-training/PathSteps";
 import { PlatformTape } from "@/components/ai-training/PlatformTape";
 import { PortraitWall } from "@/components/ai-training/PortraitWall";
+import { QuestionDesk } from "@/components/ai-training/QuestionDesk";
 import { TrainingRecord } from "@/components/ai-training/TrainingRecord";
 import { TrainingRegions } from "@/components/ai-training/TrainingRegions";
 import { TrainingRoleList } from "@/components/ai-training/TrainingRoleList";
@@ -13,7 +14,6 @@ import { PageSection } from "@/components/pages/PageSection";
 import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { Accordion } from "@/components/ui/Accordion";
 import { Button } from "@/components/ui/Button";
 import { testimonials, trainingFaq, trainingHero } from "@/content/ai-training";
 import { faqPage } from "@/lib/structured-data";
@@ -78,7 +78,7 @@ export default function AiTrainingPage() {
       ) : null}
 
       <PageSection id="faq" label="FAQ" title="Questions candidates ask.">
-        <Accordion
+        <QuestionDesk
           items={trainingFaq.map((item, index) => ({
             id: `q${index + 1}`,
             question: item.question,
