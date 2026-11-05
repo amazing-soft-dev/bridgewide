@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { deskWrap } from "@/components/roles/desk";
 import { Button } from "@/components/ui/Button";
+import { RoleTicket } from "@/components/ui/RoleTicket";
 import { regions, roles, rolesListedOn, type Role } from "@/content/site";
 import { formatCompactSalary } from "@/components/pages/format";
 import {
@@ -254,21 +254,13 @@ function RoleRow({ role, age }: { role: Role; age: string }) {
   const tag = firstTag(role);
 
   return (
-    <Link
+    <RoleTicket
       href={`/roles/${role.slug}`}
-      className="group relative grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-lg border border-cloud-soft bg-white px-3.5 py-3.5 text-ink no-underline [clip-path:polygon(0_0,calc(100%-12px)_0,100%_12px,100%_100%,0_100%)] transition-[translate,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:translate-x-1 hover:border-[color-mix(in_srgb,var(--color-brand)_40%,var(--color-cloud-soft))] hover:shadow-[0_18px_40px_color-mix(in_srgb,var(--color-ink)_10%,transparent)] focus-visible:translate-x-1 min-[900px]:grid-cols-[44px_minmax(0,1fr)_120px_90px_20px] min-[900px]:gap-3.5 min-[900px]:px-[18px] min-[1200px]:grid-cols-[48px_minmax(0,1fr)_130px_92px_116px_120px_70px_20px]"
+      code={role.boardCode}
+      title={role.title}
+      summary={role.summary}
+      className="grid-cols-[40px_minmax(0,1fr)_auto] min-[900px]:grid-cols-[44px_minmax(0,1fr)_120px_90px_20px] min-[900px]:gap-3.5 min-[900px]:px-[18px] min-[1200px]:grid-cols-[48px_minmax(0,1fr)_130px_92px_116px_120px_70px_20px]"
     >
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-[3px] origin-bottom scale-y-0 bg-brand transition-transform duration-[400ms] ease-[cubic-bezier(0.2,0.9,0.2,1)] group-hover:scale-y-100 group-focus-visible:scale-y-100"
-      />
-      <span className="grid place-items-center rounded-[3px] border border-[color-mix(in_srgb,var(--color-brand)_45%,transparent)] py-1.5 font-mono text-xs tracking-[0.12em] text-brand">
-        {role.boardCode}
-      </span>
-      <span className="grid min-w-0 gap-1">
-        <b className="font-display text-lg leading-tight font-bold tracking-[-0.02em]">{role.title}</b>
-        <span className="text-sm text-stone">{role.summary}</span>
-      </span>
       <span className="hidden font-mono text-xs tracking-[0.04em] text-stone min-[900px]:block">
         {placeLine(role)}
       </span>
@@ -292,12 +284,6 @@ function RoleRow({ role, age }: { role: Role; age: string }) {
       <span className="hidden font-mono text-xs tracking-[0.08em] text-stone uppercase min-[1200px]:block">
         {age}
       </span>
-      <span
-        aria-hidden
-        className="hidden -translate-x-1.5 text-lg opacity-0 transition duration-300 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100 min-[900px]:block"
-      >
-        →
-      </span>
-    </Link>
+    </RoleTicket>
   );
 }
