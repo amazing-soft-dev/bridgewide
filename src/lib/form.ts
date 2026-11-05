@@ -6,6 +6,7 @@ export const limits = {
   company: 160,
   roleTitle: 160,
   message: 4000,
+  phone: 40,
 } as const;
 
 export const engagementOptions = ["Permanent", "Contract"] as const satisfies readonly Engagement[];
@@ -41,6 +42,12 @@ export function honeypotTripped(value: unknown): boolean {
   if (value == null) return false;
   if (typeof value === "string") return value.trim().length > 0;
   return true;
+}
+
+/** Empty is valid and becomes "". A filled value uses the same limits as textField. */
+export function optionalText(value: unknown, max: number, label: string): FieldResult {
+  if (typeof value !== "string" || value.trim().length === 0) return { ok: true, value: "" };
+  return textField(value, max, label);
 }
 
 export function textField(
