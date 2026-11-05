@@ -5,20 +5,16 @@ import type { ReactNode } from "react";
 import { platforms } from "@/content/ai-training";
 import { usePrefersReducedMotion } from "@/lib/motion";
 
-function initials(name: string) {
-  const parts = name.replace(/\./g, "").split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
-}
-
-function LogoCard({ name, href }: { name: string; href: string }) {
+function LogoCard({ name, href, logo }: { name: string; href: string; logo: string }) {
   return (
     <Link
       href={href}
       className="flex shrink-0 items-center gap-3 rounded-lg border border-cloud-soft bg-cloud px-3 py-2.5 text-ink no-underline shadow-[0_10px_30px_rgb(17_17_17/0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgb(17_17_17/0.12)]"
     >
-      <span className="grid size-10 place-items-center rounded-md bg-ink font-mono text-xs tracking-wide text-cloud">
-        {initials(name)}
+      <span className="grid size-10 place-items-center overflow-hidden rounded-md bg-white">
+        {/* Brand marks are SVG or small PNG. next/image does not accept SVG without extra config. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={logo} alt="" width={28} height={28} className="size-7 object-contain" />
       </span>
       <span className="font-display text-base whitespace-nowrap">{name}</span>
     </Link>
@@ -66,6 +62,7 @@ export function PlatformTape() {
             <LogoCard
               key={platform.slug}
               name={platform.name}
+              logo={platform.logo}
               href={`/ai-training/platforms/${platform.slug}`}
             />
           ))}

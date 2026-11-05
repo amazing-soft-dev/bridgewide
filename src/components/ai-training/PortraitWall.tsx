@@ -8,16 +8,22 @@ import { SplitWords } from "@/components/ui/SplitWords";
 import { portraits } from "@/content/ai-training";
 
 const columns = 16;
-const rows = 8;
+const rows = 9;
+const phrase = "THE TEAM";
+const phraseRow = 4;
+const phraseColumn = 4;
 const motionGate = "(max-width: 899px), (prefers-reduced-motion: reduce)";
 
 const tiles = Array.from({ length: columns * rows }, (_, index) => {
   const column = index % columns;
   const row = Math.floor(index / columns);
+  const offset = column - phraseColumn;
+  const letter = row === phraseRow && offset >= 0 && offset < phrase.length ? phrase[offset] : "";
   return {
     index,
     progress: (column + row) / (columns + rows - 2),
-    accent: (column + row * 3) % 17 === 0,
+    letter,
+    space: letter === " ",
   };
 });
 
@@ -72,13 +78,27 @@ export function PortraitWall() {
   }, []);
 
   return (
-    <section id="talent" aria-labelledby="talent-heading" className="scroll-mt-24 bg-ink text-cloud">
+    <section id="talent" aria-labelledby="talent-heading" className="scroll-mt-24 bg-[#0b0d12] text-cloud">
       <div ref={trackRef} className="h-[280vh] gate:h-auto">
         <div
           ref={stageRef}
           className="sticky top-0 h-svh overflow-hidden gate:relative gate:h-auto"
           style={{ "--u": 0 } as CSSProperties}
         >
+          <div className="absolute inset-0 [&_img]:scale-[calc(1.08_-_var(--u)*0.08)] gate:[&_img]:scale-none" aria-hidden>
+            <Image
+              src="/images/training-team.webp"
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover object-[center_30%]"
+            />
+          </div>
+          <div className="absolute inset-0 bg-[#0b0d12] [opacity:calc(1-var(--u))] gate:[opacity:0]" aria-hidden />
+          <div
+            className="absolute inset-0 bg-[linear-gradient(90deg,rgb(10_10_10/0.78)_0%,rgb(10_10_10/0.35)_55%,rgb(10_10_10/0.62)_100%)] [opacity:var(--u)] gate:opacity-100"
+            aria-hidden
+          />
           <div
             className="pointer-events-none absolute inset-0 z-20 grid gap-[3px] p-[3px] [perspective:1400px] gate:hidden"
             style={{
@@ -87,28 +107,36 @@ export function PortraitWall() {
             }}
             aria-hidden
           >
-            {tiles.map((tile) => (
-              <span
-                key={tile.index}
-                className="block rounded-[3px] [transform:rotateX(calc(var(--f)*-92deg))] [opacity:clamp(0,calc((1-var(--f))*8),1)]"
-                style={
-                  {
-                    background: tile.accent ? "#f30100" : "#171717",
-                    transformOrigin: "50% 0",
-                    backfaceVisibility: "hidden",
-                    "--t": tile.progress.toFixed(3),
-                    "--f": "clamp(0, calc((var(--u) - var(--t) * 0.78) / 0.16), 1)",
-                  } as CSSProperties
-                }
-              />
-            ))}
+            {tiles.map((tile) => {
+              const marked = Boolean(tile.letter) && !tile.space;
+              return (
+                <span
+                  key={tile.index}
+                  className={`relative grid place-items-center rounded-[3px] font-mono text-[clamp(1.1rem,2.4vw,2.4rem)] font-semibold text-cloud [transform:rotateX(calc(var(--f)*-92deg))] [opacity:clamp(0,calc((1-var(--f))*8),1)] ${
+                    marked
+                      ? "bg-brand after:absolute after:top-1/2 after:right-0 after:left-0 after:h-px after:bg-black/45 after:content-['']"
+                      : "bg-[#14181f]"
+                  }`}
+                  style={
+                    {
+                      transformOrigin: "50% 0",
+                      backfaceVisibility: "hidden",
+                      "--t": tile.progress.toFixed(3),
+                      "--f": "clamp(0, calc((var(--u) - var(--t) * 0.78) / 0.16), 1)",
+                    } as CSSProperties
+                  }
+                >
+                  {tile.space ? "" : tile.letter}
+                </span>
+              );
+            })}
           </div>
           <div className={`relative z-10 flex h-full flex-col py-16 md:py-20 gate:block gate:h-auto ${pageWrap}`}>
             <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
               <SplitWords text="Sample profiles" />
             </p>
             <h2 id="talent-heading" className="font-display mt-3 max-w-3xl text-3xl leading-tight md:text-5xl">
-              <SplitWords text="Four fictional portraits." delay={0.06} />
+              The <span className="bg-brand px-2 text-cloud">team.</span>
             </h2>
             <Reveal delay={0.12}>
               <p className="mt-4 max-w-2xl text-lg leading-8 text-cloud-soft">

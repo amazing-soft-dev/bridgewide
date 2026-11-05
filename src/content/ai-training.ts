@@ -26,6 +26,8 @@ export type TrainingRegion = {
   slug: TrainingRegionSlug;
   name: string;
   summary: string;
+  /** Photo for the AI-training regions mosaic. Not used by the home region cards. */
+  image: string;
 };
 
 export type WorkType = {
@@ -37,6 +39,8 @@ export type WorkType = {
 export type Platform = {
   slug: string;
   name: string;
+  /** Square brand mark, used only on the platform tape. */
+  logo: string;
   summary: string;
   work: string;
   relationship: PlatformRelationship;
@@ -100,30 +104,35 @@ export const trainingMission =
 export const trainingRegions: readonly TrainingRegion[] = [
   {
     slug: "usa",
+    image: "/images/training-region-usa.webp",
     name: "United States",
     summary:
       "Remote AI-training work for people based in the United States, matched by the kind of work, seniority, and time zone.",
   },
   {
     slug: "canada",
+    image: "/images/training-region-canada.webp",
     name: "Canada",
     summary:
       "Remote AI-training work for people based in Canada, from coding and data tasks to writing and other specialist tracks.",
   },
   {
     slug: "latam",
+    image: "/images/training-region-latam.webp",
     name: "Latin America",
     summary:
       "Remote AI-training work for people based in Latin America, with assessments briefed before an introduction.",
   },
   {
     slug: "europe",
+    image: "/images/training-region-europe.webp",
     name: "Europe",
     summary:
       "Remote AI-training work for people based in Europe, matched to platforms by stack, domain, and time zone.",
   },
   {
     slug: "asia",
+    image: "/images/training-region-asia.webp",
     name: "Asia",
     summary:
       "Remote AI-training work for people based in Asia, including multilingual, writing, and technical tracks.",
@@ -156,6 +165,7 @@ export const workTypes: readonly WorkType[] = [
 export const platforms: readonly Platform[] = [
   {
     slug: "outlier",
+    logo: "/images/platforms/outlier.svg",
     name: "Outlier",
     summary: "Contributor work across coding, math, writing, STEM, and generalist tasks.",
     work: "Coding, math, writing, STEM, generalist",
@@ -163,6 +173,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "surge-ai",
+    logo: "/images/platforms/surge-ai.png",
     name: "Surge AI",
     summary: "RLHF, code review, and domain-expert rating for model training.",
     work: "RLHF, code review, domain experts",
@@ -170,6 +181,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "mercor",
+    logo: "/images/platforms/mercor.png",
     name: "Mercor",
     summary: "Expert projects across software and other professions.",
     work: "Software, professional experts",
@@ -177,6 +189,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "turing",
+    logo: "/images/platforms/turing.png",
     name: "Turing",
     summary: "Software and AI-training projects for engineers.",
     work: "Software engineering, AI training",
@@ -184,6 +197,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "micro1",
+    logo: "/images/platforms/micro1.png",
     name: "Micro1",
     summary: "Specialist contractors for AI labs and training programs.",
     work: "Software, data, domain specialists",
@@ -191,6 +205,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "dataannotation",
+    logo: "/images/platforms/dataannotation.png",
     name: "DataAnnotation",
     summary: "Coding, writing, and evaluation tasks for model training.",
     work: "Coding, writing, evaluation",
@@ -198,6 +213,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "alignerr",
+    logo: "/images/platforms/alignerr.png",
     name: "Alignerr",
     summary: "Expert contributor work across technical and professional fields.",
     work: "Technical and professional experts",
@@ -205,6 +221,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "handshake-ai",
+    logo: "/images/platforms/handshake-ai.svg",
     name: "Handshake AI",
     summary: "Short expert projects used to train AI systems.",
     work: "Expert projects",
@@ -212,6 +229,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "invisible",
+    logo: "/images/platforms/invisible.png",
     name: "Invisible",
     summary: "Expert operations and training work for AI teams.",
     work: "Expert operations, training",
@@ -219,6 +237,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "appen",
+    logo: "/images/platforms/appen.png",
     name: "Appen",
     summary: "Language, speech, and data tasks used in AI programs.",
     work: "Language, speech, data",
@@ -226,6 +245,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "telus-digital",
+    logo: "/images/platforms/telus-digital.png",
     name: "TELUS Digital",
     summary: "Language, localization, and AI data programs, including the former Lionbridge AI work.",
     work: "Language, localization, AI data",
@@ -233,6 +253,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "mindrift",
+    logo: "/images/platforms/mindrift.svg",
     name: "Mindrift",
     summary: "Domain-specialist tasks published through Toloka’s expert platform.",
     work: "Domain specialists",
@@ -240,6 +261,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "pareto",
+    logo: "/images/platforms/pareto.svg",
     name: "Pareto",
     summary: "High-skill projects for people training and evaluating models.",
     work: "High-skill evaluation",
@@ -247,6 +269,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "snorkel",
+    logo: "/images/platforms/snorkel.png",
     name: "Snorkel AI",
     summary: "Expert data development for model training.",
     work: "Expert data development",
@@ -254,6 +277,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "welocalize",
+    logo: "/images/platforms/welocalize.png",
     name: "Welocalize",
     summary: "Language and multilingual data programs for AI.",
     work: "Language, multilingual data",
@@ -261,6 +285,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "rws",
+    logo: "/images/platforms/rws.png",
     name: "RWS",
     summary: "TrainAI language and domain programs.",
     work: "Language, domain programs",
@@ -268,6 +293,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "imerit",
+    logo: "/images/platforms/imerit.png",
     name: "iMerit",
     summary: "Annotation and specialist data work for AI systems.",
     work: "Annotation, specialist data",
@@ -275,6 +301,7 @@ export const platforms: readonly Platform[] = [
   },
   {
     slug: "defined-ai",
+    logo: "/images/platforms/defined-ai.png",
     name: "Defined.ai",
     summary: "Speech, language, and domain data used to train models.",
     work: "Speech, language, domain data",
