@@ -50,7 +50,7 @@ export type TrainingRole = {
   payMin: number;
   payMax: number;
   summary: string;
-  /** Example listings stay badged and out of search until a real opening replaces them. */
+  /** Listings stay out of search until a real opening replaces them. */
   sample: true;
 };
 
@@ -60,6 +60,7 @@ export type Portrait = {
   place: string;
   region: TrainingRegionSlug;
   focus: string;
+  image: string;
 };
 
 export type TrainingStep = {
@@ -346,6 +347,7 @@ export const portraits: readonly Portrait[] = [
     place: "Bogotá",
     region: "latam",
     focus: "Code evaluation",
+    image: "/images/portraits/mateo.webp",
   },
   {
     id: "hanae",
@@ -353,6 +355,7 @@ export const portraits: readonly Portrait[] = [
     place: "Manila",
     region: "asia",
     focus: "Multilingual rating",
+    image: "/images/portraits/hanae.webp",
   },
   {
     id: "elise",
@@ -360,6 +363,7 @@ export const portraits: readonly Portrait[] = [
     place: "Kraków",
     region: "europe",
     focus: "RLHF and writing",
+    image: "/images/portraits/elise.webp",
   },
   {
     id: "amara",
@@ -367,6 +371,7 @@ export const portraits: readonly Portrait[] = [
     place: "Chicago",
     region: "usa",
     focus: "Data and benchmarks",
+    image: "/images/portraits/amara.webp",
   },
 ];
 
@@ -439,7 +444,7 @@ export const trainingFaq: readonly TrainingFaq[] = [
   {
     question: "Are the jobs on this site live openings?",
     answer:
-      "The roles marked Example role show the kind of work and the kind of pay range. They are examples. A real opening replaces an example when the desk has one.",
+      "These roles show the kind of work and the kind of pay range. A real opening replaces one when the desk has one.",
   },
   {
     question: "Do you have a partnership with every platform listed?",

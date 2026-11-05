@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ExampleBadge } from "@/components/ai-training/ExampleBadge";
 import { textLink } from "@/components/pages/format";
 import {
   formatHourly,
@@ -33,7 +32,7 @@ export function JobBoard({ roles }: { roles: readonly TrainingRole[] }) {
 
   return (
     <div className="grid gap-8">
-      <form className="grid gap-4 sm:grid-cols-2" aria-label="Filter example roles">
+      <form className="grid gap-4 sm:grid-cols-2" aria-label="Filter roles">
         <label className="grid gap-1.5">
           <span className="font-mono text-xs tracking-wide text-ink-soft uppercase">Kind of work</span>
           <select
@@ -66,19 +65,16 @@ export function JobBoard({ roles }: { roles: readonly TrainingRole[] }) {
         </label>
       </form>
       {visible.length === 0 ? (
-        <p className="text-ink-soft">No example roles match those filters.</p>
+        <p className="text-ink-soft">No roles match those filters.</p>
       ) : (
         <ul className="grid gap-4">
           {visible.map((role) => {
             const place = trainingRegions.find((item) => item.slug === role.region);
             return (
               <li key={role.slug} className="border-t border-brand pt-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <ExampleBadge />
-                  <p className="font-mono text-xs tracking-[0.16em] text-stone uppercase">
-                    {place?.name} · {workTypeLabel(role.workType)}
-                  </p>
-                </div>
+                <p className="font-mono text-xs tracking-[0.16em] text-stone uppercase">
+                  {place?.name} · {workTypeLabel(role.workType)}
+                </p>
                 <h3 className="font-display mt-3 text-2xl">
                   <Link href={`/ai-training/jobs/${role.slug}`} className={textLink}>
                     {role.title}

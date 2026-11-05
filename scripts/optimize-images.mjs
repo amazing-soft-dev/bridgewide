@@ -35,13 +35,27 @@ const exists = (file) => stat(file).then(() => true, () => false);
 
 await mkdir(outDir, { recursive: true });
 
-const files = (await readdir(srcDir)).filter((name) => /\.(webp|jpe?g|png|avif)$/i.test(name)).sort();
+const imageFile = /\.(webp|jpe?g|png|avif)$/i;
+
+async function walk(dir, prefix = "") {
+  const found = [];
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    if (entry.name.startsWith(".")) continue;
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) found.push(...(await walk(full, rel)));
+    else found.push(rel);
+  }
+  return found;
+}
+
+const files = (await walk(srcDir)).filter((name) => imageFile.test(name)).sort();
 const manifest = {};
 const keep = new Set();
 let written = 0;
 
 for (const name of files) {
-  const input = path.join(srcDir, name);
+  const input = path.join(srcDir, ...name.split("/"));
   const buffer = await readFile(input);
   const hash = createHash("sha256").update(buffer).digest("hex").slice(0, 10);
   const base = name.replace(/\.[^.]+$/, "");
@@ -50,8 +64,9 @@ for (const name of files) {
   for (const width of widths) {
     const outName = `${base}.${hash}.${width}.webp`;
     keep.add(outName);
-    const output = path.join(outDir, outName);
+    const output = path.join(outDir, ...outName.split("/"));
     if (await exists(output)) continue;
+    await mkdir(path.dirname(output), { recursive: true });
     await sharp(buffer)
       .resize({ width, withoutEnlargement: true })
       .webp({ quality: QUALITY, effort: 5 })
@@ -61,8 +76,8 @@ for (const name of files) {
 }
 
 // Drop variants of photos that changed or were removed.
-for (const name of await readdir(outDir)) {
-  if (!keep.has(name)) await rm(path.join(outDir, name));
+for (const name of await walk(outDir)) {
+  if (!keep.has(name)) await rm(path.join(outDir, ...name.split("/")));
 }
 
 const json = `${JSON.stringify(manifest, null, 2)}\n`;

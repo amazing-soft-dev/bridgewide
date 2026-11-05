@@ -120,7 +120,7 @@ export function ApplyForm({
       {roleSlug ? <input type="hidden" name="role" value={roleSlug} /> : null}
       {roleTitle ? (
         <p className="text-sm text-ink-soft">
-          This application mentions the example role <span className="text-ink">{roleTitle}</span>.
+          This application mentions the role <span className="text-ink">{roleTitle}</span>.
         </p>
       ) : null}
       <Field label="Name" name="name" autoComplete="name" required error={errors.name} />

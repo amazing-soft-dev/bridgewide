@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExampleBadge } from "@/components/ai-training/ExampleBadge";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { textLink } from "@/components/pages/format";
@@ -50,17 +49,16 @@ export default async function TrainingRegionPage({
       <PageHero eyebrow="Region" title={region.name} lede={region.summary}>
         <Button href="/ai-training/for-candidates">Apply</Button>
       </PageHero>
-      <PageSection id="roles" label="Example roles" title="Roles written for this region.">
+      <PageSection id="roles" label="Roles" title="Roles written for this region.">
         {roles.length === 0 ? (
           <p className="text-ink-soft">
-            Example roles for {region.name} will show here. You can still apply from anywhere.
+            Roles for {region.name} will show here. You can still apply from anywhere.
           </p>
         ) : (
           <ul className="grid gap-6">
             {roles.map((role) => (
               <li key={role.slug} className="border-t border-brand pt-4">
-                <ExampleBadge />
-                <h3 className="font-display mt-3 text-2xl">
+                <h3 className="font-display text-2xl">
                   <Link href={`/ai-training/jobs/${role.slug}`} className={textLink}>
                     {role.title}
                   </Link>

@@ -24,3 +24,7 @@ The ids below are Unsplash image CDN ids (`images.unsplash.com/photo-{id}`). The
 | `person-sofia.webp` | https://unsplash.com/ | `1580489944761-15a19d654956` |
 | `person-marcus.webp` | https://unsplash.com/ | `1507003211169-0a1dd7228f2d` |
 | `person-priya.webp` | https://unsplash.com/ | `1544005313-94ddf0286df2` |
+| `portraits/mateo.webp` | https://unsplash.com/ | `1560250097-0b93528c311a` |
+| `portraits/hanae.webp` | https://unsplash.com/ | `1573497019236-17f8177b81e8` |
+| `portraits/elise.webp` | https://unsplash.com/ | `1573497019940-1c28c88b4f3e` |
+| `portraits/amara.webp` | https://unsplash.com/ | `1573497161161-c3e73707e25c` |
