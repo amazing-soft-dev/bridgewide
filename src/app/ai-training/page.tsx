@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { ExampleBadge } from "@/components/ai-training/ExampleBadge";
+import { MissionBand } from "@/components/ai-training/MissionBand";
+import { PathSteps } from "@/components/ai-training/PathSteps";
+import { PlatformTape } from "@/components/ai-training/PlatformTape";
+import { PortraitWall } from "@/components/ai-training/PortraitWall";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { textLink } from "@/components/pages/format";
@@ -7,20 +10,15 @@ import { pageMetadata } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Accordion } from "@/components/ui/Accordion";
 import { Button } from "@/components/ui/Button";
-import { Marquee } from "@/components/ui/Marquee";
 import {
   formatHourly,
-  platforms,
-  portraits,
   testimonials,
   trainingBenefits,
   trainingFaq,
   trainingHero,
-  trainingMission,
   trainingRegions,
   trainingRoles,
   trainingStats,
-  trainingSteps,
   workTypeLabel,
   workTypes,
 } from "@/content/ai-training";
@@ -50,17 +48,7 @@ export default function AiTrainingPage() {
         lede="Outlier, Surge AI, Mercor, Turing, Micro1, and the others in this directory. BridgeWide is the shortcut through that maze."
         tone="ink"
       >
-        <Marquee className="flex flex-wrap gap-x-8 gap-y-3">
-          {platforms.map((platform) => (
-            <Link
-              key={platform.slug}
-              href={`/ai-training/platforms/${platform.slug}`}
-              className="font-display text-2xl whitespace-nowrap text-cloud no-underline hover:text-brand"
-            >
-              {platform.name}
-            </Link>
-          ))}
-        </Marquee>
+        <PlatformTape />
       </PageSection>
 
       <PageSection
@@ -79,9 +67,7 @@ export default function AiTrainingPage() {
         </ol>
       </PageSection>
 
-      <PageSection id="mission" label="Mission" title="Close the gap." tone="ink">
-        <p className="max-w-3xl text-lg leading-8 text-cloud-soft">{trainingMission}</p>
-      </PageSection>
+      <MissionBand />
 
       <PageSection id="stats" label="At a glance" title="One application, paid by the platform.">
         <dl className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -105,39 +91,15 @@ export default function AiTrainingPage() {
         </ul>
       </PageSection>
 
-      <PageSection
-        id="path"
-        label="The path"
-        title="Apply, match, brief, start."
-        lede="The desk aims to review an application within three business days."
-        tone="ink"
-      >
-        <ol className="grid gap-8 md:grid-cols-2">
-          {trainingSteps.map((step, index) => (
-            <li key={step.title} className="border-t border-brand pt-4">
-              <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">0{index + 1}</p>
-              <h3 className="font-display mt-3 text-2xl">{step.title}</h3>
-              <p className="mt-3 leading-7 text-cloud-soft">{step.copy}</p>
-            </li>
-          ))}
-        </ol>
-      </PageSection>
+      <PathSteps />
 
-      <PageSection
-        id="roles"
-        label="Example roles"
-        title="The range of the work."
-        lede="These listings are examples. Each one is marked Example role."
-      >
+      <PageSection id="roles" label="Roles" title="The range of the work.">
         <ul className="grid gap-6">
           {trainingRoles.map((role) => (
             <li key={role.slug} className="border-t border-brand pt-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <ExampleBadge />
-                <p className="font-mono text-xs tracking-[0.16em] text-stone uppercase">
-                  {workTypeLabel(role.workType)}
-                </p>
-              </div>
+              <p className="font-mono text-xs tracking-[0.16em] text-stone uppercase">
+                {workTypeLabel(role.workType)}
+              </p>
               <h3 className="font-display mt-3 text-2xl">
                 <Link href={`/ai-training/jobs/${role.slug}`} className={textLink}>
                   {role.title}
@@ -150,7 +112,7 @@ export default function AiTrainingPage() {
         </ul>
         <p className="mt-8">
           <Link href="/ai-training/jobs" className={textLink}>
-            Filter example roles
+            Filter roles
           </Link>
         </p>
       </PageSection>
@@ -170,25 +132,7 @@ export default function AiTrainingPage() {
         </ul>
       </PageSection>
 
-      <PageSection
-        id="talent"
-        label="Sample profiles"
-        title="Four fictional portraits."
-        lede="These people are samples. They are not candidates BridgeWide has placed."
-        tone="ink"
-      >
-        <ul className="grid gap-6 sm:grid-cols-2">
-          {portraits.map((person) => (
-            <li key={person.id} className="border-t border-brand pt-4">
-              <p className="font-mono text-xs tracking-[0.16em] text-brand uppercase">Sample profile</p>
-              <h3 className="font-display mt-3 text-2xl">{person.name}</h3>
-              <p className="mt-2 text-cloud-soft">
-                {person.place} · {person.focus}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </PageSection>
+      <PortraitWall />
 
       {testimonials.length > 0 ? (
         <PageSection id="testimonials" label="Testimonials" title="In their words.">

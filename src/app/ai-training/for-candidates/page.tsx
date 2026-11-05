@@ -23,7 +23,7 @@ export default function ForCandidatesPage() {
         lede="Tell us your experience, the kind of work, your region, and your English level. Attach a CV. The desk aims to review it within three business days."
       >
         <Link href="/ai-training/jobs" className={textLink}>
-          See example roles
+          See roles
         </Link>
       </PageHero>
       <PageSection id="path" label="The path" title="What happens after you apply." tone="ink">

@@ -100,7 +100,7 @@ export async function POST(request: Request) {
         `Region: ${formRegionName(region.value)} (${region.value})`,
         `English: ${labelFor(english.value, englishLevels)}`,
         `Availability: ${labelFor(availability.value, availabilities)}`,
-        role ? `Example role: ${role.title} (${role.slug})` : "Example role: none",
+        role ? `Role: ${role.title} (${role.slug})` : "Role: none",
         "Consent: profile is shared only after the candidate agrees.",
         `File: ${checked.filename}`,
       ].join("\n"),

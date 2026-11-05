@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExampleBadge } from "@/components/ai-training/ExampleBadge";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { textLink } from "@/components/pages/format";
@@ -31,7 +30,7 @@ export async function generateMetadata({
 
   return pageMetadata({
     title: `${role.title} · AI training · BridgeWide`,
-    description: `${role.summary} Example pay ${formatHourly(role.payMin, role.payMax)}.`,
+    description: `${role.summary} Pay ${formatHourly(role.payMin, role.payMax)}.`,
     path: `/ai-training/jobs/${role.slug}`,
     robots: role.sample ? { index: false, follow: true } : undefined,
   });
@@ -50,24 +49,21 @@ export default async function TrainingJobPage({
   return (
     <>
       <PageHero
-        eyebrow="Example role"
+        eyebrow="Role"
         title={role.title}
         lede={role.summary}
         meta={
-          <span className="flex flex-wrap items-center gap-3">
-            <ExampleBadge />
-            <span className="font-mono text-xs tracking-[0.16em] text-stone uppercase">
-              {region?.name} · {workTypeLabel(role.workType)} · {formatHourly(role.payMin, role.payMax)}
-            </span>
+          <span className="font-mono text-xs tracking-[0.16em] text-stone uppercase">
+            {region?.name} · {workTypeLabel(role.workType)} · {formatHourly(role.payMin, role.payMax)}
           </span>
         }
       >
         <Button href={`/ai-training/for-candidates?role=${role.slug}`}>Apply</Button>
         <Button href="/ai-training/jobs" variant="secondary">
-          All example roles
+          All roles
         </Button>
       </PageHero>
-      <PageSection id="about" label="This listing" title="An example, not a live seat.">
+      <PageSection id="about" label="This listing" title="A listing, not a live seat.">
         <p className="max-w-2xl leading-8 text-ink-soft">
           The pay range shows the kind of rate this work can carry. The platform would pay the person,
           in USD. BridgeWide does not take a cut, and a profile is shared only after the candidate agrees.
