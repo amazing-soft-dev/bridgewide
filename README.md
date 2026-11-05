@@ -130,18 +130,18 @@ The canonical site URL (used for metadata, sitemap, and Open Graph) is `siteUrl`
 `dev` is where work lands. `main` is the release branch. Do not push to either one. See `CONTRIBUTING.md`.
 
 1. Create a GitHub issue and note the number.
-2. Branch from `origin/dev` as `feat/`, `fix/`, `docs/`, `ci/`, or `build/`.
-3. Commit with a Conventional Commit subject and a line of its own: `Closes #N`.
+2. Branch from `origin/dev` as `feat/12-short-description` (`fix/`, `docs/`, `ci/`, and `build/` work the same way). The issue number in the branch name is enough.
+3. Commit with a Conventional Commit subject. Add a `Closes #N` line when the branch name has no issue number. `Fixes` and `Resolves` work the same way.
 4. Push. `open-pull-request.yml` opens the pull request into `dev`.
 5. `ci.yml` runs. If **CI passed** is green, `merge-passing-pr.yml` merge-commits into `dev`.
-6. That push opens `dev` into `main`. CI runs again and, if it passes, merges into `main`.
-7. GitHub closes the issue when `Closes #N` lands on `main`.
+6. That push opens `dev` into `main`, or updates the open one. Its body lists `Closes #N` from numbered branches and commit keywords. CI runs again and, if it passes, merges into `main`.
+7. GitHub closes those issues when that pull request merges.
 
 A merge to `main` only re-runs CI. Vercel deploys https://www.bridgewide.org from its Git connection. GitHub Pages is not published by Actions.
 
 | Workflow | Runs on | What it does |
 | --- | --- | --- |
-| `open-pull-request.yml` | Push to `feat/**`, `fix/**`, `docs/**`, `ci/**`, `build/**`, or `dev` | Opens the branch into `dev`, or `dev` into `main` when `dev` is ahead |
+| `open-pull-request.yml` | Push to `feat/**`, `fix/**`, `docs/**`, `ci/**`, `build/**`, or `dev` | Opens the branch into `dev`, or `dev` into `main` when `dev` is ahead. The pull request into `main` lists `Closes #N` from numbered branches and commit keywords, and an open one is updated |
 | `ci.yml` | Pull requests, pushes to `dev` and `main` | Lint, type check, server and static builds. **CI passed** is the required check |
 | `merge-passing-pr.yml` | CI succeeds on a pull request | Merge-commits eligible pull requests if the head commit is still the one CI validated |
 
