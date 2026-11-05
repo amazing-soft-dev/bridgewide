@@ -4,9 +4,13 @@ import Image from "next/image";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
 import { trainingSteps } from "@/content/ai-training";
-import { images } from "@/content/site";
 
-const stepImages = [images.hero, images.employers, images.engineers, images.desk] as const;
+const stepImages = [
+  "/images/training-path-1.webp",
+  "/images/training-path-2.webp",
+  "/images/training-path-3.webp",
+  "/images/training-path-4.webp",
+] as const;
 const motionGate = "(max-width: 899px), (prefers-reduced-motion: reduce)";
 
 export function PathSteps() {
