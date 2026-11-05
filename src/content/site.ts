@@ -111,6 +111,12 @@ export type Role = {
   summary: string;
   consultantName: string;
   tags?: readonly RoleTag[];
+  /** Three lines for “What you would do”, drawn from the summary. */
+  duties: readonly [string, string, string];
+  /** Three lines for “What you bring”, drawn from the summary. */
+  requirements: readonly [string, string, string];
+  /** Three lines for “What you get”, drawn from the published seat. */
+  benefits: readonly [string, string, string];
 };
 
 export type Placement = {
@@ -446,6 +452,21 @@ export const roles: readonly Role[] = [
       "A staff backend seat for a San Francisco payments team that needs one owner for a ledger service. The engineer should have shipped Go or Java in production and be ready to review design with the people already on the team.",
     consultantName: "Lena Cho",
     tags: ["Hot"],
+    duties: [
+      "Own the ledger service for a San Francisco payments team",
+      "Review design with the people already on the team",
+      "Keep one service’s production path in a single owner’s hands",
+    ],
+    requirements: [
+      "Shipped Go or Java in production",
+      "Ready to review design with an existing team",
+      "Comfortable as the owner of a ledger service",
+    ],
+    benefits: [
+      "Salary $210,000–$245,000",
+      "Hybrid in San Francisco",
+      "Permanent seat, with Lena Cho on the search",
+    ],
   },
   {
     slug: "senior-frontend-engineer-austin",
@@ -468,6 +489,21 @@ export const roles: readonly Role[] = [
       "Hybrid frontend seat in Austin on a product surface that operations staff use all day. We are shortlisting senior engineers who have owned a design system and can work beside an existing React team.",
     consultantName: "Lena Cho",
     tags: ["New"],
+    duties: [
+      "Build the product surface operations staff use all day",
+      "Work beside the existing React team in Austin",
+      "Own pieces of the design system that surface depends on",
+    ],
+    requirements: [
+      "Senior frontend engineer",
+      "Has owned a design system",
+      "Can work beside an existing React team",
+    ],
+    benefits: [
+      "Salary $165,000–$190,000",
+      "Hybrid in Austin",
+      "Permanent seat, with Lena Cho on the search",
+    ],
   },
   {
     slug: "engineering-manager-new-york",
@@ -490,6 +526,21 @@ export const roles: readonly Role[] = [
       "A manager seat in New York for a group of eight product engineers and a roadmap the company has already shared internally. The search is for a manager who has run a team of engineers and who will hire into that team after they start.",
     consultantName: "Priya Raman",
     tags: ["2 Left"],
+    duties: [
+      "Run a group of eight product engineers in New York",
+      "Carry a roadmap the company has already shared internally",
+      "Hire into the team after the start date",
+    ],
+    requirements: [
+      "Has run a team of engineers",
+      "Will hire into that team after they start",
+      "Ready for a roadmap that is already written down",
+    ],
+    benefits: [
+      "Salary $240,000–$280,000",
+      "Hybrid in New York",
+      "Permanent seat, with Priya Raman on the search",
+    ],
   },
   {
     slug: "senior-data-engineer-toronto",
@@ -511,6 +562,21 @@ export const roles: readonly Role[] = [
       "Toronto hybrid seat on a warehouse that feeds finance and product reporting. The brief calls for a senior data engineer who has run dbt and a cloud warehouse in production.",
     consultantName: "Marcus Adeyemi",
     tags: ["Hot"],
+    duties: [
+      "Own a warehouse that feeds finance and product reporting",
+      "Keep Toronto hybrid hours with the team on that warehouse",
+      "Run the models the brief already depends on",
+    ],
+    requirements: [
+      "Senior data engineer",
+      "Has run dbt in production",
+      "Has run a cloud warehouse in production",
+    ],
+    benefits: [
+      "Salary $150,000–$175,000",
+      "Hybrid in Toronto",
+      "Permanent seat, with Marcus Adeyemi on the search",
+    ],
   },
   {
     slug: "cloud-engineer-vancouver",
@@ -532,6 +598,21 @@ export const roles: readonly Role[] = [
       "A contract cloud seat, remote in Canada, to finish a platform cutover before year end. The engineer should be comfortable owning Terraform, a Kubernetes cluster, and the on-call that comes with both.",
     consultantName: "Marcus Adeyemi",
     tags: ["New"],
+    duties: [
+      "Finish a platform cutover before year end",
+      "Own Terraform and a Kubernetes cluster",
+      "Carry the on-call that comes with both",
+    ],
+    requirements: [
+      "Comfortable owning Terraform",
+      "Comfortable owning a Kubernetes cluster",
+      "Ready for the on-call that comes with the cutover",
+    ],
+    benefits: [
+      "Rate $850–$980 / day",
+      "Remote in Canada",
+      "Contract seat, with Marcus Adeyemi on the search",
+    ],
   },
   {
     slug: "senior-backend-engineer-mexico-city",
@@ -553,6 +634,21 @@ export const roles: readonly Role[] = [
       "Contract backend seat in Mexico City, overlapped with US Pacific hours, for an API that is already in market. We want a senior engineer who can pick up a Go service and ship without a long ramp.",
     consultantName: "Sofia Navarro",
     tags: ["Hot"],
+    duties: [
+      "Pick up a Go API that is already in market",
+      "Ship on that service without a long ramp",
+      "Overlap working hours with US Pacific",
+    ],
+    requirements: [
+      "Senior backend engineer",
+      "Can pick up a Go service",
+      "Can ship without a long ramp",
+    ],
+    benefits: [
+      "Rate $650–$780 / day",
+      "Remote from Mexico City, overlapped with US Pacific",
+      "Contract seat, with Sofia Navarro on the search",
+    ],
   },
   {
     slug: "mobile-engineer-sao-paulo",
@@ -574,6 +670,21 @@ export const roles: readonly Role[] = [
       "Permanent mobile seat in São Paulo for a health product with iOS and Android already in the stores. The hire joins a small app team and is expected to own releases as well as tickets.",
     consultantName: "Sofia Navarro",
     tags: ["12 Seats"],
+    duties: [
+      "Join a small app team on a health product",
+      "Work on iOS and Android builds already in the stores",
+      "Own releases as well as tickets",
+    ],
+    requirements: [
+      "Mobile engineer for iOS and Android",
+      "Ready to own releases, not only tickets",
+      "Based in São Paulo for a permanent seat",
+    ],
+    benefits: [
+      "Salary $95,000–$120,000",
+      "Remote in São Paulo",
+      "Permanent seat, with Sofia Navarro on the search",
+    ],
   },
   {
     slug: "frontend-engineer-bogota",
@@ -595,6 +706,21 @@ export const roles: readonly Role[] = [
       "Contract frontend seat in Bogotá for a dashboard that account managers live in. The engineer should know React well enough to improve a mature codebase in place.",
     consultantName: "Sofia Navarro",
     tags: ["6 Seats"],
+    duties: [
+      "Improve a dashboard account managers live in",
+      "Work inside a mature React codebase",
+      "Ship changes in place, without a rewrite",
+    ],
+    requirements: [
+      "Knows React well enough for a mature codebase",
+      "Can improve a product in place",
+      "Available for a contract from Bogotá",
+    ],
+    benefits: [
+      "Rate $480–$620 / day",
+      "Remote in Bogotá",
+      "Contract seat, with Sofia Navarro on the search",
+    ],
   },
   {
     slug: "staff-platform-engineer-london",
@@ -616,6 +742,21 @@ export const roles: readonly Role[] = [
       "Hybrid staff platform seat in London for a company whose product engineers are blocked on internal tooling. The hire sets the paved path: CI, environments, and the libraries other teams are expected to use.",
     consultantName: "Henrik Dahl",
     tags: ["Hot"],
+    duties: [
+      "Unblock product engineers who are waiting on internal tooling",
+      "Set the paved path for CI and environments",
+      "Set the libraries other teams are expected to use",
+    ],
+    requirements: [
+      "Staff platform engineer",
+      "Has set a paved path other teams actually use",
+      "Hybrid in London",
+    ],
+    benefits: [
+      "Salary $160,000–$190,000",
+      "Hybrid in London",
+      "Permanent seat, with Henrik Dahl on the search",
+    ],
   },
   {
     slug: "data-engineer-berlin",
@@ -637,6 +778,21 @@ export const roles: readonly Role[] = [
       "Hybrid data seat in Berlin on event pipelines that feed product analytics and a customer-facing report. We are looking for an engineer who has operated streaming jobs in production.",
     consultantName: "Marcus Adeyemi",
     tags: ["Confidential"],
+    duties: [
+      "Run event pipelines that feed product analytics",
+      "Feed a customer-facing report from those pipelines",
+      "Keep the streaming jobs healthy in production",
+    ],
+    requirements: [
+      "Has operated streaming jobs in production",
+      "Can work a hybrid week in Berlin",
+      "Comfortable with pipelines that customers see",
+    ],
+    benefits: [
+      "Salary $120,000–$145,000",
+      "Hybrid in Berlin",
+      "Permanent seat, with Marcus Adeyemi on the search",
+    ],
   },
   {
     slug: "ios-engineer-amsterdam",
@@ -658,6 +814,21 @@ export const roles: readonly Role[] = [
       "Remote contract iOS seat in Amsterdam to ship a regulated feature before a fixed release window. The engineer should have taken an app through App Store review and be used to working with a backend team in another city.",
     consultantName: "Sofia Navarro",
     tags: ["New"],
+    duties: [
+      "Ship a regulated iOS feature before a fixed release window",
+      "Take the build through App Store review",
+      "Work with a backend team in another city",
+    ],
+    requirements: [
+      "Has taken an app through App Store review",
+      "Used to working with a backend team in another city",
+      "Available for a remote contract from Amsterdam",
+    ],
+    benefits: [
+      "Rate $700–$860 / day",
+      "Remote in Amsterdam",
+      "Contract seat, with Sofia Navarro on the search",
+    ],
   },
   {
     slug: "director-of-engineering-dublin",
@@ -679,6 +850,21 @@ export const roles: readonly Role[] = [
       "A director seat in Dublin for a product org of about forty engineers across three groups. The search starts confidential, and the hire is expected to reset planning with the managers already in place.",
     consultantName: "Priya Raman",
     tags: ["Confidential"],
+    duties: [
+      "Lead a product org of about forty engineers across three groups",
+      "Reset planning with the managers already in place",
+      "Keep the search confidential until the shortlist",
+    ],
+    requirements: [
+      "Has led managers, not only a single team",
+      "Ready to reset planning with the people already there",
+      "Comfortable with a search that starts confidential",
+    ],
+    benefits: [
+      "Salary $200,000–$240,000",
+      "Hybrid in Dublin",
+      "Permanent seat, with Priya Raman on the search",
+    ],
   },
 ];
 
