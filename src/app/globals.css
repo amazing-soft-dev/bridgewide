@@ -46,6 +46,7 @@
   --animate-sth-pulse: sth-pulse 2.4s ease-out infinite;
   --animate-sth-blink: sth-blink 1.4s steps(2) infinite;
   --animate-sth-board-in: sth-board-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.35s both;
+  --animate-role-stamp: role-stamp 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
   @keyframes flap-fold {
     50% {
@@ -117,6 +118,13 @@
       translate: 0 0;
     }
   }
+
+  @keyframes role-stamp {
+    from {
+      opacity: 0;
+      scale: 1.8;
+    }
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -144,6 +152,8 @@
     animation: none !important;
     transition: none !important;
     transform: none !important;
+    translate: none !important;
+    scale: none !important;
     opacity: 1 !important;
   }
 }

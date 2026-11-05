@@ -1,57 +1,21 @@
-import Link from "next/link";
-import { PageHero } from "@/components/pages/PageHero";
-import { PageSection } from "@/components/pages/PageSection";
-import { RoleList } from "@/components/pages/RoleList";
-import { rolesIn, textLink } from "@/components/pages/format";
+import { RolesClose } from "@/components/roles/RolesClose";
+import { RolesExplorer } from "@/components/roles/RolesExplorer";
+import { RolesHero } from "@/components/roles/RolesHero";
 import { pageMetadata } from "@/components/pages/metadata";
-import { regions } from "@/content/site";
 
 export const metadata = pageMetadata({
   title: "Roles · BridgeWide",
   description:
-    "Open software engineering roles across the USA, Canada, Latin America, and Europe.",
+    "Open software engineering roles across the USA, Canada, Latin America, and Europe. Salary on every role, and a named consultant behind each one.",
   path: "/roles",
 });
 
 export default function RolesPage() {
   return (
     <>
-      <PageHero
-        eyebrow="Roles"
-        title="Seats that are live this season."
-        lede="Grouped by region."
-      >
-        <nav aria-label="Jump to region">
-          <ul className="flex flex-wrap gap-x-5 gap-y-2">
-            {regions.map((region) => (
-              <li key={region.slug}>
-                <a
-                  href={`#${region.slug}`}
-                  className="font-mono text-xs tracking-[0.18em] text-brand uppercase no-underline hover:text-ink"
-                >
-                  {region.name}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </PageHero>
-      {regions.map((region) => (
-        <PageSection
-          key={region.slug}
-          id={region.slug}
-          label={region.code}
-          title={region.name}
-          lede={region.summary}
-        >
-          <RoleList items={rolesIn(region.slug)} />
-          <p className="mt-8">
-            <Link href={`/regions/${region.slug}`} className={textLink}>
-              {region.name} desk
-            </Link>
-          </p>
-        </PageSection>
-      ))}
+      <RolesHero />
+      <RolesExplorer />
+      <RolesClose />
     </>
   );
 }
