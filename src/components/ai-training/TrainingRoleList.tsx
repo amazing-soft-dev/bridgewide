@@ -2,20 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { TrainingRoleTicket } from "@/components/ai-training/TrainingRoleTicket";
 import { pageWrap, textLink } from "@/components/pages/format";
-import {
-  formatHourly,
-  trainingRegion,
-  trainingRoles,
-  workTypes,
-  type WorkTypeSlug,
-} from "@/content/ai-training";
-
-const code: Record<WorkTypeSlug, string> = {
-  code: "COD",
-  rlhf: "RLH",
-  specialist: "SPC",
-};
+import { trainingRoles, workTypes, type WorkTypeSlug } from "@/content/ai-training";
 
 export function TrainingRoleList() {
   const [filter, setFilter] = useState<WorkTypeSlug | "all">("all");
@@ -57,30 +46,10 @@ export function TrainingRoleList() {
             );
           })}
         </div>
-        <ul className="mt-4 grid gap-3">
+        <ul className="mt-4 grid list-none gap-1.5 p-0">
           {visible.map((role) => (
             <li key={role.slug}>
-              <Link
-                href={`/ai-training/jobs/${role.slug}`}
-                className="grid items-start gap-3 rounded-xl bg-white px-4 py-4 text-ink no-underline shadow-[0_8px_24px_rgb(17_17_17/0.04)] min-[700px]:grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] min-[700px]:items-center"
-              >
-                <span className="grid size-11 place-items-center rounded-md border border-cloud-soft font-mono text-xs tracking-wide">
-                  {code[role.workType]}
-                </span>
-                <span className="min-w-0">
-                  <span className="font-display text-lg leading-tight">{role.title}</span>
-                  <span className="mt-1 block text-sm leading-6 text-ink-soft">{role.summary}</span>
-                </span>
-                <span className="font-mono text-xs tracking-wide text-stone uppercase">
-                  {trainingRegion(role.region)?.name}
-                </span>
-                <span className="font-mono text-sm">{formatHourly(role.payMin, role.payMax)}</span>
-                {role.sample ? (
-                  <span className="w-fit rounded bg-brand px-2 py-1 font-mono text-[11px] tracking-[0.12em] text-cloud uppercase">
-                    Sample
-                  </span>
-                ) : null}
-              </Link>
+              <TrainingRoleTicket role={role} />
             </li>
           ))}
         </ul>

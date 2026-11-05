@@ -100,20 +100,22 @@ export function BenefitsTimeline() {
               />
               <ol className="m-0 grid list-none grid-cols-4 gap-4 p-0 gate:flex gate:flex-col gate:gap-6">
                 {trainingBenefits.map((benefit, index) => {
-                  const shown = index === active;
+                  const shown = index <= active;
                   return (
                     <li key={benefit.title} className="min-w-0">
                       <span
                         className={`relative z-[2] mb-6 grid size-[18px] place-items-center rounded-full border-2 bg-[#0a0a0a] gate:hidden ${
-                          index <= active ? "border-brand" : "border-cloud/40"
+                          shown ? "border-brand" : "border-cloud/40"
                         }`}
                         aria-hidden
                       >
-                        <span className={`size-2 rounded-full bg-brand ${index <= active ? "opacity-100" : "opacity-0"}`} />
+                        <span className={`size-2 rounded-full bg-brand ${shown ? "opacity-100" : "opacity-0"}`} />
                       </span>
                       <article
-                        className={`max-w-xs rounded-lg border border-cloud/15 border-t-[3px] border-t-brand bg-ink/75 px-4 py-4 backdrop-blur-md gate:max-w-none ${
-                          shown ? "opacity-100" : "opacity-0 gate:opacity-100"
+                        className={`max-w-xs rounded-lg border border-cloud/15 border-t-[3px] border-t-brand bg-ink/80 px-4 py-4 backdrop-blur-md transition-[opacity,translate] duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] gate:max-w-none gate:translate-y-0 gate:opacity-100 ${
+                          shown
+                            ? "translate-y-0 opacity-100"
+                            : "pointer-events-none translate-y-3 opacity-0 gate:pointer-events-auto"
                         }`}
                       >
                         <p className="font-mono text-xs tracking-[0.16em] text-brand uppercase">0{index + 1}</p>
