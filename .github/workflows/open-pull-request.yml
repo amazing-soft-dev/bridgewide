@@ -82,16 +82,41 @@ jobs:
           fi
 
           existing=$(gh pr list --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$HEAD" --state open --json number --jq '.[0].number // empty')
+
+          # Closing keywords on a pull request into dev are ignored. GitHub
+          # closes an issue only from the pull request into main, so that body
+          # lists every issue named by a branch or a commit in this range.
+          body=$(printf 'Opened automatically from `%s`.\n' "$HEAD")
+          if [ "$BASE" = "main" ]; then
+            issues=$(
+              {
+                git log --format='%B' "origin/$BASE..origin/$HEAD" \
+                  | grep -iE '^(close[sd]?|fix(e[sd])?|resolve[sd]?):?[[:space:]]+#' \
+                  | grep -oE '[0-9]+' || true
+                git log --format='%B' "origin/$BASE..origin/$HEAD" \
+                  | grep -oE '(feat|fix|docs|ci|build)/[0-9]+-' \
+                  | grep -oE '[0-9]+' || true
+              } | sort -n -u
+            )
+            closes=""
+            if [ -n "$issues" ]; then
+              while IFS= read -r number; do
+                [ -n "$number" ] || continue
+                closes="${closes}Closes #${number}"$'\n'
+              done <<< "$issues"
+              body=$(printf '%s\n%s' "$body" "$closes")
+            fi
+          fi
+
           if [ -n "$existing" ]; then
-            echo "Pull request #$existing is already open."
+            if [ "$BASE" = "main" ]; then
+              gh pr edit "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+              echo "Updated pull request #$existing."
+            else
+              echo "Pull request #$existing is already open."
+            fi
             exit 0
           fi
 
           title=$(git log -1 --format='%s' "origin/$HEAD")
-          closes=$(git log --format='%B' "origin/$BASE..origin/$HEAD" | grep -E '^(Closes|Fixes|Resolves) #[0-9]+$' || true)
-          body=$(printf 'Opened automatically from `%s`.\n' "$HEAD")
-          if [ -n "$closes" ]; then
-            body=$(printf '%s\n%s\n' "$body" "$closes")
-          fi
-
           gh pr create --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$HEAD" --title "$title" --body "$body"
