@@ -1,5 +1,13 @@
 import { inspectCv, MAX_CV_BYTES } from "@/lib/cv-file";
-import { emailField, honeypotTripped, limits, regionField, regionName, textField } from "@/lib/form";
+import {
+  emailField,
+  honeypotTripped,
+  limits,
+  optionalText,
+  regionField,
+  regionName,
+  textField,
+} from "@/lib/form";
 import { jsonResult, sendFormEmail } from "@/lib/mail";
 
 export const runtime = "nodejs";
@@ -25,6 +33,15 @@ export async function POST(request: Request) {
   const region = regionField(form.get("region"));
   if (!region.ok) return jsonResult({ ok: false, error: region.error, status: 400 });
 
+  const phone = optionalText(form.get("phone"), limits.phone, "Phone");
+  if (!phone.ok) return jsonResult({ ok: false, error: phone.error, status: 400 });
+
+  const seat = optionalText(form.get("role"), limits.roleTitle, "Role");
+  if (!seat.ok) return jsonResult({ ok: false, error: seat.error, status: 400 });
+
+  const ref = optionalText(form.get("ref"), 32, "Reference");
+  if (!ref.ok) return jsonResult({ ok: false, error: ref.error, status: 400 });
+
   const uploaded = form.get("file");
   if (!(uploaded instanceof File)) {
     return jsonResult({ ok: false, error: "Attach a CV.", status: 400 });
@@ -41,16 +58,21 @@ export async function POST(request: Request) {
     return jsonResult({ ok: false, error: "CV must be 5 MB or smaller.", status: 400 });
   }
 
+  const seatLine = seat.value && ref.value ? `${seat.value} (${ref.value})` : seat.value;
+  const lines = [
+    `Name: ${name.value}`,
+    `Email: ${email.value}`,
+    `Region: ${regionName(region.value)} (${region.value})`,
+    phone.value ? `Phone: ${phone.value}` : "",
+    seatLine ? `Role: ${seatLine}` : "",
+    `File: ${checked.filename}`,
+  ].filter(Boolean);
+
   return jsonResult(
     await sendFormEmail({
-      subject: `CV from ${name.value}`,
+      subject: seatLine ? `CV from ${name.value} — ${seatLine}` : `CV from ${name.value}`,
       replyTo: email.value,
-      text: [
-        `Name: ${name.value}`,
-        `Email: ${email.value}`,
-        `Region: ${regionName(region.value)} (${region.value})`,
-        `File: ${checked.filename}`,
-      ].join("\n"),
+      text: lines.join("\n"),
       attachments: [
         {
           filename: checked.filename,
