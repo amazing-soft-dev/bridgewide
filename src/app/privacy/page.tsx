@@ -24,7 +24,7 @@ export default function PrivacyPage() {
             BridgeWide will replace this note with a real privacy notice before the site treats it as policy. Until then, read it as a draft and do not use it to decide your rights.
           </p>
           <p>
-            The hire, CV, and contact forms send the details you type to the desk by email so someone can reply. That is a description of the form, not a promise about retention, sharing, or your legal rights.
+            The hire, CV, and contact forms send the details you type to the desk by email so someone can reply. The salary-guide field in the footer does the same: it emails the address you type so the desk can send the guide. That is a description of the form, not a promise about retention, sharing, or your legal rights.
           </p>
           <p>
             AI-training applications from those pages are emailed to the desk the same way. A candidate profile is introduced to a platform only after that candidate agrees. The platform pays the candidate.

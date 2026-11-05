@@ -8,14 +8,18 @@ export function SplitWords({
   className,
   immediate = false,
   delay = 0,
+  shown,
 }: {
   text: string;
   className?: string;
   immediate?: boolean;
   delay?: number;
+  /** When set, play the rise only after this becomes true. Skips whileInView. */
+  shown?: boolean;
 }) {
   const reduced = usePrefersReducedMotion();
   const words = text.trim().split(/\s+/);
+  const controlled = shown !== undefined;
 
   if (reduced) {
     return <span className={className}>{text}</span>;
@@ -25,9 +29,9 @@ export function SplitWords({
     <motion.span
       className={className}
       initial="hidden"
-      animate={immediate ? "visible" : undefined}
-      whileInView={immediate ? undefined : "visible"}
-      viewport={immediate ? undefined : revealViewport}
+      animate={controlled ? (shown ? "visible" : "hidden") : immediate ? "visible" : undefined}
+      whileInView={!controlled && !immediate ? "visible" : undefined}
+      viewport={!controlled && !immediate ? revealViewport : undefined}
       variants={{
         hidden: {},
         visible: {
