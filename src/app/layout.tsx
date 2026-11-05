@@ -72,7 +72,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <JsonLd data={siteGraph()} />
         <SiteHeader />
-        <main className="flex-1">{children}</main>
+        <main className="relative z-10 flex-1 bg-cloud">{children}</main>
         <SiteFooter />
         <FooterMark />
         {productionInsights ? <ProductionInsights /> : null}

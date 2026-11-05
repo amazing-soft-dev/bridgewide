@@ -88,6 +88,7 @@ All routes run on the Node.js runtime and return `{ ok: true }` or `{ ok: false,
 | `POST /api/hire` | JSON | `name`, `email`, `company`, `roleTitle`, `region`, `engagement` (`Permanent` / `Contract`), `message` |
 | `POST /api/cv` | `multipart/form-data` | `name`, `email`, `region`, `file` (PDF, DOC, or DOCX, 5 MB max; sent as an email attachment) |
 | `POST /api/contact` | JSON | `name`, `email`, `message` |
+| `POST /api/salary-guide` | JSON | `email` |
 
 The server validates every field (`src/lib/form.ts`, `src/lib/cv-file.ts`). Each form includes a hidden `companyWebsite` honeypot: if it is filled, the API returns success without sending anything.
 
@@ -96,7 +97,7 @@ The server validates every field (`src/lib/form.ts`, `src/lib/cv-file.ts`). Each
 ```
 src/
   app/                  Routes, layout, globals.css, sitemap/robots/OG
-    api/{hire,cv,contact}/route.ts
+    api/{hire,cv,contact,salary-guide}/route.ts
   components/
     brand/              Logo and bridge mark paths
     forms/              HireForm, CvForm, ContactForm, Field
