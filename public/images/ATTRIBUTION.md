@@ -36,3 +36,8 @@ The ids below are Unsplash image CDN ids (`images.unsplash.com/photo-{id}`). The
 | `training-region-latam.webp` | https://unsplash.com/ | `1518659526054-190340b32735` |
 | `training-region-europe.webp` | https://unsplash.com/ | `1502602898657-3e91760cbb34` |
 | `training-region-asia.webp` | https://unsplash.com/ | `1540959733332-eab4deabeeaf` |
+| `training-mission.webp` | https://unsplash.com/ | `1522202176988-66273c2fd55f` |
+| `training-path-1.webp` | https://unsplash.com/ | `1454165804606-c3d57bc86b40` |
+| `training-path-2.webp` | https://unsplash.com/ | `1531482615713-2afd69097998` |
+| `training-path-3.webp` | https://unsplash.com/ | `1517245386807-bb43f82c33c4` |
+| `training-path-4.webp` | https://unsplash.com/ | `1553877522-43269d4ea984` |
