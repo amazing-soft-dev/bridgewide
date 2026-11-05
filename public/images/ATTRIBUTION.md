@@ -28,3 +28,11 @@ The ids below are Unsplash image CDN ids (`images.unsplash.com/photo-{id}`). The
 | `portraits/hanae.webp` | https://unsplash.com/ | `1573497019236-17f8177b81e8` |
 | `portraits/elise.webp` | https://unsplash.com/ | `1573497019940-1c28c88b4f3e` |
 | `portraits/amara.webp` | https://unsplash.com/ | `1573497161161-c3e73707e25c` |
+| `training-platforms.webp` | https://unsplash.com/ | `1518770660439-4636190af475` |
+| `training-team.webp` | https://unsplash.com/ | `1521737604893-d14cc237f11d` |
+| `training-benefits.webp` | https://unsplash.com/ | `1600880292089-90a7e086ee0c` |
+| `training-region-usa.webp` | https://unsplash.com/ | `1496442226666-8d4d0e62e6e9` |
+| `training-region-canada.webp` | https://unsplash.com/ | `1503614472-8c93d56e92ce` |
+| `training-region-latam.webp` | https://unsplash.com/ | `1518659526054-190340b32735` |
+| `training-region-europe.webp` | https://unsplash.com/ | `1502602898657-3e91760cbb34` |
+| `training-region-asia.webp` | https://unsplash.com/ | `1540959733332-eab4deabeeaf` |
