@@ -3,9 +3,11 @@ import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { pageMetadata } from "@/components/pages/metadata";
 import { trainingRoles } from "@/content/ai-training";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Roles · AI training · BridgeWide",
+  title: "Roles · AI training",
   description: "AI-training roles across coding, rating, and specialist tracks.",
   path: "/ai-training/jobs",
 });
@@ -13,6 +15,7 @@ export const metadata = pageMetadata({
 export default function TrainingJobsPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: "Roles", path: "/ai-training/jobs" }])} />
       <PageHero
         eyebrow="Jobs"
         title="Roles, until a live opening replaces them."

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { textLink } from "@/components/pages/format";
-import { pageMetadata } from "@/components/pages/metadata";
+import { pageMetadata, sampleRobots } from "@/components/pages/metadata";
 import { Button } from "@/components/ui/Button";
 import {
   formatHourly,
@@ -12,6 +12,8 @@ import {
   trainingRoles,
   workTypeLabel,
 } from "@/content/ai-training";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs, trainingJobPosting } from "@/lib/structured-data";
 
 export const dynamicParams = false;
 
@@ -29,10 +31,10 @@ export async function generateMetadata({
   if (!role) notFound();
 
   return pageMetadata({
-    title: `${role.title} · AI training · BridgeWide`,
+    title: `${role.title} · AI training`,
     description: `${role.summary} Pay ${formatHourly(role.payMin, role.payMax)}.`,
     path: `/ai-training/jobs/${role.slug}`,
-    robots: role.sample ? { index: false, follow: true } : undefined,
+    robots: role.sample ? sampleRobots : undefined,
   });
 }
 
@@ -48,6 +50,9 @@ export default async function TrainingJobPage({
 
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: "Roles", path: "/ai-training/jobs" }, { name: role.title, path: `/ai-training/jobs/${role.slug}` }])} />
+      {/* Sample listings are noindex; the JobPosting is wired for the day a live opening replaces one. */}
+      {role.sample ? null : <JsonLd data={trainingJobPosting(role)} />}
       <PageHero
         eyebrow="Role"
         title={role.title}

@@ -5,9 +5,11 @@ import { PageSection } from "@/components/pages/PageSection";
 import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { contact } from "@/content/site";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Contact · BridgeWide",
+  title: "Contact",
   description: `Write to ${contact.email}. ${contact.location}.`,
   path: "/contact",
 });
@@ -15,6 +17,7 @@ export const metadata = pageMetadata({
 export default function ContactPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "Contact", path: "/contact" }])} />
       <PageHero
         eyebrow="Contact"
         title="The desk answers."

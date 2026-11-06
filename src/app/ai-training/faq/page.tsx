@@ -4,10 +4,10 @@ import { PageSection } from "@/components/pages/PageSection";
 import { pageMetadata } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { trainingFaq } from "@/content/ai-training";
-import { faqPage } from "@/lib/structured-data";
+import { breadcrumbs, faqPage } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "FAQ · AI training · BridgeWide",
+  title: "FAQ · AI training",
   description:
     "Who AI-training work is for, who pays, when a profile is shared, and how the listed roles differ from live openings.",
   path: "/ai-training/faq",
@@ -16,6 +16,7 @@ export const metadata = pageMetadata({
 export default function AiTrainingFaqPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: "FAQ", path: "/ai-training/faq" }])} />
       <JsonLd data={faqPage(trainingFaq)} />
       <PageHero
         eyebrow="FAQ"

@@ -4,9 +4,11 @@ import { PageSection } from "@/components/pages/PageSection";
 import { pageMetadata } from "@/components/pages/metadata";
 import { Button } from "@/components/ui/Button";
 import { fees, images, week } from "@/content/site";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Employers · BridgeWide",
+  title: "Employers",
   description:
     "How a company hires with BridgeWide: a week from brief to offer, fees, and a form to open a search.",
   path: "/employers",
@@ -15,6 +17,7 @@ export const metadata = pageMetadata({
 export default function EmployersPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "Employers", path: "/employers" }])} />
       <PageHero
         eyebrow="Employers"
         title="A shortlist your managers will interview."

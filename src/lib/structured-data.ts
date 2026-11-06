@@ -1,12 +1,17 @@
 import { siteUrl } from "@/components/pages/metadata";
 import {
   contact,
+  contentUpdatedOn,
   faq,
   organization,
+  people,
+  regions,
   rolesListedOn,
+  salaryBands,
   type Insight,
   type Role,
 } from "@/content/site";
+import { trainingRegion, type TrainingRole } from "@/content/ai-training";
 
 /**
  * schema.org builders. Only facts the site already states go in here.
@@ -37,6 +42,7 @@ export function siteGraph() {
         },
         areaServed: organization.areaServed.map((name) => ({ "@type": "Place", name })),
         knowsAbout: organization.knowsAbout,
+        ...(organization.sameAs.length > 0 ? { sameAs: [...organization.sameAs] } : {}),
         contactPoint: {
           "@type": "ContactPoint",
           contactType: "sales",
@@ -46,9 +52,14 @@ export function siteGraph() {
         hasOfferCatalog: {
           "@type": "OfferCatalog",
           name: "Recruitment services",
-          itemListElement: organization.services.map((name) => ({
+          itemListElement: organization.services.map((service) => ({
             "@type": "Offer",
-            itemOffered: { "@type": "Service", name, provider: { "@id": orgId } },
+            itemOffered: {
+              "@type": "Service",
+              name: service.name,
+              url: abs(service.path),
+              provider: { "@id": orgId },
+            },
           })),
         },
       },
@@ -59,6 +70,7 @@ export function siteGraph() {
         url: abs("/"),
         inLanguage: "en",
         publisher: { "@id": orgId },
+        dateModified: contentUpdatedOn,
       },
     ],
   };
@@ -102,9 +114,65 @@ export function article(insight: Insight) {
     timeRequired: `PT${insight.minutes}M`,
     articleSection: insight.kicker,
     inLanguage: "en",
-    image: abs("/opengraph-image"),
+    image: abs(`/insights/${insight.slug}/opengraph-image`),
     author: { "@id": orgId },
     publisher: { "@id": orgId },
+  };
+}
+
+/** The consultants on /about, each addressable as /about#id. */
+export function desk() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "The BridgeWide desk",
+    itemListElement: people.map((person, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Person",
+        "@id": abs(`/about#${person.id}`),
+        url: abs(`/about#${person.id}`),
+        name: person.name,
+        jobTitle: person.role,
+        image: abs(person.image),
+        worksFor: { "@id": orgId },
+        knowsAbout: person.focus,
+      },
+    })),
+  };
+}
+
+/** The salary guide as a Dataset: one measured value per discipline and region. */
+export function salaryDataset() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: `BridgeWide engineering salary guide, ${salaryBands.edition}`,
+    description: `${salaryBands.basis}. Low, median, and high base salary for ${salaryBands.disciplines
+      .map((discipline) => discipline.label.toLowerCase())
+      .join(", ")} engineers in ${regions.map((region) => region.name).join(", ")}.`,
+    url: abs("/salary-guide"),
+    creator: { "@id": orgId },
+    publisher: { "@id": orgId },
+    dateModified: contentUpdatedOn,
+    inLanguage: "en",
+    isAccessibleForFree: true,
+    spatialCoverage: regions.map((region) => ({ "@type": "Place", name: region.name })),
+    variableMeasured: salaryBands.disciplines.flatMap((discipline) =>
+      regions.map((region) => {
+        const band = discipline.bands[region.slug];
+        return {
+          "@type": "PropertyValue",
+          name: `${discipline.label} engineer base salary, ${region.name}`,
+          minValue: band.low,
+          maxValue: band.high,
+          value: band.median,
+          unitText: "USD per year",
+          description: `Median ${band.median} USD`,
+        };
+      }),
+    ),
   };
 }
 
@@ -174,6 +242,47 @@ export function jobPosting(role: Role) {
         }
       : {}),
     ...(salary ? { baseSalary: salary } : {}),
+  };
+}
+
+const trainingCountry: Partial<Record<TrainingRole["region"], string>> = {
+  usa: "United States",
+  canada: "Canada",
+};
+
+/**
+ * An AI-training listing as a remote, hourly JobPosting. The platform pays
+ * the person; BridgeWide is the hiring organization only in the sense that
+ * it makes the introduction, so `directApply` stays false.
+ */
+export function trainingJobPosting(role: TrainingRole) {
+  const region = trainingRegion(role.region);
+  const country = trainingCountry[role.region];
+  return {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: role.title,
+    description: `${role.summary} Remote, paid in USD by the platform. Region: ${region?.name ?? role.region}.`,
+    url: abs(`/ai-training/jobs/${role.slug}`),
+    datePosted: contentUpdatedOn,
+    validThrough: plusDays(contentUpdatedOn, 90),
+    employmentType: "CONTRACTOR",
+    directApply: false,
+    hiringOrganization: { "@id": orgId },
+    jobLocationType: "TELECOMMUTE",
+    ...(country
+      ? { applicantLocationRequirements: { "@type": "Country", name: country } }
+      : {}),
+    baseSalary: {
+      "@type": "MonetaryAmount",
+      currency: "USD",
+      value: {
+        "@type": "QuantitativeValue",
+        minValue: role.payMin,
+        maxValue: role.payMax,
+        unitText: "HOUR",
+      },
+    },
   };
 }
 

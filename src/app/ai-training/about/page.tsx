@@ -5,9 +5,11 @@ import { Prose } from "@/components/pages/Prose";
 import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { trainingMission } from "@/content/ai-training";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "About · AI training · BridgeWide",
+  title: "About · AI training",
   description: trainingMission,
   path: "/ai-training/about",
 });
@@ -15,6 +17,7 @@ export const metadata = pageMetadata({
 export default function AiTrainingAboutPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: "About", path: "/ai-training/about" }])} />
       <PageHero eyebrow="About" title="A second desk, for AI-training work." lede={trainingMission} />
       <PageSection id="who" label="Who it is for" title="Candidates and partners.">
         <Prose>

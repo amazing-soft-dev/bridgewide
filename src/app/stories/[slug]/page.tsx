@@ -4,9 +4,9 @@ import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { Prose } from "@/components/pages/Prose";
 import { regionFor, textLink } from "@/components/pages/format";
-import { pageMetadata } from "@/components/pages/metadata";
+import { pageMetadata, sampleRobots } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { getStory, stories } from "@/content/site";
+import { contentIsSample, contentUpdatedOn, getStory, stories } from "@/content/site";
 import { breadcrumbs } from "@/lib/structured-data";
 
 export const dynamicParams = false;
@@ -21,10 +21,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!story) notFound();
 
   return pageMetadata({
-    title: `${story.company} · BridgeWide`,
+    title: `${story.company}`,
     description: story.quote,
     path: `/stories/${story.slug}`,
     type: "article",
+    modifiedTime: contentUpdatedOn,
+    robots: contentIsSample ? sampleRobots : undefined,
   });
 }
 
