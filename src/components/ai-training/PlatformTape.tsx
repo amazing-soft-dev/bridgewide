@@ -9,9 +9,9 @@ function LogoCard({ name, href, logo }: { name: string; href: string; logo: stri
   return (
     <Link
       href={href}
-      className="flex shrink-0 items-center gap-3 rounded-lg border border-cloud-soft bg-cloud px-3 py-2.5 text-ink no-underline shadow-[0_10px_30px_rgb(17_17_17/0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgb(17_17_17/0.12)]"
+      className="flex shrink-0 items-center gap-3 rounded-md border border-cloud/15 bg-ink/55 px-3 py-2.5 text-cloud no-underline backdrop-blur-md transition-[translate,border-color,background-color] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:-translate-y-0.5 hover:border-brand/70 hover:bg-ink/80 focus-visible:border-brand/70 focus-visible:bg-ink/80"
     >
-      <span className="grid size-10 place-items-center overflow-hidden rounded-md bg-white">
+      <span className="grid size-10 place-items-center overflow-hidden rounded-[5px] bg-cloud [clip-path:polygon(0_0,calc(100%_-_8px)_0,100%_8px,100%_100%,0_100%)]">
         {/* Brand marks are SVG or small PNG. next/image does not accept SVG without extra config. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={logo} alt="" width={28} height={28} className="size-7 object-contain" />

@@ -16,7 +16,7 @@ export function TrainingRecord() {
     <section
       id="stats"
       aria-labelledby="stats-heading"
-      className="relative scroll-mt-24 overflow-hidden bg-ink py-20 text-cloud md:py-28 [clip-path:polygon(0_var(--seam),100%_0,100%_calc(100%-var(--seam)),0_100%)]"
+      className="relative z-10 mt-[calc(var(--seam)*-1)] scroll-mt-24 overflow-hidden bg-ink pt-[calc(var(--seam)+5rem)] pb-[calc(var(--seam)+5rem)] text-cloud md:pt-[calc(var(--seam)+7rem)] md:pb-[calc(var(--seam)+7rem)] [clip-path:polygon(0_var(--seam),100%_0,100%_100%,0_100%)]"
     >
       <p
         className="pointer-events-none absolute top-1/2 left-0 -translate-y-1/2 font-display text-[clamp(5rem,18vw,16rem)] leading-none font-extrabold tracking-[-0.04em] whitespace-nowrap text-transparent [-webkit-text-stroke:1.5px_rgb(244_240_232/0.16)] max-[899px]:hidden motion-reduce:hidden"
