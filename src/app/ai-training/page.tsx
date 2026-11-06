@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BenefitsTimeline } from "@/components/ai-training/BenefitsTimeline";
+import { CandidateStories } from "@/components/ai-training/CandidateStories";
 import { MissionBand } from "@/components/ai-training/MissionBand";
 import { PathSteps } from "@/components/ai-training/PathSteps";
 import { PlatformTape } from "@/components/ai-training/PlatformTape";
@@ -52,7 +52,7 @@ export default function AiTrainingPage() {
 
       <TrainingRecord />
 
-      <BenefitsTimeline />
+      <CandidateStories />
 
       <PathSteps />
 
