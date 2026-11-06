@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import { regionFor } from "@/components/pages/format";
-import { pageMetadata, sampleRobots } from "@/components/pages/metadata";
+import { pageMetadata } from "@/components/pages/metadata";
 import { RoleApply } from "@/components/roles/RoleApply";
 import { RelatedRoles, RoleCopy } from "@/components/roles/RoleCopy";
 import { RoleHero } from "@/components/roles/RoleHero";
 import { deskWrap } from "@/components/roles/desk";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { contentIsSample, getRole, roles } from "@/content/site";
+import { getRole, roles } from "@/content/site";
 import { relatedRoles, roleRef } from "@/lib/role-desk";
 import { breadcrumbs, jobPosting } from "@/lib/structured-data";
 
@@ -26,7 +26,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${role.title} · ${region.name}`,
     description: role.summary,
     path: `/roles/${role.slug}`,
-    robots: contentIsSample ? sampleRobots : undefined,
   });
 }
 

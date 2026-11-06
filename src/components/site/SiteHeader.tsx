@@ -42,7 +42,7 @@ export function SiteHeader() {
             <a className="sthd-tel" href={`mailto:${contact.email}`}>
               {contact.email}
             </a>
-            <Button href="/employers" arrow={false} compact className="sthd-cta">
+            <Button href="/employers" compact className="sthd-cta">
               Hire engineers
             </Button>
             <MobileNav

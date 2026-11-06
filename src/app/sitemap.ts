@@ -2,7 +2,6 @@ import type { MetadataRoute } from "next";
 import { siteUrl } from "@/components/pages/metadata";
 import { platforms, trainingRegions, trainingRoles } from "@/content/ai-training";
 import {
-  contentIsSample,
   contentUpdatedOn,
   insights,
   regions,
@@ -27,8 +26,7 @@ type Entry = {
 /**
  * Every indexable route with how often it changes and how central it is.
  * Dates come from the content files, so a content edit moves lastModified
- * without touching this file. Sample roles and stories stay out while the
- * content is labelled as sample data; those pages are noindex too.
+ * without touching this file.
  */
 function entries(): Entry[] {
   const content = contentUpdatedOn;
@@ -57,13 +55,11 @@ function entries(): Entry[] {
   for (const region of regions) {
     list.push({ path: `/regions/${region.slug}`, lastModified: content, changeFrequency: "weekly", priority: 0.7 });
   }
-  if (!contentIsSample) {
-    for (const role of roles) {
-      list.push({ path: `/roles/${role.slug}`, lastModified: rolesListedOn, changeFrequency: "weekly", priority: 0.7 });
-    }
-    for (const story of stories) {
-      list.push({ path: `/stories/${story.slug}`, lastModified: content, changeFrequency: "yearly", priority: 0.5 });
-    }
+  for (const role of roles) {
+    list.push({ path: `/roles/${role.slug}`, lastModified: rolesListedOn, changeFrequency: "weekly", priority: 0.7 });
+  }
+  for (const story of stories) {
+    list.push({ path: `/stories/${story.slug}`, lastModified: content, changeFrequency: "yearly", priority: 0.5 });
   }
   for (const insight of insights) {
     list.push({
@@ -80,7 +76,6 @@ function entries(): Entry[] {
     list.push({ path: `/ai-training/platforms/${platform.slug}`, lastModified: content, changeFrequency: "monthly", priority: 0.5 });
   }
   for (const role of trainingRoles) {
-    if (role.sample) continue;
     list.push({ path: `/ai-training/jobs/${role.slug}`, lastModified: content, changeFrequency: "weekly", priority: 0.6 });
   }
 

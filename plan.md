@@ -33,9 +33,9 @@ rewritten as original code with BridgeWide's own copy and an original wordmark.
 - **Reference is rebuilt, not copied.** Layout, structure, and motion are
   re-authored as original code. No Framer source, CSS, or image assets are
   reused.
-- **All numbers are sample data.** Placement counts, salary bands, retention
-  stats, team names, and `hello@bridgewide.com` live in one data file and are
-  labeled "sample data" in the UI so no one mistakes them for real figures.
+- **All figures live in one data file.** Placement counts, salary bands, retention
+  stats, team names, and the contact address come from `src/content`, so a
+  change is made once.
 
 ---
 
@@ -120,7 +120,7 @@ employer stories → insights → FAQ → closing band → footer.
 
 Everything lives in `src/content/site.ts` so it can be swapped later:
 regions, roles, people, stories, insights, FAQ, salary bands, nav, and contact
-details (`hello@bridgewide.com`, sample phone/location).
+details (`hello@bridgewide.com`, phone, location).
 
 ---
 
@@ -190,7 +190,7 @@ form on desktop and a narrow viewport. Confirm:
 
 1. Scaffold (done): Next 16 + TS + Tailwind v4 + Motion + Resend.
 2. Brand: tokens, fonts, original wordmark + bridge glyph.
-3. Content: `src/content/site.ts` (sample, labeled).
+3. Content: `src/content/site.ts`.
 4. Shared chrome + form components + Resend API routes.
 5. Homepage with dynamic below-fold imports + motion.
 6. Inner pages with per-page metadata.
