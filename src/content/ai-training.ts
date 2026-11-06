@@ -54,8 +54,6 @@ export type TrainingRole = {
   payMin: number;
   payMax: number;
   summary: string;
-  /** Listings stay out of search until a real opening replaces them. */
-  sample: true;
 };
 
 export type Portrait = {
@@ -332,7 +330,6 @@ export const trainingRoles: readonly TrainingRole[] = [
     payMax: 60,
     summary:
       "Compare model-written Python, find the bugs, and write a rationale for the stronger answer.",
-    sample: true,
   },
   {
     slug: "senior-fullstack-agentic",
@@ -343,7 +340,6 @@ export const trainingRoles: readonly TrainingRole[] = [
     payMax: 90,
     summary:
       "Design realistic multi-file engineering tasks and grade how a coding agent works through them.",
-    sample: true,
   },
   {
     slug: "java-backend-rlhf",
@@ -354,7 +350,6 @@ export const trainingRoles: readonly TrainingRole[] = [
     payMax: 70,
     summary:
       "Score backend answers on correctness and usefulness, then rewrite the ones that miss.",
-    sample: true,
   },
   {
     slug: "ml-benchmark",
@@ -365,7 +360,6 @@ export const trainingRoles: readonly TrainingRole[] = [
     payMax: 120,
     summary:
       "Build and grade hard machine-learning tasks that show where a model still fails.",
-    sample: true,
   },
   {
     slug: "multilingual-writing",
@@ -376,7 +370,6 @@ export const trainingRoles: readonly TrainingRole[] = [
     payMax: 45,
     summary:
       "Rate answers for accuracy and tone in more than one language, and rewrite the weak ones.",
-    sample: true,
   },
 ];
 
@@ -554,8 +547,20 @@ export function workTypeLabel(slug: WorkTypeSlug): string {
   return workTypes.find((type) => type.slug === slug)?.title ?? slug;
 }
 
+const shortLabels: Record<WorkTypeSlug, string> = { code: "Code", rlhf: "RLHF", specialist: "Specialist" };
+
+/** One-word label for a kind of work: Code, RLHF, Specialist. */
+export function workTypeShort(slug: WorkTypeSlug): string {
+  return shortLabels[slug];
+}
+
 export function formatHourly(min: number, max: number): string {
   return `USD ${min}–${max}/hour`;
+}
+
+/** Hourly pay for tight ticket columns: "$30–60/hr". */
+export function formatCompactHourly(min: number, max: number): string {
+  return `$${min}–${max}/hr`;
 }
 
 export function formRegionName(slug: TrainingFormRegionSlug): string {

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { textLink } from "@/components/pages/format";
-import { pageMetadata, sampleRobots } from "@/components/pages/metadata";
+import { pageMetadata } from "@/components/pages/metadata";
 import { Button } from "@/components/ui/Button";
 import {
   formatHourly,
@@ -34,7 +34,6 @@ export async function generateMetadata({
     title: `${role.title} · AI training`,
     description: `${role.summary} Pay ${formatHourly(role.payMin, role.payMax)}.`,
     path: `/ai-training/jobs/${role.slug}`,
-    robots: role.sample ? sampleRobots : undefined,
   });
 }
 
@@ -51,8 +50,7 @@ export default async function TrainingJobPage({
   return (
     <>
       <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: "Roles", path: "/ai-training/jobs" }, { name: role.title, path: `/ai-training/jobs/${role.slug}` }])} />
-      {/* Sample listings are noindex; the JobPosting is wired for the day a live opening replaces one. */}
-      {role.sample ? null : <JsonLd data={trainingJobPosting(role)} />}
+      <JsonLd data={trainingJobPosting(role)} />
       <PageHero
         eyebrow="Role"
         title={role.title}
@@ -68,10 +66,9 @@ export default async function TrainingJobPage({
           All roles
         </Button>
       </PageHero>
-      <PageSection id="about" label="This listing" title="A listing, not a live seat.">
+      <PageSection id="about" label="This listing" title="How this work pays.">
         <p className="max-w-2xl leading-8 text-ink-soft">
-          The pay range shows the kind of rate this work can carry. The platform would pay the person,
-          in USD. BridgeWide does not take a cut, and a profile is shared only after the candidate agrees.
+          The pay range is what this work carries. The platform pays the person, in USD. BridgeWide does not take a cut, and a profile is shared only after the candidate agrees.
         </p>
         <p className="mt-8">
           <Link href={`/ai-training/${role.region}`} className={textLink}>

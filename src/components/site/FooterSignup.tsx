@@ -83,7 +83,7 @@ export function FooterSignup() {
                 className="pointer-events-none absolute right-0 bottom-[-1px] left-0 h-0.5 origin-left scale-x-0 rounded-b-lg bg-brand transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] peer-focus:scale-x-100"
               />
             </label>
-            <SubmitButton sending={sending} arrow={false} className="h-14">
+            <SubmitButton sending={sending} className="h-14">
               Send
             </SubmitButton>
           </div>

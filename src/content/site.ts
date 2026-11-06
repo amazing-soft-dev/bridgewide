@@ -227,13 +227,6 @@ export type SiteImages = {
   close: string;
 };
 
-/**
- * While true, /llms.txt tells AI assistants that figures are illustrative and
- * role pages omit JobPosting markup. False means the published figures are the
- * site's own and may be cited.
- */
-export const contentIsSample = false;
-
 /** Day the current open roles were listed. validThrough is 90 days later. */
 export const rolesListedOn = "2026-10-18";
 

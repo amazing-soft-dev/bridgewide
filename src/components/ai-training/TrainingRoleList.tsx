@@ -5,7 +5,7 @@ import { useState } from "react";
 import { TrainingRoleTicket } from "@/components/ai-training/TrainingRoleTicket";
 import { textLink } from "@/components/pages/format";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { trainingRoles, workTypes, type WorkTypeSlug } from "@/content/ai-training";
+import { trainingRoles, workTypes, workTypeShort, type WorkTypeSlug } from "@/content/ai-training";
 
 export function TrainingRoleList() {
   const [filter, setFilter] = useState<WorkTypeSlug | "all">("all");
@@ -14,7 +14,7 @@ export function TrainingRoleList() {
     { id: "all" as const, label: "All", count: trainingRoles.length },
     ...workTypes.map((type) => ({
       id: type.slug,
-      label: type.slug === "rlhf" ? "RLHF" : type.slug === "code" ? "Code" : "Specialist",
+      label: workTypeShort(type.slug),
       count: trainingRoles.filter((role) => role.workType === type.slug).length,
     })),
   ];

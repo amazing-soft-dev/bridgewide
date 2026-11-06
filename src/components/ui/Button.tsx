@@ -9,10 +9,9 @@ type Variant = "primary" | "secondary" | "onDark";
 const base =
   "group/btn relative inline-flex items-center justify-center gap-3.5 overflow-hidden isolate rounded-lg border-[1.5px] border-transparent font-semibold leading-none tracking-[0.01em] whitespace-nowrap no-underline cursor-pointer [clip-path:polygon(0_0,calc(100%_-_13px)_0,100%_13px,100%_100%,0_100%)] translate-x-[var(--mx,0px)] translate-y-[var(--my,0px)] [transition:translate_0.3s_cubic-bezier(0.2,0.8,0.2,1),scale_0.3s_cubic-bezier(0.2,0.8,0.2,1),color_0.35s_0.05s,border-color_0.35s] hover:translate-y-[calc(var(--my,0px)_-_2px)] focus-visible:translate-y-[calc(var(--my,0px)_-_2px)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:[transition:none] before:absolute before:-inset-[2px] before:-z-1 before:origin-left before:bg-ink before:content-[''] before:[scale:0_1] before:[transition:scale_0.6s_cubic-bezier(0.7,0,0.2,1)] hover:before:[scale:1_1] focus-visible:before:[scale:1_1] motion-reduce:before:[transition:none]";
 
-/** Size and padding. `arrow: false` drops the arrow chip, so the label gets even padding. */
-function sizeClass(arrow: boolean, compact: boolean) {
-  if (compact) return "min-h-11 px-[18px] text-[12.5px]";
-  return arrow ? "min-h-[60px] pl-[22px] pr-4 text-[13px]" : "min-h-12 px-[22px] text-[13px]";
+/** Size and padding. The arrow chip sits inside the right padding in both sizes. */
+function sizeClass(compact: boolean) {
+  return compact ? "min-h-11 pl-4 pr-1.5 text-[12.5px]" : "min-h-[60px] pl-[22px] pr-4 text-[13px]";
 }
 
 const variantClass: Record<Variant, string> = {
@@ -37,9 +36,7 @@ const labelLine =
 
 type CommonProps = {
   variant?: Variant;
-  /** Show the arrow chip (default). Set false for the plain header button. */
-  arrow?: boolean;
-  /** 44px tall, 12.5px label. Used by the header call to action. */
+  /** 44px tall, 12.5px label, 30px arrow chip. Used by the header and footer calls to action. */
   compact?: boolean;
   className?: string;
   children: ReactNode;
@@ -55,13 +52,13 @@ type NativeButtonProps = CommonProps &
     href?: never;
   };
 
-function Arrow({ variant }: { variant: Variant }) {
+function Arrow({ variant, compact }: { variant: Variant; compact: boolean }) {
   return (
     <span
       aria-hidden
-      className={`grid h-[38px] w-[38px] flex-none place-items-center rounded-[5px] [rotate:-45deg] [transition:rotate_0.55s_cubic-bezier(0.2,0.9,0.2,1),background_0.35s,color_0.35s] group-hover/btn:[rotate:0deg] group-focus-visible/btn:[rotate:0deg] motion-reduce:[rotate:0deg] motion-reduce:[transition:none] ${arrowClass[variant]}`}
+      className={`grid flex-none place-items-center rounded-[5px] ${compact ? "h-[30px] w-[30px]" : "h-[38px] w-[38px]"} [rotate:-45deg] [transition:rotate_0.55s_cubic-bezier(0.2,0.9,0.2,1),background_0.35s,color_0.35s] group-hover/btn:[rotate:0deg] group-focus-visible/btn:[rotate:0deg] motion-reduce:[rotate:0deg] motion-reduce:[transition:none] ${arrowClass[variant]}`}
     >
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <svg width={compact ? 11 : 13} height={compact ? 11 : 13} viewBox="0 0 24 24" fill="none" aria-hidden>
         <path
           d="M5 12h14M13 5l7 7-7 7"
           stroke="currentColor"
@@ -89,22 +86,20 @@ export function Button(props: LinkButtonProps | NativeButtonProps) {
   const ref = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
   useMagnet(ref);
   const variant = props.variant ?? "primary";
-  const arrow = props.arrow ?? true;
   const compact = props.compact ?? false;
-  const className = [base, sizeClass(arrow, compact), variantClass[variant], props.className]
+  const className = [base, sizeClass(compact), variantClass[variant], props.className]
     .filter(Boolean)
     .join(" ");
   const body = (
     <>
       <Label>{props.children}</Label>
-      {arrow ? <Arrow variant={variant} /> : null}
+      <Arrow variant={variant} compact={compact} />
     </>
   );
 
   if ("href" in props && props.href != null) {
     const {
       variant: _variant,
-      arrow: _arrow,
       compact: _compact,
       className: _className,
       children: _children,
@@ -123,7 +118,6 @@ export function Button(props: LinkButtonProps | NativeButtonProps) {
 
   const {
     variant: _variant,
-    arrow: _arrow,
     compact: _compact,
     className: _className,
     children: _children,
