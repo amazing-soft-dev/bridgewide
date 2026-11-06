@@ -72,6 +72,19 @@ export type TrainingStep = {
   copy: string;
 };
 
+/** One promise on the candidates slides. */
+export type TrainingBenefit = TrainingStep & {
+  /** Large figure on the slide card. */
+  figure: string;
+  /** Line under the figure. */
+  unit: string;
+  /** One-line fact under the card. */
+  note: string;
+  /** Full-bleed photo behind the slide. */
+  image: string;
+  alt: string;
+};
+
 export type TrainingFaq = {
   question: string;
   answer: string;
@@ -424,22 +437,42 @@ export const trainingSteps: readonly TrainingStep[] = [
   },
 ];
 
-export const trainingBenefits: readonly TrainingStep[] = [
+export const trainingBenefits: readonly TrainingBenefit[] = [
   {
     title: "One application",
     copy: "You apply to BridgeWide once instead of starting from scratch on a dozen platforms.",
+    figure: "1",
+    unit: "application for every platform in the directory",
+    note: "The desk aims to review it within three business days.",
+    image: "/images/training-benefits.webp",
+    alt: "People working together at a table",
   },
   {
     title: "Free for candidates",
     copy: "Platforms and companies pay the agency. You do not pay to be screened or introduced.",
+    figure: "$0",
+    unit: "to be screened, briefed, or introduced",
+    note: "Platforms and companies pay BridgeWide. Candidates never do.",
+    image: "/images/story-3.webp",
+    alt: "A laptop open on a desk",
   },
   {
     title: "Paid by the platform",
     copy: "Earnings come from the platform, in USD. BridgeWide does not take a percentage.",
+    figure: "0%",
+    unit: "of your earnings taken by BridgeWide",
+    note: "The platform pays you in USD, on its own terms.",
+    image: "/images/story-4.webp",
+    alt: "A team working side by side",
   },
   {
     title: "Your say on sharing",
     copy: "A profile goes to a platform only after you agree to that introduction.",
+    figure: "0",
+    unit: "profiles shared without your yes",
+    note: "Applying does not send your name to every platform in the directory.",
+    image: "/images/story-1.webp",
+    alt: "People in a meeting around a table",
   },
 ];
 
