@@ -21,6 +21,15 @@ import { trainingRegion, type TrainingRole } from "@/content/ai-training";
 const abs = (path: string) => new URL(path, siteUrl).toString();
 const orgId = abs("/#organization");
 const siteId = abs("/#website");
+const weekdayNames = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
 
 export function siteGraph() {
   return {
@@ -43,11 +52,20 @@ export function siteGraph() {
         areaServed: organization.areaServed.map((name) => ({ "@type": "Place", name })),
         knowsAbout: organization.knowsAbout,
         ...(organization.sameAs.length > 0 ? { sameAs: [...organization.sameAs] } : {}),
+        telephone: contact.phone,
         contactPoint: {
           "@type": "ContactPoint",
           contactType: "sales",
           email: contact.email,
+          telephone: contact.phone,
           availableLanguage: ["English"],
+          areaServed: organization.areaServed.map((name) => ({ "@type": "Place", name })),
+          hoursAvailable: {
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: contact.hours.days.map((day) => weekdayNames[day]),
+            opens: contact.hours.opens,
+            closes: contact.hours.closes,
+          },
         },
         hasOfferCatalog: {
           "@type": "OfferCatalog",
