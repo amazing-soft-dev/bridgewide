@@ -34,15 +34,13 @@ export function SubmitButton({
   sending,
   children,
   className,
-  arrow,
 }: {
   sending: boolean;
   children: ReactNode;
   className?: string;
-  arrow?: boolean;
 }) {
   return (
-    <Button type="submit" variant="primary" disabled={sending} className={className} arrow={arrow}>
+    <Button type="submit" variant="primary" disabled={sending} className={className}>
       {sending ? "Sending…" : children}
     </Button>
   );

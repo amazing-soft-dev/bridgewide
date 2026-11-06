@@ -554,8 +554,20 @@ export function workTypeLabel(slug: WorkTypeSlug): string {
   return workTypes.find((type) => type.slug === slug)?.title ?? slug;
 }
 
+const shortLabels: Record<WorkTypeSlug, string> = { code: "Code", rlhf: "RLHF", specialist: "Specialist" };
+
+/** One-word label for a kind of work: Code, RLHF, Specialist. */
+export function workTypeShort(slug: WorkTypeSlug): string {
+  return shortLabels[slug];
+}
+
 export function formatHourly(min: number, max: number): string {
   return `USD ${min}–${max}/hour`;
+}
+
+/** Hourly pay for tight ticket columns: "$30–60/hr". */
+export function formatCompactHourly(min: number, max: number): string {
+  return `$${min}–${max}/hr`;
 }
 
 export function formRegionName(slug: TrainingFormRegionSlug): string {
