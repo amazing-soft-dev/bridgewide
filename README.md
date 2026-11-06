@@ -164,7 +164,6 @@ The workflows call `gh` with the `GH_TOKEN` repository secret, not the default `
 
 - **Metadata:** every page has a title, description, canonical URL, Open Graph and Twitter card tags, and a generated Open Graph image (`src/components/pages/metadata.ts`, `src/app/opengraph-image.tsx`).
 - **Structured data (JSON-LD, `src/lib/structured-data.ts`):** Organization (San Francisco, no street address) and WebSite on every page, FAQPage on the homepage, BreadcrumbList on detail pages, Article on insights, and JobPosting on each role. There is no Review markup.
-- **`contentIsSample`** in `src/content/site.ts` is `false`. Set it back to `true` only if the published figures must not be cited. While it is `true`, `/llms.txt` warns assistants and role pages should not advertise jobs that are not real.
 - **Crawlable FAQ:** FAQ answers are in the HTML even when collapsed, so search engines and AI crawlers can read them.
 - **AI crawlers:** `robots.txt` allows all crawlers and names the main AI ones (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, …).
 - **`/llms.txt`:** a plain-Markdown summary for AI assistants, generated from `src/content/site.ts`. It lists services, regions, every open role, every salary band, insights, and the FAQ, each with a URL.

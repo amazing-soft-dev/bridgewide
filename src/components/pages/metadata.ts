@@ -80,6 +80,3 @@ export function pageMetadata({
     ...(robots ? { robots } : {}),
   };
 }
-
-/** `noindex, follow` for pages whose content is labelled as sample data. */
-export const sampleRobots: Metadata["robots"] = { index: false, follow: true };

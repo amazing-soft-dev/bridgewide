@@ -4,9 +4,9 @@ import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { Prose } from "@/components/pages/Prose";
 import { regionFor, textLink } from "@/components/pages/format";
-import { pageMetadata, sampleRobots } from "@/components/pages/metadata";
+import { pageMetadata } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { contentIsSample, contentUpdatedOn, getStory, stories } from "@/content/site";
+import { contentUpdatedOn, getStory, stories } from "@/content/site";
 import { breadcrumbs } from "@/lib/structured-data";
 
 export const dynamicParams = false;
@@ -26,7 +26,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     path: `/stories/${story.slug}`,
     type: "article",
     modifiedTime: contentUpdatedOn,
-    robots: contentIsSample ? sampleRobots : undefined,
   });
 }
 

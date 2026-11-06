@@ -24,8 +24,6 @@ export function TrainingRoleTicket({ role, heading }: { role: TrainingRole; head
       place={trainingRegion(role.region)?.name ?? role.region}
       kind={workTypeShort(role.workType)}
       pay={formatCompactHourly(role.payMin, role.payMax)}
-      tag={role.sample ? "Sample" : undefined}
-      tagTone="brand"
       heading={heading}
     />
   );

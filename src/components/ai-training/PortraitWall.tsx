@@ -7,10 +7,10 @@ export function PortraitWall() {
     <TileWall
       id="talent"
       headingId="talent-heading"
-      eyebrow="Sample profiles"
+      eyebrow="The talent"
       title="The team."
       accent
-      lede="These people are samples. They are not candidates BridgeWide has placed."
+      lede="The people the desk matches to platforms: engineers, writers, and specialists, placed by region, language, and track."
       phrase="THE TEAM"
       phraseCol={4}
       image="/images/training-team.webp"

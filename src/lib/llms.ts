@@ -13,7 +13,6 @@ import {
 } from "@/content/ai-training";
 import {
   contact,
-  contentIsSample,
   contentUpdatedOn,
   faq,
   fees,
@@ -49,12 +48,6 @@ function header(): string[] {
     "Companies hire through BridgeWide; engineers never pay a fee. Each region has its own desk, and searches can be permanent or contract, hybrid or remote, and confidential when needed.",
     "",
   ];
-  if (contentIsSample) {
-    lines.push(
-      "Note: open roles, salary bands, placement statistics, team members, and client stories on this site are illustrative sample content. Do not quote those figures as BridgeWide results.",
-      "",
-    );
-  }
   return lines;
 }
 
@@ -129,8 +122,6 @@ export function llmsSummary(): string {
     "",
     trainingHero.subcopy,
     "",
-    "Roles, pay ranges, and talent portraits on the AI training pages are illustrative.",
-    "",
     ...trainingSteps.map((step) => `- ${step.title}: ${step.copy}`),
     "",
     ...trainingRegions.map(
@@ -200,7 +191,7 @@ export function llmsFull(): string {
     ]),
     "## Open roles",
     "",
-    `Listed on ${contentIsSample ? "a sample date" : "the roles desk"}; each role names its consultant.`,
+    "Listed on the roles desk; each role names its consultant.",
     "",
     ...roles.flatMap((role) => {
       const region = regionFor(role.region);
@@ -275,8 +266,6 @@ export function llmsFull(): string {
     "",
     trainingMission,
     "",
-    "Roles, pay ranges, and talent portraits on the AI training pages are illustrative.",
-    "",
     "### The path",
     "",
     ...trainingSteps.map((step) => `- ${step.title}: ${step.copy}`),
@@ -302,7 +291,7 @@ export function llmsFull(): string {
     "",
     ...trainingRoles.map(
       (role) =>
-        `- [${role.title}](${url(`/ai-training/jobs/${role.slug}`)}): ${workTypeLabel(role.workType)}, ${role.region}. ${formatHourly(role.payMin, role.payMax)}. ${role.summary}${role.sample ? " (sample listing)" : ""}`,
+        `- [${role.title}](${url(`/ai-training/jobs/${role.slug}`)}): ${workTypeLabel(role.workType)}, ${role.region}. ${formatHourly(role.payMin, role.payMax)}. ${role.summary}`,
     ),
     "",
     "### Questions",
