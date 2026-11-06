@@ -1,4 +1,10 @@
-import { regions, type Engagement, type RegionSlug } from "@/content/site";
+import {
+  contactTopics,
+  regions,
+  type ContactTopic,
+  type Engagement,
+  type RegionSlug,
+} from "@/content/site";
 
 export const limits = {
   name: 120,
@@ -63,6 +69,17 @@ export function textField(
     return { ok: false, error: `${label} is too long.` };
   }
   return { ok: true, value: trimmed };
+}
+
+const topics = new Set<string>(contactTopics);
+
+/** The contact topic. Empty falls back to the first topic, so older clients still submit. */
+export function topicField(value: unknown): FieldResult<ContactTopic> {
+  if (value == null || value === "") return { ok: true, value: contactTopics[0] };
+  if (typeof value !== "string" || !topics.has(value)) {
+    return { ok: false, error: "Choose a topic from the list." };
+  }
+  return { ok: true, value: value as ContactTopic };
 }
 
 export function emailField(value: unknown): FieldResult {

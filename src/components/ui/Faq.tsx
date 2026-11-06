@@ -1,4 +1,4 @@
-import { QuestionDesk } from "@/components/ai-training/QuestionDesk";
+import { QuestionDesk, type QuestionDeskFooter } from "@/components/ai-training/QuestionDesk";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Accordion } from "@/components/ui/Accordion";
 import { faqPage } from "@/lib/structured-data";
@@ -24,18 +24,25 @@ export function Faq({
   layout = "accordion",
   idPrefix = "faq",
   structuredData = true,
+  deskFooter,
 }: {
   items: readonly FaqEntry[];
   layout?: "accordion" | "desk";
   idPrefix?: string;
   structuredData?: boolean;
+  /** The "Still asking?" line under the desk layout. Defaults to the AI-training desk. */
+  deskFooter?: QuestionDeskFooter;
 }) {
   const entries: FaqItem[] = items.map((item, index) => ({ ...item, id: `${idPrefix}-${index + 1}` }));
 
   return (
     <>
       {structuredData ? <JsonLd data={faqPage(items)} /> : null}
-      {layout === "desk" ? <QuestionDesk items={entries} /> : <Accordion items={entries} />}
+      {layout === "desk" ? (
+        <QuestionDesk items={entries} footer={deskFooter} />
+      ) : (
+        <Accordion items={entries} />
+      )}
     </>
   );
 }

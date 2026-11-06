@@ -150,6 +150,7 @@ export function llmsSummary(): string {
     "## Contact",
     "",
     `- Email: ${contact.email}`,
+    `- Phone: ${contact.phone} (${contact.hours.label})`,
     `- Website: ${url("/")}`,
     "",
   ];
@@ -310,6 +311,7 @@ export function llmsFull(): string {
     "## Contact",
     "",
     `- Email: ${contact.email}`,
+    `- Phone: ${contact.phone} (${contact.hours.label})`,
     `- Location: ${contact.location}`,
     `- Website: ${url("/")}`,
     "",

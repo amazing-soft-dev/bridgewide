@@ -11,6 +11,7 @@ export function SectionHeading({
   lede,
   id,
   tone = "light",
+  accent = false,
   className,
 }: {
   eyebrow?: string;
@@ -19,6 +20,8 @@ export function SectionHeading({
   /** The h2's id, for the section's aria-labelledby. */
   id?: string;
   tone?: Tone;
+  /** Brand block behind the title's last word. */
+  accent?: boolean;
   className?: string;
 }) {
   const titleColor = tone === "dark" ? "text-cloud" : "text-ink";
@@ -36,7 +39,7 @@ export function SectionHeading({
           id={id}
           className={`mt-3 max-w-3xl font-display text-4xl leading-[1.02] tracking-tight md:text-5xl ${titleColor}`}
         >
-          <SplitWords text={title} delay={0.06} />
+          <SplitWords text={title} delay={0.06} accent={accent} accentTone={tone} />
         </h2>
       ) : null}
       {lede ? (
