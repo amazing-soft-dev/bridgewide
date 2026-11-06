@@ -31,7 +31,7 @@ export function PageHero({
             <SplitWords text={eyebrow} immediate />
           </p>
           <h1 className="font-display mt-4 text-4xl leading-[1.05] text-ink md:text-6xl">
-            <SplitWords text={title} immediate delay={0.08} />
+            <SplitWords text={title} immediate keepVisible delay={0.08} />
           </h1>
           <Reveal delay={0.16}>
             <p className="mt-6 max-w-xl text-lg leading-8 text-ink-soft">{lede}</p>

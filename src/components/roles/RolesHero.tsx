@@ -1,49 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AccentLine } from "@/components/roles/AccentLine";
 import { deskWrap } from "@/components/roles/desk";
-import { useEntered } from "@/components/roles/use-entered";
-import { usePrefersReducedMotion } from "@/lib/motion";
+import { useEntered } from "@/hooks/use-entered";
+import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/use-media-query";
+import { useScrollFrame } from "@/hooks/scroll-frame";
 
 const chips = ["Salary on every role", "Named consultant", "Four regions"] as const;
 
 export function RolesHero() {
   const on = useEntered();
   const reduced = usePrefersReducedMotion();
+  const wide = useMediaQuery("(min-width: 900px)");
   const [shift, setShift] = useState(0);
 
-  useEffect(() => {
-    if (reduced) return;
-    const wide = window.matchMedia("(min-width: 900px)");
-    let frame = 0;
-    const measure = () => {
-      frame = 0;
-      if (!wide.matches) {
-        setShift(0);
-        return;
-      }
-      const y = Math.min(1, window.scrollY / 700);
-      setShift(y * -40);
-    };
-    const request = () => {
-      if (!frame) frame = requestAnimationFrame(measure);
-    };
-    measure();
-    window.addEventListener("scroll", request, { passive: true });
-    window.addEventListener("resize", request);
-    return () => {
-      window.removeEventListener("scroll", request);
-      window.removeEventListener("resize", request);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, [reduced]);
+  useScrollFrame(() => {
+    const next = Math.min(1, window.scrollY / 700) * -40;
+    return () => setShift(next);
+  }, !reduced && wide);
+  const lift = !reduced && wide ? shift : 0;
 
   return (
     <header className="overflow-hidden bg-cloud text-ink">
       <div className={`${deskWrap} pt-8 pb-8 md:pt-14 md:pb-10`}>
-        <div data-motion="reveal" style={{ translate: `0 ${shift}px` }}>
+        <div data-motion="reveal" style={{ translate: `0 ${lift}px` }}>
           <nav aria-label="Breadcrumb" className="font-mono text-xs tracking-[0.16em] text-stone uppercase">
             <ol className="m-0 flex list-none flex-wrap items-center gap-2.5 p-0">
               <li

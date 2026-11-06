@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, type ComponentPropsWithoutRef, type ReactNode, type RefObject } from "react";
+import { useRef, type ComponentPropsWithoutRef, type ReactNode, type RefObject } from "react";
+import { useMagnet } from "@/hooks/use-magnet";
 
 type Variant = "primary" | "secondary" | "onDark";
 
@@ -54,9 +55,6 @@ type NativeButtonProps = CommonProps &
     href?: never;
   };
 
-const MAGNET = 14;
-const REACH = 64;
-
 function Arrow({ variant }: { variant: Variant }) {
   return (
     <span
@@ -85,29 +83,6 @@ function Label({ children }: { children: ReactNode }) {
       </span>
     </span>
   );
-}
-
-function useMagnet(ref: RefObject<HTMLElement | null>) {
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const fine = window.matchMedia("(pointer: fine)").matches;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!fine || reduce) return;
-
-    const onMove = (event: PointerEvent) => {
-      const rect = el.getBoundingClientRect();
-      const dx = event.clientX - (rect.left + rect.width / 2);
-      const dy = event.clientY - (rect.top + rect.height / 2);
-      const near =
-        Math.abs(dx) < rect.width / 2 + REACH && Math.abs(dy) < rect.height / 2 + REACH;
-      el.style.setProperty("--mx", near ? `${((dx / rect.width) * MAGNET).toFixed(2)}px` : "0px");
-      el.style.setProperty("--my", near ? `${((dy / rect.height) * MAGNET).toFixed(2)}px` : "0px");
-    };
-
-    window.addEventListener("pointermove", onMove);
-    return () => window.removeEventListener("pointermove", onMove);
-  }, [ref]);
 }
 
 export function Button(props: LinkButtonProps | NativeButtonProps) {

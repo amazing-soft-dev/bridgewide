@@ -1,19 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useSyncExternalStore, type RefObject } from "react";
-import { usePrefersReducedMotion } from "@/lib/motion";
-
-function useFinePointer() {
-  return useSyncExternalStore(
-    (onStoreChange) => {
-      const query = window.matchMedia("(hover: hover) and (pointer: fine)");
-      query.addEventListener("change", onStoreChange);
-      return () => query.removeEventListener("change", onStoreChange);
-    },
-    () => window.matchMedia("(hover: hover) and (pointer: fine)").matches,
-    () => false,
-  );
-}
+import { useEffect, useRef, type RefObject } from "react";
+import { useFinePointer, usePrefersReducedMotion } from "@/hooks/use-media-query";
 
 export function HeroCursor({ sectionRef }: { sectionRef: RefObject<HTMLElement | null> }) {
   const nodeRef = useRef<HTMLDivElement>(null);

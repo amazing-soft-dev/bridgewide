@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { m } from "motion/react";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { usePrefersReducedMotion } from "@/lib/motion";
+import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { hero, images } from "@/content/site";
 
 const doors = [
@@ -34,16 +34,8 @@ const doors = [
 
 export function TwoDoors() {
   const [active, setActive] = useState<number | null>(null);
-  const [wide, setWide] = useState(false);
+  const wide = useMediaQuery("(min-width: 768px)");
   const reduced = usePrefersReducedMotion();
-
-  useEffect(() => {
-    const query = window.matchMedia("(min-width: 768px)");
-    const update = () => setWide(query.matches);
-    update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
 
   return (
     <section className="mt-[calc(var(--seam)*-1)] [clip-path:polygon(0_var(--seam),100%_0,100%_100%,0_100%)] relative z-10 bg-cloud" aria-labelledby="doors-heading">
@@ -61,7 +53,7 @@ export function TwoDoors() {
           const transition = { duration: reduced ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] as const };
 
           return (
-            <motion.article
+            <m.article
               key={door.href}
               className="relative min-h-[28rem] min-w-0 overflow-hidden bg-ink text-cloud md:min-h-[36rem] md:flex-1 md:basis-0"
               data-motion="door"
@@ -96,14 +88,14 @@ export function TwoDoors() {
                   </Button>
                 </div>
               </div>
-              <motion.div
+              <m.div
                 className="pointer-events-none absolute inset-0 bg-ink"
                 aria-hidden
                 initial={false}
                 animate={{ opacity: dimmed ? 0.45 : 0 }}
                 transition={transition}
               />
-            </motion.article>
+            </m.article>
           );
         })}
       </div>

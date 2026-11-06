@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { AccentLine } from "@/components/roles/AccentLine";
 import { deskWrap } from "@/components/roles/desk";
-import { useEntered } from "@/components/roles/use-entered";
+import { useEntered } from "@/hooks/use-entered";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
+import { useScrollFrame } from "@/hooks/scroll-frame";
 import { Button } from "@/components/ui/Button";
 import { hero, images, roles } from "@/content/site";
-import { usePrefersReducedMotion } from "@/lib/motion";
 
 function chamfer(progress: number) {
   const easedIn = Math.min(1, Math.max(0, (progress - 0.08) / 0.3));
@@ -25,31 +26,14 @@ export function RolesClose() {
   const reduced = usePrefersReducedMotion();
   const [progress, setProgress] = useState(0);
 
-  useEffect(() => {
-    if (reduced) return;
+  useScrollFrame(() => {
     const node = ref.current;
     if (!node) return;
-    let frame = 0;
-    const measure = () => {
-      frame = 0;
-      const rect = node.getBoundingClientRect();
-      const view = window.innerHeight;
-      const seen = view - rect.top;
-      const total = rect.height + view;
-      setProgress(Math.min(1, Math.max(0, seen / total)));
-    };
-    const request = () => {
-      if (!frame) frame = requestAnimationFrame(measure);
-    };
-    request();
-    window.addEventListener("scroll", request, { passive: true });
-    window.addEventListener("resize", request);
-    return () => {
-      window.removeEventListener("scroll", request);
-      window.removeEventListener("resize", request);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, [reduced]);
+    const rect = node.getBoundingClientRect();
+    const view = window.innerHeight;
+    const next = Math.min(1, Math.max(0, (view - rect.top) / (rect.height + view)));
+    return () => setProgress(next);
+  }, !reduced);
 
   const shape = chamfer(reduced ? 1 : progress);
   const open = reduced || progress > 0.22;
