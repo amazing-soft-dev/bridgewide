@@ -14,7 +14,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "motion": "^14.8.0",
-    "next": "16.3.8",
+    "next": "16.4.5",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "resend": "^6.34.1",
@@ -27,9 +27,12 @@
     "@types/react-dom": "^19",
     "@types/three": "^0.186.0",
     "eslint": "^10",
-    "eslint-config-next": "16.4.3",
+    "eslint-config-next": "16.4.5",
     "sharp": "^0.35.5",
     "tailwindcss": "^4",
     "typescript": "^7.0.2"
+  },
+  "overrides": {
+    "minimatch@10": "^11.0.5"
   }
 }
