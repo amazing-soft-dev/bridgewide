@@ -30,7 +30,7 @@ export default function HowItWorksPage() {
         <ol className="grid gap-8">
           {trainingSteps.map((step, index) => (
             <li key={step.title} className="border-t border-brand pt-4">
-              <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">0{index + 1}</p>
+              <p className="eyebrow">0{index + 1}</p>
               <h2 className="font-display mt-3 text-3xl">{step.title}</h2>
               <p className="mt-3 max-w-2xl leading-8 text-ink-soft">{step.copy}</p>
             </li>

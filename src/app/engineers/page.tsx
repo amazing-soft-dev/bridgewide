@@ -51,7 +51,7 @@ export default function EngineersPage() {
         <ol className="grid gap-8 md:grid-cols-3">
           {path.map((step, index) => (
             <li key={step.title} className="border-t border-brand pt-4">
-              <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
+              <p className="eyebrow">
                 0{index + 1}
               </p>
               <h3 className="font-display mt-3 text-2xl">{step.title}</h3>

@@ -1,16 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { TrainingRoleTicket } from "@/components/ai-training/TrainingRoleTicket";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { Button } from "@/components/ui/Button";
-import {
-  formatHourly,
-  trainingRegion,
-  trainingRegions,
-  trainingRoles,
-} from "@/content/ai-training";
+import { trainingRegion, trainingRegions, trainingRoles } from "@/content/ai-training";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbs } from "@/lib/structured-data";
 
@@ -58,16 +54,10 @@ export default async function TrainingRegionPage({
             Roles for {region.name} will show here. You can still apply from anywhere.
           </p>
         ) : (
-          <ul className="grid gap-6">
+          <ul className="grid list-none gap-1.5 p-0">
             {roles.map((role) => (
-              <li key={role.slug} className="border-t border-brand pt-4">
-                <h3 className="font-display text-2xl">
-                  <Link href={`/ai-training/jobs/${role.slug}`} className={textLink}>
-                    {role.title}
-                  </Link>
-                </h3>
-                <p className="mt-2 text-ink-soft">{role.summary}</p>
-                <p className="mt-2 font-mono text-sm">{formatHourly(role.payMin, role.payMax)}</p>
+              <li key={role.slug}>
+                <TrainingRoleTicket role={role} />
               </li>
             ))}
           </ul>

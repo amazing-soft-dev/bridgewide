@@ -183,7 +183,7 @@ export function RegionHint() {
         </Link>
         <button
           type="button"
-          className="font-mono text-xs tracking-[0.18em] text-stone uppercase"
+          className="eyebrow-muted"
           onClick={() => setHidden(true)}
         >
           Dismiss

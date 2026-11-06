@@ -36,14 +36,14 @@ export default function SalaryGuidePage() {
             </caption>
             <thead>
               <tr className="border-b border-brand">
-                <th scope="col" className="py-3 pr-4 font-mono text-xs tracking-[0.18em] text-stone uppercase">
+                <th scope="col" className="py-3 pr-4 eyebrow-muted">
                   Discipline
                 </th>
                 {regions.map((region) => (
                   <th
                     key={region.slug}
                     scope="col"
-                    className="px-3 py-3 font-mono text-xs tracking-[0.18em] text-brand uppercase"
+                    className="px-3 py-3 eyebrow"
                   >
                     {region.name}
                   </th>

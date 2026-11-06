@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent } from "react";
-import { pageWrap } from "@/components/pages/format";
+
 import {
   formatHourly,
   trainingRegion,
@@ -50,10 +50,10 @@ export function WorkTypes() {
 
   return (
     <section id="work" aria-labelledby="work-heading" className="scroll-mt-24 border-t border-cloud-soft bg-cloud text-ink">
-      <div className={`${pageWrap} py-16 md:py-24`}>
+      <div className={`wrap py-16 md:py-24`}>
         <div className="grid items-end gap-6 min-[900px]:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           <div>
-            <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">The work</p>
+            <p className="eyebrow">The work</p>
             <h2 id="work-heading" className="font-display mt-3 max-w-3xl text-3xl leading-tight md:text-5xl">
               Three kinds of tasks, and the tracks around{" "}
               <span className="bg-brand px-2 text-cloud">them.</span>

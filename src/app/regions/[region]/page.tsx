@@ -57,7 +57,7 @@ export default async function RegionPage({
           alt: `Photograph for the ${region.name} desk`,
         }}
         meta={
-          <span className="font-mono text-xs tracking-[0.18em] text-stone uppercase">
+          <span className="eyebrow-muted">
             {region.openRoleCount} open {region.openRoleCount === 1 ? "role" : "roles"}
           </span>
         }

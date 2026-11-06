@@ -1,8 +1,6 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { pageWrap } from "@/components/pages/format";
-import { Reveal } from "@/components/ui/Reveal";
-import { SplitWords } from "@/components/ui/SplitWords";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export function PageSection({
   id,
@@ -45,25 +43,8 @@ export function PageSection({
           />
         </>
       ) : null}
-      <div className={`relative ${pageWrap} py-16 md:py-24`}>
-        <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
-          <SplitWords text={label} />
-        </p>
-        {title ? (
-          <h2
-            id={headingId}
-            className="font-display mt-3 max-w-3xl text-3xl leading-tight md:text-5xl"
-          >
-            <SplitWords text={title} delay={0.06} />
-          </h2>
-        ) : null}
-        {lede ? (
-          <Reveal delay={0.12}>
-            <p className={`mt-4 max-w-2xl text-lg leading-8 ${dark ? "text-cloud-soft" : "text-ink-soft"}`}>
-              {lede}
-            </p>
-          </Reveal>
-        ) : null}
+      <div className="wrap relative py-16 md:py-24">
+        <SectionHeading id={headingId} eyebrow={label} title={title} lede={lede} tone={dark ? "dark" : "light"} />
         <div className={title || lede ? "mt-10" : "mt-8"}>{children}</div>
       </div>
     </section>

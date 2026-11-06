@@ -9,7 +9,7 @@ export function TrainingNav() {
           <li key={item.href}>
             <Link
               href={item.href}
-              className="font-mono text-xs tracking-[0.18em] text-brand uppercase no-underline hover:text-ink"
+              className="eyebrow no-underline hover:text-ink"
             >
               {item.label}
             </Link>

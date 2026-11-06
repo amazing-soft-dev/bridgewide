@@ -4,13 +4,9 @@ import { useId, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { contact } from "@/content/site";
 
-export type QuestionDeskItem = {
-  id: string;
-  question: string;
-  answer: string;
-};
+import type { FaqItem } from "@/components/ui/Faq";
 
-export function QuestionDesk({ items }: { items: readonly QuestionDeskItem[] }) {
+export function QuestionDesk({ items }: { items: readonly FaqItem[] }) {
   const [openId, setOpenId] = useState(items[0]?.id ?? "");
   const baseId = useId();
 

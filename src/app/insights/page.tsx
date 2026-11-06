@@ -28,7 +28,7 @@ export default function InsightsPage() {
           {insights.map((insight) => (
             <li key={insight.slug} className="border-t border-brand pt-6">
               <article>
-                <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
+                <p className="eyebrow">
                   {insight.kicker}
                 </p>
                 <h3 className="font-display mt-3 text-3xl text-ink">

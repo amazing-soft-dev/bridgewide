@@ -42,7 +42,7 @@ export default function AboutPage() {
                 <div>
                 <h3 className="font-display text-3xl text-ink">{person.name}</h3>
                 <p className="mt-3 leading-7 text-ink-soft">{person.role}</p>
-                <p className="mt-3 font-mono text-xs tracking-[0.18em] text-brand uppercase">
+                <p className="mt-3 eyebrow">
                   {person.focus}
                 </p>
                 <p className="mt-4 text-ink">{person.placementCount} placements</p>

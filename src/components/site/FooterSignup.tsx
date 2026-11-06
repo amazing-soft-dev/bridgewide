@@ -1,18 +1,14 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Honeypot } from "@/components/forms/Field";
+import { SubmitButton } from "@/components/forms/FormFeedback";
 import { submitJson } from "@/components/forms/read-submission";
 import { useFooterShown } from "@/components/site/FooterCurtain";
-import { Button } from "@/components/ui/Button";
 import { SplitWords } from "@/components/ui/SplitWords";
+import { honeypotValue, useFormSubmit } from "@/hooks/use-form-submit";
 import { salaryBands } from "@/content/site";
 import { emailField } from "@/lib/form";
-
-function honeypotValue(value: FormDataEntryValue | null) {
-  if (typeof value === "string") return value;
-  return value ? "filled" : "";
-}
 
 const rise =
   "transition-[opacity,translate] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none";
@@ -20,52 +16,30 @@ const rise =
 export function FooterSignup() {
   const shown = useFooterShown();
   const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
-  const sending = useRef(false);
+  const { status, errors, serverError, sending, onSubmit } = useFormSubmit<{ email?: string }>(
+    (data) => {
+      const address = emailField(data.get("email"));
+      if (!address.ok) return { ok: false, errors: { email: address.error } };
+      return {
+        ok: true,
+        send: () =>
+          submitJson("/api/salary-guide", {
+            email: address.value,
+            companyWebsite: honeypotValue(data),
+          }),
+      };
+    },
+    { onSuccess: () => setEmail("") },
+  );
+  const error = errors.email || serverError;
   const hidden = shown ? "" : "translate-y-3 opacity-0";
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (sending.current) return;
-
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const address = emailField(data.get("email"));
-    if (!address.ok) {
-      setError(address.error);
-      setStatus("idle");
-      return;
-    }
-
-    setError("");
-    setStatus("sending");
-    sending.current = true;
-
-    try {
-      const result = await submitJson("/api/salary-guide", {
-        email: address.value,
-        companyWebsite: honeypotValue(data.get("companyWebsite")),
-      });
-      if (!result.ok) {
-        setStatus("error");
-        setError(result.error);
-        return;
-      }
-      form.reset();
-      setEmail("");
-      setStatus("success");
-    } finally {
-      sending.current = false;
-    }
-  }
 
   return (
     <form
       className="grid max-w-[460px] content-start gap-4"
       noValidate
       aria-label="Salary guide"
-      aria-busy={status === "sending"}
+      aria-busy={sending}
       onSubmit={onSubmit}
     >
       <Honeypot />
@@ -109,15 +83,9 @@ export function FooterSignup() {
                 className="pointer-events-none absolute right-0 bottom-[-1px] left-0 h-0.5 origin-left scale-x-0 rounded-b-lg bg-brand transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] peer-focus:scale-x-100"
               />
             </label>
-            <Button
-              type="submit"
-              variant="primary"
-              arrow={false}
-              className="h-14"
-              disabled={status === "sending"}
-            >
-              {status === "sending" ? "Sending…" : "Send"}
-            </Button>
+            <SubmitButton sending={sending} arrow={false} className="h-14">
+              Send
+            </SubmitButton>
           </div>
           {error ? (
             <p id="footer-email-error" role="alert" className="text-sm font-medium text-brand">

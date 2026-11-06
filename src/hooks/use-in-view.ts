@@ -8,7 +8,11 @@ import { useEffect, useState, type RefObject } from "react";
  */
 export function useInView(
   ref: RefObject<Element | null>,
-  { rootMargin = "0px", once = false }: { rootMargin?: string; once?: boolean } = {},
+  {
+    rootMargin = "0px",
+    threshold = 0,
+    once = false,
+  }: { rootMargin?: string; threshold?: number; once?: boolean } = {},
 ) {
   const [inView, setInView] = useState(false);
 
@@ -25,11 +29,11 @@ export function useInView(
           setInView(false);
         }
       },
-      { rootMargin },
+      { rootMargin, threshold },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [once, ref, rootMargin]);
+  }, [once, ref, rootMargin, threshold]);
 
   return inView;
 }

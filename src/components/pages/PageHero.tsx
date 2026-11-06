@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 import { ContentImage } from "@/components/pages/ContentImage";
-import { pageWrap } from "@/components/pages/format";
-import { Reveal } from "@/components/ui/Reveal";
-import { SplitWords } from "@/components/ui/SplitWords";
+import { HeroCopy } from "@/components/ui/HeroCopy";
 
 export function PageHero({
   eyebrow,
@@ -22,22 +20,12 @@ export function PageHero({
   return (
     <header className="bg-cloud">
       <div
-        className={`${pageWrap} grid gap-10 py-16 md:py-24 ${
+        className={`wrap grid gap-10 py-16 md:py-24 ${
           image ? "md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-end" : ""
         }`}
       >
         <div>
-          <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
-            <SplitWords text={eyebrow} immediate />
-          </p>
-          <h1 className="font-display mt-4 text-4xl leading-[1.05] text-ink md:text-6xl">
-            <SplitWords text={title} immediate keepVisible delay={0.08} />
-          </h1>
-          <Reveal delay={0.16}>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-ink-soft">{lede}</p>
-          </Reveal>
-          {meta ? <div className="mt-6 text-sm text-stone">{meta}</div> : null}
-          {children ? <div className="mt-8 flex flex-wrap gap-3">{children}</div> : null}
+          <HeroCopy eyebrow={eyebrow} title={title} lede={lede} meta={meta} actions={children} />
         </div>
         {image ? (
           <ContentImage
