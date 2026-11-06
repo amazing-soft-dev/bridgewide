@@ -47,3 +47,6 @@ next-env.d.ts
 .cursor
 # generated responsive images (npm run images)
 /public/_img/
+
+# vscode
+.vscode/*
