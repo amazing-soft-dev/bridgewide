@@ -9,46 +9,77 @@ export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.bridgew
   "",
 );
 
+export const siteName = "BridgeWide";
+
+/**
+ * Machine-readable companions linked from every page: the llms.txt summary
+ * and full text for AI assistants, and the insights feed for readers and
+ * aggregators.
+ */
+const alternateTypes: NonNullable<Metadata["alternates"]>["types"] = {
+  "text/plain": [
+    { url: "/llms.txt", title: "LLM-readable site summary" },
+    { url: "/llms-full.txt", title: "LLM-readable full site text" },
+  ],
+  "application/rss+xml": [{ url: "/insights/feed.xml", title: "BridgeWide insights" }],
+};
+
 export function pageMetadata({
   title,
   description,
   path,
   type = "website",
   publishedTime,
+  modifiedTime,
+  authors,
   robots,
 }: {
-  title: string;
+  /**
+   * The page's own title. The root layout appends " · BridgeWide"; pass
+   * `{ absolute }` for a title that already carries the brand.
+   */
+  title: string | { absolute: string };
   description: string;
   path: string;
   type?: "website" | "article";
   /** ISO date; added to Open Graph for articles. */
   publishedTime?: string;
+  /** ISO date; added to Open Graph for articles. */
+  modifiedTime?: string;
+  /** Author URLs for articles. Defaults to the firm for article pages. */
+  authors?: readonly string[];
   robots?: Metadata["robots"];
 }): Metadata {
   const url = new URL(path, siteUrl).toString();
+  const shown = typeof title === "string" ? title : title.absolute;
+  const article = type === "article";
 
   return {
     title,
     description,
     alternates: {
       canonical: url,
-      // Points AI crawlers at the plain-text summary (src/app/llms.txt).
-      types: { "text/plain": [{ url: "/llms.txt", title: "LLM-readable site summary" }] },
+      types: alternateTypes,
     },
     openGraph: {
-      title,
+      title: shown,
       description,
       url,
-      siteName: "BridgeWide",
+      siteName,
       locale: "en_US",
       type,
-      ...(type === "article" && publishedTime ? { publishedTime } : {}),
+      ...(article && publishedTime ? { publishedTime } : {}),
+      ...(article && modifiedTime ? { modifiedTime } : {}),
+      ...(article ? { authors: [...(authors ?? [siteUrl])] } : {}),
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: shown,
       description,
     },
     ...(robots ? { robots } : {}),
   };
 }
+
+/** `noindex, follow` for pages whose content is labelled as sample data. */
+export const sampleRobots: Metadata["robots"] = { index: false, follow: true };

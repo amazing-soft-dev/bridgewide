@@ -4,7 +4,7 @@ import { Prose } from "@/components/pages/Prose";
 import { pageMetadata } from "@/components/pages/metadata";
 
 export const metadata = pageMetadata({
-  title: "Terms · BridgeWide",
+  title: "Terms",
   description:
     "Placeholder terms for BridgeWide. This page is not legal advice and it is not a contract.",
   path: "/terms",

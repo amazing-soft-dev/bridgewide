@@ -4,9 +4,11 @@ import { PageSection } from "@/components/pages/PageSection";
 import { pageMetadata } from "@/components/pages/metadata";
 import { Button } from "@/components/ui/Button";
 import { images } from "@/content/site";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Engineers · BridgeWide",
+  title: "Engineers",
   description:
     "The candidate path is free and confidential. Send a CV and your consultant shares the band before your name goes to a company.",
   path: "/engineers",
@@ -30,6 +32,7 @@ const path = [
 export default function EngineersPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "Engineers", path: "/engineers" }])} />
       <PageHero
         eyebrow="Engineers"
         title="Your name stays with us until the brief is real."

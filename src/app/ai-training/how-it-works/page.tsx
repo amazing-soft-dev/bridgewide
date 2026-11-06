@@ -5,9 +5,11 @@ import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { Button } from "@/components/ui/Button";
 import { trainingSteps } from "@/content/ai-training";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "How it works · AI training · BridgeWide",
+  title: "How it works · AI training",
   description:
     "Apply once, get screened and matched, get briefed and introduced, then start on the platform’s terms.",
   path: "/ai-training/how-it-works",
@@ -16,6 +18,7 @@ export const metadata = pageMetadata({
 export default function HowItWorksPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: "How it works", path: "/ai-training/how-it-works" }])} />
       <PageHero
         eyebrow="How it works"
         title="Four steps, then the platform pays you."

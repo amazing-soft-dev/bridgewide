@@ -7,9 +7,11 @@ import { HoverLift } from "@/components/ui/HoverLift";
 import { RevealGroup, RevealItem } from "@/components/ui/Reveal";
 import { pageMetadata } from "@/components/pages/metadata";
 import { stories } from "@/content/site";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Stories · BridgeWide",
+  title: "Stories",
   description:
     "How companies filled an engineering seat with BridgeWide, from the brief to the start date.",
   path: "/stories",
@@ -18,6 +20,7 @@ export const metadata = pageMetadata({
 export default function StoriesPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "Stories", path: "/stories" }])} />
       <PageHero
         eyebrow="Stories"
         title="Searches that ended with a start date."

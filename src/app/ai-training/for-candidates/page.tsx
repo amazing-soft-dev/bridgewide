@@ -6,9 +6,11 @@ import { PageSection } from "@/components/pages/PageSection";
 import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { trainingSteps } from "@/content/ai-training";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "For candidates · AI training · BridgeWide",
+  title: "For candidates · AI training",
   description:
     "Apply once for remote AI-training work. The platform pays you. BridgeWide does not take a cut, and your profile is shared only after you agree.",
   path: "/ai-training/for-candidates",
@@ -17,6 +19,7 @@ export const metadata = pageMetadata({
 export default function ForCandidatesPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: "For candidates", path: "/ai-training/for-candidates" }])} />
       <PageHero
         eyebrow="For candidates"
         title="One application, then a briefing."

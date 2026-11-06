@@ -16,10 +16,10 @@ import { pageMetadata } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/Button";
 import { testimonials, trainingFaq, trainingHero } from "@/content/ai-training";
-import { faqPage } from "@/lib/structured-data";
+import { breadcrumbs, faqPage } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "AI training · BridgeWide",
+  title: "AI training",
   description: trainingHero.subcopy,
   path: "/ai-training",
 });
@@ -27,6 +27,7 @@ export const metadata = pageMetadata({
 export default function AiTrainingPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }])} />
       <JsonLd data={faqPage(trainingFaq)} />
       <PageHero eyebrow={trainingHero.eyebrow} title={trainingHero.headline} lede={trainingHero.subcopy}>
         <Button href="/ai-training/for-candidates">Apply</Button>

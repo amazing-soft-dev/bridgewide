@@ -5,9 +5,11 @@ import { PageSection } from "@/components/pages/PageSection";
 import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { contact } from "@/content/site";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Contact · AI training · BridgeWide",
+  title: "Contact · AI training",
   description: `Questions about AI-training work. Write to ${contact.email}, or use the candidate and partner forms.`,
   path: "/ai-training/contact",
 });
@@ -15,6 +17,7 @@ export const metadata = pageMetadata({
 export default function AiTrainingContactPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: "Contact", path: "/ai-training/contact" }])} />
       <PageHero
         eyebrow="Contact"
         title="A note to the AI-training desk."

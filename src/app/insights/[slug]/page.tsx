@@ -21,11 +21,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!insight) notFound();
 
   return pageMetadata({
-    title: `${insight.title} · BridgeWide`,
+    title: insight.title,
     description: insight.excerpt,
     path: `/insights/${insight.slug}`,
     type: "article",
     publishedTime: isoDate(insight.date),
+    modifiedTime: isoDate(insight.date),
   });
 }
 

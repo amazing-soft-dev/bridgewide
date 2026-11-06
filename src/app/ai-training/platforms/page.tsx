@@ -4,9 +4,11 @@ import { PageSection } from "@/components/pages/PageSection";
 import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { platforms } from "@/content/ai-training";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Platforms · AI training · BridgeWide",
+  title: "Platforms · AI training",
   description:
     "A public directory of AI-training platforms. BridgeWide introduces candidates where it has a direct line.",
   path: "/ai-training/platforms",
@@ -15,6 +17,7 @@ export const metadata = pageMetadata({
 export default function PlatformsPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: "Platforms", path: "/ai-training/platforms" }])} />
       <PageHero
         eyebrow="Platforms"
         title="A directory, not a claim of partnership."
