@@ -1,7 +1,12 @@
 "use client";
 
-import { motion } from "motion/react";
-import { revealViewport, usePrefersReducedMotion, wordVariants } from "@/lib/motion";
+import { m } from "motion/react";
+import {
+  revealViewport,
+  usePrefersReducedMotion,
+  wordVariants,
+  wordVariantsVisible,
+} from "@/lib/motion";
 
 export function SplitWords({
   text,
@@ -9,6 +14,7 @@ export function SplitWords({
   immediate = false,
   delay = 0,
   shown,
+  keepVisible = false,
 }: {
   text: string;
   className?: string;
@@ -16,17 +22,20 @@ export function SplitWords({
   delay?: number;
   /** When set, play the rise only after this becomes true. Skips whileInView. */
   shown?: boolean;
+  /** Rise without fading in. Use on the page's LCP heading. */
+  keepVisible?: boolean;
 }) {
   const reduced = usePrefersReducedMotion();
   const words = text.trim().split(/\s+/);
   const controlled = shown !== undefined;
+  const variants = keepVisible ? wordVariantsVisible : wordVariants;
 
   if (reduced) {
     return <span className={className}>{text}</span>;
   }
 
   return (
-    <motion.span
+    <m.span
       className={className}
       initial="hidden"
       animate={controlled ? (shown ? "visible" : "hidden") : immediate ? "visible" : undefined}
@@ -40,16 +49,16 @@ export function SplitWords({
       }}
     >
       {words.map((word, index) => (
-        <motion.span
+        <m.span
           key={`${word}-${index}`}
           className="inline-block"
           data-motion="reveal"
-          variants={wordVariants}
+          variants={variants}
         >
           {word}
-          {index < words.length - 1 ? "\u00A0" : null}
-        </motion.span>
+          {index < words.length - 1 ? " " : null}
+        </m.span>
       ))}
-    </motion.span>
+    </m.span>
   );
 }

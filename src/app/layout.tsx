@@ -7,6 +7,7 @@ import { siteGraph } from "@/lib/structured-data";
 import { FooterMark } from "@/components/site/FooterMark";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { MotionProvider } from "@/components/ui/MotionProvider";
 import "./globals.css";
 
 /** Production Vercel only. Preview, local, and the GitHub Pages export stay quiet. */
@@ -71,10 +72,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <JsonLd data={siteGraph()} />
-        <SiteHeader />
-        <main className="relative z-10 flex-1 bg-cloud">{children}</main>
-        <SiteFooter />
-        <FooterMark />
+        <MotionProvider>
+          <SiteHeader />
+          <main className="relative z-10 flex-1 bg-cloud">{children}</main>
+          <SiteFooter />
+          <FooterMark />
+        </MotionProvider>
         {productionInsights ? <ProductionInsights /> : null}
       </body>
     </html>

@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
+import { useTrackProgress } from "@/hooks/use-track-progress";
+import { ramp } from "@/hooks/scroll-frame";
 import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
 import { trainingSteps } from "@/content/ai-training";
 
@@ -11,7 +13,6 @@ const stepImages = [
   "/images/training-path-3.webp",
   "/images/training-path-4.webp",
 ] as const;
-const motionGate = "(max-width: 899px), (prefers-reduced-motion: reduce)";
 
 export function PathSteps() {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -19,56 +20,17 @@ export function PathSteps() {
   const activeRef = useRef(0);
   const [active, setActive] = useState(0);
 
-  useEffect(() => {
-    const track = trackRef.current;
-    const stage = stageRef.current;
-    if (!track || !stage) return;
-
-    const gate = window.matchMedia(motionGate);
-    let frame = 0;
-
-    const apply = () => {
-      frame = 0;
-      if (gate.matches) return;
-
-      const rect = track.getBoundingClientRect();
-      const scrollable = rect.height - window.innerHeight;
-      const passed = Math.min(Math.max(-rect.top, 0), Math.max(scrollable, 0));
-      const progress = scrollable > 0 ? passed / scrollable : 0;
-      const reveal = Math.min(1, Math.max(0, (progress - 0.04) / 0.92));
-      stage.style.setProperty("--u", reveal.toFixed(4));
-
-      const next = Math.min(trainingSteps.length - 1, Math.floor(reveal * trainingSteps.length));
+  useTrackProgress(trackRef, (progress) => {
+    const reveal = ramp(progress, 0.04, 0.92);
+    const next = Math.min(trainingSteps.length - 1, Math.floor(reveal * trainingSteps.length));
+    return () => {
+      stageRef.current?.style.setProperty("--u", reveal.toFixed(4));
       if (activeRef.current !== next) {
         activeRef.current = next;
         setActive(next);
       }
     };
-
-    const request = () => {
-      if (!frame) frame = requestAnimationFrame(apply);
-    };
-
-    const syncListener = () => {
-      if (gate.matches) {
-        window.removeEventListener("scroll", request);
-        return;
-      }
-      window.addEventListener("scroll", request, { passive: true });
-      request();
-    };
-
-    syncListener();
-    window.addEventListener("resize", request);
-    gate.addEventListener("change", syncListener);
-
-    return () => {
-      window.removeEventListener("scroll", request);
-      window.removeEventListener("resize", request);
-      gate.removeEventListener("change", syncListener);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, []);
+  });
 
   return (
     <section id="path" aria-labelledby="path-heading" className="scroll-mt-24 bg-ink text-cloud">

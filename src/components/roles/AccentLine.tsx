@@ -1,6 +1,6 @@
 "use client";
 
-import { usePrefersReducedMotion } from "@/lib/motion";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 
 /**
  * Word-rise headline. The last word gets a brand wipe.

@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useRef, type CSSProperties } from "react";
+import { useTrackProgress } from "@/hooks/use-track-progress";
+import { ramp } from "@/hooks/scroll-frame";
 import { pageWrap } from "@/components/pages/format";
 import { Reveal } from "@/components/ui/Reveal";
 import { SplitWords } from "@/components/ui/SplitWords";
@@ -12,7 +14,6 @@ const rows = 9;
 const phrase = "THE TEAM";
 const phraseRow = 4;
 const phraseColumn = 4;
-const motionGate = "(max-width: 899px), (prefers-reduced-motion: reduce)";
 
 const tiles = Array.from({ length: columns * rows }, (_, index) => {
   const column = index % columns;
@@ -31,51 +32,14 @@ export function PortraitWall() {
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const track = trackRef.current;
-    const stage = stageRef.current;
-    if (!track || !stage) return;
-
-    const gate = window.matchMedia(motionGate);
-    let frame = 0;
-
-    const apply = () => {
-      frame = 0;
-      if (gate.matches) return;
-
-      const rect = track.getBoundingClientRect();
-      const scrollable = rect.height - window.innerHeight;
-      const passed = Math.min(Math.max(-rect.top, 0), Math.max(scrollable, 0));
-      const progress = scrollable > 0 ? passed / scrollable : 0;
-      const reveal = Math.min(1, Math.max(0, (progress - 0.04) / 0.9));
-      stage.style.setProperty("--u", reveal.toFixed(4));
-    };
-
-    const request = () => {
-      if (!frame) frame = requestAnimationFrame(apply);
-    };
-
-    const syncListener = () => {
-      if (gate.matches) {
-        window.removeEventListener("scroll", request);
-        stage.style.setProperty("--u", "1");
-        return;
-      }
-      window.addEventListener("scroll", request, { passive: true });
-      request();
-    };
-
-    syncListener();
-    window.addEventListener("resize", request);
-    gate.addEventListener("change", syncListener);
-
-    return () => {
-      window.removeEventListener("scroll", request);
-      window.removeEventListener("resize", request);
-      gate.removeEventListener("change", syncListener);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, []);
+  useTrackProgress(
+    trackRef,
+    (progress) => {
+      const reveal = ramp(progress, 0.04, 0.9);
+      return () => stageRef.current?.style.setProperty("--u", reveal.toFixed(4));
+    },
+    () => stageRef.current?.style.setProperty("--u", "1"),
+  );
 
   return (
     <section id="talent" aria-labelledby="talent-heading" className="scroll-mt-24 bg-[#0b0d12] text-cloud">

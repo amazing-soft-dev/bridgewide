@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { platforms } from "@/content/ai-training";
-import { usePrefersReducedMotion } from "@/lib/motion";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 
 function LogoCard({ name, href, logo }: { name: string; href: string; logo: string }) {
   return (
