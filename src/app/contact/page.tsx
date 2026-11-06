@@ -43,7 +43,7 @@ export default function ContactPage() {
       >
         <div className="grid gap-12 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1fr)] md:items-start">
           <address className="border-t border-brand pt-4 not-italic">
-            <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">Desk</p>
+            <p className="eyebrow">Desk</p>
             <ul className="mt-4 grid gap-3 text-lg">
               <li>
                 <a href={`mailto:${contact.email}`} className={textLink}>

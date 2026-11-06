@@ -4,7 +4,6 @@ import { MissionBand } from "@/components/ai-training/MissionBand";
 import { PathSteps } from "@/components/ai-training/PathSteps";
 import { PlatformTape } from "@/components/ai-training/PlatformTape";
 import { PortraitWall } from "@/components/ai-training/PortraitWall";
-import { QuestionDesk } from "@/components/ai-training/QuestionDesk";
 import { TrainingRecord } from "@/components/ai-training/TrainingRecord";
 import { TrainingRegions } from "@/components/ai-training/TrainingRegions";
 import { TrainingRoleList } from "@/components/ai-training/TrainingRoleList";
@@ -15,8 +14,9 @@ import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/Button";
+import { Faq } from "@/components/ui/Faq";
 import { testimonials, trainingFaq, trainingHero } from "@/content/ai-training";
-import { breadcrumbs, faqPage } from "@/lib/structured-data";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
   title: "AI training",
@@ -28,7 +28,6 @@ export default function AiTrainingPage() {
   return (
     <>
       <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }])} />
-      <JsonLd data={faqPage(trainingFaq)} />
       <PageHero eyebrow={trainingHero.eyebrow} title={trainingHero.headline} lede={trainingHero.subcopy}>
         <Button href="/ai-training/for-candidates">Apply</Button>
         <Button href="/ai-training/for-partners" variant="secondary">
@@ -79,13 +78,7 @@ export default function AiTrainingPage() {
       ) : null}
 
       <PageSection id="faq" label="FAQ" title="Questions candidates ask.">
-        <QuestionDesk
-          items={trainingFaq.map((item, index) => ({
-            id: `q${index + 1}`,
-            question: item.question,
-            answer: item.answer,
-          }))}
-        />
+        <Faq items={trainingFaq} layout="desk" idPrefix="q" />
         <p className="mt-8">
           <Link href="/ai-training/faq" className={textLink}>
             All questions

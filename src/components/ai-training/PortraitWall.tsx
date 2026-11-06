@@ -4,10 +4,11 @@ import Image from "next/image";
 import { useRef, type CSSProperties } from "react";
 import { useTrackProgress } from "@/hooks/use-track-progress";
 import { ramp } from "@/hooks/scroll-frame";
-import { pageWrap } from "@/components/pages/format";
+
 import { Reveal } from "@/components/ui/Reveal";
 import { SplitWords } from "@/components/ui/SplitWords";
 import { portraits } from "@/content/ai-training";
+import "./portrait-wall.css";
 
 const columns = 16;
 const rows = 9;
@@ -95,8 +96,8 @@ export function PortraitWall() {
               );
             })}
           </div>
-          <div className={`relative z-10 flex h-full flex-col py-16 md:py-20 gate:block gate:h-auto ${pageWrap}`}>
-            <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
+          <div className={`relative z-10 flex h-full flex-col py-16 md:py-20 gate:block gate:h-auto wrap`}>
+            <p className="eyebrow">
               <SplitWords text="Sample profiles" />
             </p>
             <h2 id="talent-heading" className="font-display mt-3 max-w-3xl text-3xl leading-tight md:text-5xl">
@@ -110,7 +111,7 @@ export function PortraitWall() {
             <ul className="portrait-row mt-auto list-none p-0 gate:mt-10">
               {portraits.map((person) => (
                 <li key={person.id}>
-                  <article className="group relative overflow-hidden rounded-lg bg-cloud text-ink [clip-path:polygon(0_0,calc(100%-12px)_0,100%_12px,100%_100%,0_100%)] transition duration-300 hover:shadow-[0_30px_60px_rgb(0_0_0/0.4)]">
+                  <article className="group relative overflow-hidden rounded-lg bg-cloud text-ink corner-cut transition duration-300 hover:shadow-[0_30px_60px_rgb(0_0_0/0.4)]">
                     <span className="relative block aspect-[4/4.4] overflow-hidden bg-cloud-soft">
                       <Image
                         src={person.image}

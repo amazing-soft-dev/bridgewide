@@ -20,8 +20,6 @@ export function formatUsd(amount: number): string {
   }).format(amount);
 }
 
-export const pageWrap = "mx-auto w-full max-w-6xl px-4";
-
 export const textLink =
   "text-ink underline decoration-brand underline-offset-4 hover:text-ink-soft";
 

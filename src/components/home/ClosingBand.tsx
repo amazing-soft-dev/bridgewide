@@ -2,13 +2,13 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { SplitWords } from "@/components/ui/SplitWords";
-import { sectionContainer } from "@/components/ui/SectionHeading";
+
 import { hero, images } from "@/content/site";
 
 export function ClosingBand() {
   return (
     <section data-header-tone="dark"
-      className="mt-[calc(var(--seam)*-1)] [clip-path:polygon(0_0,100%_var(--seam),100%_100%,0_100%)] relative z-10 bg-ink pt-28 pb-24 text-cloud md:pt-36 md:pb-32"
+      className="seam-right relative z-10 bg-ink pt-28 pb-24 text-cloud md:pt-36 md:pb-32"
       aria-labelledby="close-heading"
     >
       <div className="absolute inset-0">
@@ -22,9 +22,9 @@ export function ClosingBand() {
         />
         <div className="absolute inset-0 bg-ink/72" aria-hidden />
       </div>
-      <div className={`relative ${sectionContainer}`}>
+      <div className={`relative wrap`}>
         <Reveal>
-          <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
+          <p className="eyebrow">
             Start a search
           </p>
           <h2

@@ -33,7 +33,7 @@ export default function ForCandidatesPage() {
         <ol className="grid gap-8 md:grid-cols-2">
           {trainingSteps.map((step, index) => (
             <li key={step.title} className="border-t border-brand pt-4">
-              <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">0{index + 1}</p>
+              <p className="eyebrow">0{index + 1}</p>
               <h3 className="font-display mt-3 text-2xl">{step.title}</h3>
               <p className="mt-3 leading-7 text-cloud-soft">{step.copy}</p>
             </li>

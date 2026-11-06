@@ -1,38 +1,17 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
 import { Field, Honeypot } from "@/components/forms/Field";
+import { FormStatus, SubmitButton } from "@/components/forms/FormFeedback";
 import { submitJson } from "@/components/forms/read-submission";
-import { Button } from "@/components/ui/Button";
-import {
-  allOk,
-  emailField,
-  fieldErrors,
-  limits,
-  textField,
-} from "@/lib/form";
+import { honeypotValue, useFormSubmit } from "@/hooks/use-form-submit";
+import { allOk, emailField, fieldErrors, limits, textField } from "@/lib/form";
 
 type PartnerErrors = Partial<
   Record<"name" | "email" | "company" | "need" | "coverage" | "message", string>
 >;
 
-function honeypotValue(value: FormDataEntryValue | null) {
-  if (typeof value === "string") return value;
-  return value ? "filled" : "";
-}
-
 export function PartnerForm() {
-  const [errors, setErrors] = useState<PartnerErrors>({});
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
-  const [serverError, setServerError] = useState("");
-  const sending = useRef(false);
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (sending.current) return;
-
-    const form = event.currentTarget;
-    const data = new FormData(form);
+  const { status, errors, serverError, sending, onSubmit } = useFormSubmit<PartnerErrors>((data) => {
     const fields = {
       name: textField(data.get("name"), limits.name, "Name"),
       email: emailField(data.get("email")),
@@ -41,50 +20,28 @@ export function PartnerForm() {
       coverage: textField(data.get("coverage"), limits.roleTitle, "Region or time zone"),
       message: textField(data.get("message"), limits.message, "Message"),
     };
-
-    if (!allOk(fields)) {
-      setErrors(fieldErrors(fields));
-      setServerError("");
-      setStatus("idle");
-      return;
-    }
-
-    setErrors({});
-    setServerError("");
-    setStatus("sending");
-    sending.current = true;
-
-    try {
-      const result = await submitJson("/api/ai-training/partner", {
-        name: fields.name.value,
-        email: fields.email.value,
-        company: fields.company.value,
-        need: fields.need.value,
-        coverage: fields.coverage.value,
-        message: fields.message.value,
-        companyWebsite: honeypotValue(data.get("companyWebsite")),
-      });
-
-      if (!result.ok) {
-        setStatus("error");
-        setServerError(result.error);
-        return;
-      }
-
-      form.reset();
-      setErrors({});
-      setStatus("success");
-    } finally {
-      sending.current = false;
-    }
-  }
+    if (!allOk(fields)) return { ok: false, errors: fieldErrors(fields) };
+    return {
+      ok: true,
+      send: () =>
+        submitJson("/api/ai-training/partner", {
+          name: fields.name.value,
+          email: fields.email.value,
+          company: fields.company.value,
+          need: fields.need.value,
+          coverage: fields.coverage.value,
+          message: fields.message.value,
+          companyWebsite: honeypotValue(data),
+        }),
+    };
+  });
 
   return (
     <form
       className="relative grid max-w-xl gap-4"
       noValidate
       aria-label="Partner inquiry"
-      aria-busy={status === "sending"}
+      aria-busy={sending}
       onSubmit={onSubmit}
     >
       <Honeypot />
@@ -119,19 +76,8 @@ export function PartnerForm() {
         required
         error={errors.message}
       />
-      {status === "success" ? (
-        <p role="status" className="text-sm text-ink">
-          Thanks. The desk will reply about a shortlist.
-        </p>
-      ) : null}
-      {status === "error" ? (
-        <p role="alert" className="text-sm font-medium text-ink">
-          {serverError}
-        </p>
-      ) : null}
-      <Button type="submit" variant="primary" disabled={status === "sending"}>
-        {status === "sending" ? "Sending…" : "Send inquiry"}
-      </Button>
+      <FormStatus status={status} error={serverError} success="Thanks. The desk will reply about a shortlist." />
+      <SubmitButton sending={sending}>Send inquiry</SubmitButton>
     </form>
   );
 }

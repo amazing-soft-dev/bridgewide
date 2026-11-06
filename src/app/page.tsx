@@ -4,9 +4,7 @@ import { AiTrainingBand } from "@/components/home/AiTrainingBand";
 import { ClosingBand } from "@/components/home/ClosingBand";
 import { Hero } from "@/components/home/Hero";
 import { TwoDoors } from "@/components/home/TwoDoors";
-import { JsonLd } from "@/components/seo/JsonLd";
 import { hero } from "@/content/site";
-import { faqPage } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
   title: { absolute: "BridgeWide — Engineers across four regions" },
@@ -76,7 +74,6 @@ const FaqSection = dynamic(() => import("@/components/home/FaqSection"), {
 export default function HomePage() {
   return (
     <>
-      <JsonLd data={faqPage()} />
       <Hero />
       <TwoDoors />
       <AiTrainingBand />

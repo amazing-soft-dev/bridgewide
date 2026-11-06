@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { useRef, type CSSProperties, type PointerEvent } from "react";
 import { useTrackProgress } from "@/hooks/use-track-progress";
 import { ramp } from "@/hooks/scroll-frame";
-import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { images, people } from "@/content/site";
 
 const COLS = 16;
@@ -69,7 +69,7 @@ export default function DeskSection() {
             aria-hidden
           />
           <div
-            className={`relative z-[2] grid h-full grid-rows-[1fr_auto] gap-y-6 pt-[clamp(4.5rem,10vh,6.5rem)] pb-[calc(var(--seam)_+_clamp(1.5rem,4vh,2.75rem))] gate:block gate:h-auto gate:pt-[6.5rem] gate:pb-[calc(var(--seam)_+_2.5rem)] ${sectionContainer}`}
+            className={`relative z-[2] grid h-full grid-rows-[1fr_auto] gap-y-6 pt-[clamp(4.5rem,10vh,6.5rem)] pb-[calc(var(--seam)_+_clamp(1.5rem,4vh,2.75rem))] gate:block gate:h-auto gate:pt-[6.5rem] gate:pb-[calc(var(--seam)_+_2.5rem)] wrap`}
           >
             <div className="max-w-xl">
               <SectionHeading
@@ -88,7 +88,7 @@ export default function DeskSection() {
                 <li key={person.id}>
                   <Link
                     href={`/about#${person.id}`}
-                    className="group/desk relative flex flex-1 flex-col overflow-hidden rounded-lg bg-cloud text-[#14120e] no-underline [clip-path:polygon(0_0,calc(100%_-_12px)_0,100%_12px,100%_100%,0_100%)] [transform:rotateX(var(--rx,0deg))_rotateY(var(--ry,0deg))] [transform-style:preserve-3d] [transition:transform_0.35s_ease,box-shadow_0.4s_ease] hover:shadow-[0_30px_60px_rgb(0_0_0/0.4)]"
+                    className="group/desk relative flex flex-1 flex-col overflow-hidden rounded-lg bg-cloud text-[#14120e] no-underline corner-cut [transform:rotateX(var(--rx,0deg))_rotateY(var(--ry,0deg))] [transform-style:preserve-3d] [transition:transform_0.35s_ease,box-shadow_0.4s_ease] hover:shadow-[0_30px_60px_rgb(0_0_0/0.4)]"
                     onPointerMove={tilt}
                     onPointerLeave={(event) => {
                       event.currentTarget.style.setProperty("--rx", "0deg");

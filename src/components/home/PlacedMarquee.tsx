@@ -1,15 +1,15 @@
 import { Marquee } from "@/components/ui/Marquee";
 import { SplitWords } from "@/components/ui/SplitWords";
-import { sectionContainer } from "@/components/ui/SectionHeading";
+
 import { placements } from "@/content/site";
 
 export default function PlacedMarquee() {
   return (
     <section data-header-tone="dark"
-      className="mt-[calc(var(--seam)*-1)] [clip-path:polygon(0_0,100%_var(--seam),100%_100%,0_100%)] relative z-10 bg-ink pt-20 pb-16 text-cloud"
+      className="seam-right relative z-10 bg-ink pt-20 pb-16 text-cloud"
       aria-labelledby="placed-heading"
     >
-      <div className={sectionContainer}>
+      <div className="wrap">
         <h2
           id="placed-heading"
           className="font-display text-3xl leading-tight tracking-tight text-cloud md:text-4xl"
@@ -18,7 +18,7 @@ export default function PlacedMarquee() {
         </h2>
       </div>
       <div className="mt-6">
-        <Marquee className={`${sectionContainer} flex flex-wrap gap-x-8 gap-y-4`}>
+        <Marquee className={`wrap flex flex-wrap gap-x-8 gap-y-4`}>
           {placements.map((placement) => (
             <p
               key={`${placement.company}-${placement.title}`}
