@@ -3,9 +3,11 @@ import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { pageMetadata } from "@/components/pages/metadata";
 import { images, people } from "@/content/site";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs, desk } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "About · BridgeWide",
+  title: "About",
   description:
     "The BridgeWide desk: consultants who hire for the engineering work they used to do, across four regions.",
   path: "/about",
@@ -14,6 +16,8 @@ export const metadata = pageMetadata({
 export default function AboutPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "About", path: "/about" }])} />
+      <JsonLd data={desk()} />
       <PageHero
         eyebrow="About"
         title="A desk of people who have done the job."

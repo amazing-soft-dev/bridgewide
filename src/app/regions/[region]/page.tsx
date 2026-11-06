@@ -25,7 +25,7 @@ export async function generateMetadata({
   if (!region) notFound();
 
   return pageMetadata({
-    title: `${region.name} · BridgeWide`,
+    title: `${region.name}`,
     description: region.summary,
     path: `/regions/${region.slug}`,
   });

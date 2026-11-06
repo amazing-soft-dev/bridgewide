@@ -2,6 +2,8 @@ import { PartnerForm } from "@/components/ai-training/PartnerForm";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { pageMetadata } from "@/components/pages/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 const partnerSteps = [
   {
@@ -23,7 +25,7 @@ const partnerSteps = [
 ] as const;
 
 export const metadata = pageMetadata({
-  title: "For partners · AI training · BridgeWide",
+  title: "For partners · AI training",
   description:
     "A pre-screened pipeline for AI-training platforms and labs, matched by discipline, seniority, language, and time zone.",
   path: "/ai-training/for-partners",
@@ -32,6 +34,7 @@ export const metadata = pageMetadata({
 export default function ForPartnersPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: "For partners", path: "/ai-training/for-partners" }])} />
       <PageHero
         eyebrow="For partners"
         title="A pipeline, without a new recruiting team."

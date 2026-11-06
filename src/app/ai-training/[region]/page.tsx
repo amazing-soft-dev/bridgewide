@@ -11,6 +11,8 @@ import {
   trainingRegions,
   trainingRoles,
 } from "@/content/ai-training";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const dynamicParams = false;
 
@@ -28,7 +30,7 @@ export async function generateMetadata({
   if (!region) notFound();
 
   return pageMetadata({
-    title: `${region.name} · AI training · BridgeWide`,
+    title: `${region.name} · AI training`,
     description: region.summary,
     path: `/ai-training/${region.slug}`,
   });
@@ -46,6 +48,7 @@ export default async function TrainingRegionPage({
 
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: region.name, path: `/ai-training/${region.slug}` }])} />
       <PageHero eyebrow="Region" title={region.name} lede={region.summary}>
         <Button href="/ai-training/for-candidates">Apply</Button>
       </PageHero>

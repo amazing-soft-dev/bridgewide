@@ -3,9 +3,11 @@ import { PageSection } from "@/components/pages/PageSection";
 import { formatUsd } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { regions, salaryBands } from "@/content/site";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs, salaryDataset } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Salary guide · BridgeWide",
+  title: "Salary guide",
   description: `${salaryBands.edition}. Salary bands by region for backend, frontend, data, cloud, mobile, and engineering leadership. ${salaryBands.basis}.`,
   path: "/salary-guide",
 });
@@ -13,6 +15,8 @@ export const metadata = pageMetadata({
 export default function SalaryGuidePage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "Salary guide", path: "/salary-guide" }])} />
+      <JsonLd data={salaryDataset()} />
       <PageHero
         eyebrow="Salary guide"
         title={salaryBands.edition}

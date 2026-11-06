@@ -33,7 +33,7 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "BridgeWide",
+  title: { default: "BridgeWide", template: "%s · BridgeWide" },
   description:
     "BridgeWide places software engineers for companies across the USA, Canada, LATAM, and Europe.",
   applicationName: "BridgeWide",
@@ -72,9 +72,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <JsonLd data={siteGraph()} />
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-md focus:bg-ink focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-cloud focus:no-underline"
+        >
+          Skip to content
+        </a>
         <MotionProvider>
           <SiteHeader />
-          <main className="relative z-10 flex-1 bg-cloud">{children}</main>
+          <main id="main" className="relative z-10 flex-1 bg-cloud">{children}</main>
           <SiteFooter />
           <FooterMark />
         </MotionProvider>

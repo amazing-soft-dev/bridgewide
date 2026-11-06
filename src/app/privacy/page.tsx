@@ -4,7 +4,7 @@ import { Prose } from "@/components/pages/Prose";
 import { pageMetadata } from "@/components/pages/metadata";
 
 export const metadata = pageMetadata({
-  title: "Privacy · BridgeWide",
+  title: "Privacy",
   description: "Placeholder privacy note for BridgeWide. This page is not legal advice.",
   path: "/privacy",
   robots: { index: false, follow: true },

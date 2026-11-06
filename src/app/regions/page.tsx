@@ -4,9 +4,11 @@ import { RegionCard } from "@/components/pages/RegionCard";
 import { RevealGroup, RevealItem } from "@/components/ui/Reveal";
 import { pageMetadata } from "@/components/pages/metadata";
 import { regions } from "@/content/site";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Regions · BridgeWide",
+  title: "Regions",
   description:
     "Four desks for hiring software engineers: the United States, Canada, Latin America, and Europe.",
   path: "/regions",
@@ -15,6 +17,7 @@ export const metadata = pageMetadata({
 export default function RegionsPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "Regions", path: "/regions" }])} />
       <PageHero
         eyebrow="Regions"
         title="Four desks. One search if you want the comparison."

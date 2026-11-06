@@ -6,6 +6,8 @@ import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { Button } from "@/components/ui/Button";
 import { platforms, trainingPlatform } from "@/content/ai-training";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const dynamicParams = false;
 
@@ -23,7 +25,7 @@ export async function generateMetadata({
   if (!platform) notFound();
 
   return pageMetadata({
-    title: `${platform.name} · AI training · BridgeWide`,
+    title: `${platform.name} · AI training`,
     description: platform.summary,
     path: `/ai-training/platforms/${platform.slug}`,
   });
@@ -45,6 +47,7 @@ export default async function PlatformPage({
 
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: "Platforms", path: "/ai-training/platforms" }, { name: platform.name, path: `/ai-training/platforms/${platform.slug}` }])} />
       <PageHero eyebrow="Platform" title={platform.name} lede={platform.summary}>
         <Button href="/ai-training/for-candidates">Apply</Button>
         <Button href="/ai-training/platforms" variant="secondary">

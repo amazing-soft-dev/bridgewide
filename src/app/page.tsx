@@ -9,7 +9,7 @@ import { hero } from "@/content/site";
 import { faqPage } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "BridgeWide — Engineers across four regions",
+  title: { absolute: "BridgeWide — Engineers across four regions" },
   description: hero.subcopy,
   path: "/",
 });

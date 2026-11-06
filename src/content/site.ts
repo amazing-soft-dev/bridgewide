@@ -213,6 +213,13 @@ export const contentIsSample = false;
 /** Day the current open roles were listed. validThrough is 90 days later. */
 export const rolesListedOn = "2026-10-18";
 
+/**
+ * ISO date of the last content edit in this file. Feeds the sitemap's
+ * lastModified, the Dataset and Organization dateModified, and llms.txt.
+ * Bump it when copy, roles, bands, or stories change.
+ */
+export const contentUpdatedOn = "2026-11-05";
+
 /** Facts used for Organization structured data and /llms.txt. */
 export const organization = {
   name: "BridgeWide",
@@ -227,13 +234,19 @@ export const organization = {
     "Hiring software engineers in Europe",
     "Engineering salary benchmarks",
   ],
+  /** Each service points at the page section that describes it, so the schema.org Offer has a real URL. */
   services: [
-    "Permanent software engineer placement",
-    "Contract software engineer placement",
-    "Confidential engineering searches",
-    "Engineering leadership searches",
-    "Matching candidates to AI-training platforms",
+    { name: "Permanent software engineer placement", path: "/employers#fees" },
+    { name: "Contract software engineer placement", path: "/employers#fees" },
+    { name: "Confidential engineering searches", path: "/employers#how" },
+    { name: "Engineering leadership searches", path: "/employers#how" },
+    { name: "Matching candidates to AI-training platforms", path: "/ai-training" },
   ],
+  /**
+   * Public profiles of the firm (LinkedIn, X, GitHub, Crunchbase). Empty until
+   * the real ones exist; schema.org sameAs is left out while this is empty.
+   */
+  sameAs: [] as readonly string[],
 } as const;
 
 export const contact: Contact = {
