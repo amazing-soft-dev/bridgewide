@@ -48,9 +48,33 @@ export type FooterColumn = {
   items: readonly FooterItem[];
 };
 
+export type ContactHours = {
+  /** Shown on the desk card and in llms.txt: "Mon–Fri · 08:00–18:00 PT". */
+  label: string;
+  /** Days the desk answers, 0 = Sunday through 6 = Saturday. */
+  days: readonly number[];
+  /** 24-hour local times in the desk's time zone. */
+  opens: string;
+  closes: string;
+  /** IANA zone used to decide "Open now" on the contact page. */
+  timeZone: string;
+};
+
 export type Contact = {
   email: string;
+  phone: string;
+  /** The tel: link, digits only with the country code. */
+  phoneHref: string;
+  address: string;
   location: string;
+  hours: ContactHours;
+};
+
+/** A question on the contact page's question desk. */
+export type ContactFaqItem = {
+  question: string;
+  answer: string;
+  label: string;
 };
 
 export type Announcement = {
@@ -251,8 +275,51 @@ export const organization = {
 
 export const contact: Contact = {
   email: "michael.allen@bridgewide.org",
+  phone: "+1 (415) 555-0142",
+  phoneHref: "+14155550142",
+  address: "San Francisco, CA",
   location: "San Francisco · remote desks in four regions",
+  hours: {
+    label: "Mon–Fri · 08:00–18:00 PT",
+    days: [1, 2, 3, 4, 5],
+    opens: "08:00",
+    closes: "18:00",
+    timeZone: "America/Los_Angeles",
+  },
 };
+
+/** The topic select on the contact form. The first entry is the default. */
+export const contactTopics = [
+  "Something else",
+  "Hiring engineers",
+  "Looking for a role",
+  "AI training",
+  "Press",
+] as const;
+
+export type ContactTopic = (typeof contactTopics)[number];
+
+/** The three quick answers on the contact page. Longer answers live in `faq`. */
+export const contactFaq: readonly ContactFaqItem[] = [
+  {
+    label: "General",
+    question: "Which regions do you cover?",
+    answer:
+      "Four: the United States, Canada, Latin America, and Europe. Each region has its own desk with a consultant who has hired in that market, and one search can draw from more than one region when you want the comparison.",
+  },
+  {
+    label: "General",
+    question: "Where are you based?",
+    answer:
+      "The desk sits in San Francisco. Consultants work from the four regions we hire in, and most first conversations happen on video, in the hours that suit the team you are hiring for.",
+  },
+  {
+    label: "General",
+    question: "When can I reach you?",
+    answer:
+      "Monday to Friday, 08:00 to 18:00 Pacific. Email reaches the desk at any hour, and a person answers, usually within two working hours. Outside those hours, send the brief and we pick it up first thing.",
+  },
+];
 
 export const nav: readonly NavLink[] = [
   { label: "Employers", href: "/employers" },

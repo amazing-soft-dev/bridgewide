@@ -25,6 +25,7 @@ export function HeroCopy({
   meta,
   actions,
   tone = "light",
+  accent = false,
   titleClassName,
   ledeClassName,
   actionsClassName = "mt-8 flex flex-wrap gap-3",
@@ -36,6 +37,8 @@ export function HeroCopy({
   meta?: ReactNode;
   actions?: ReactNode;
   tone?: "light" | "dark";
+  /** Brand block behind the title's last word. */
+  accent?: boolean;
   titleClassName?: string;
   ledeClassName?: string;
   actionsClassName?: string;
@@ -46,7 +49,14 @@ export function HeroCopy({
         <SplitWords text={eyebrow} immediate />
       </p>
       <h1 id={titleId} className={titleClassName ?? titleClass[tone]}>
-        <SplitWords text={title} immediate keepVisible delay={0.08} />
+        <SplitWords
+          text={title}
+          immediate
+          keepVisible
+          delay={0.08}
+          accent={accent}
+          accentTone={tone}
+        />
       </h1>
       <Reveal immediate delay={0.16}>
         <p className={ledeClassName ?? ledeClass[tone]}>{lede}</p>

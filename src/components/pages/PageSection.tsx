@@ -9,6 +9,7 @@ export function PageSection({
   lede,
   children,
   tone = "cloud",
+  accent = false,
   backgroundImage,
 }: {
   id?: string;
@@ -17,6 +18,8 @@ export function PageSection({
   lede?: ReactNode;
   children: ReactNode;
   tone?: "cloud" | "ink";
+  /** Brand block behind the title's last word. */
+  accent?: boolean;
   /** Full-bleed photo behind the section. Referenced only by the caller that passes it. */
   backgroundImage?: string;
 }) {
@@ -44,7 +47,14 @@ export function PageSection({
         </>
       ) : null}
       <div className="wrap relative py-16 md:py-24">
-        <SectionHeading id={headingId} eyebrow={label} title={title} lede={lede} tone={dark ? "dark" : "light"} />
+        <SectionHeading
+          id={headingId}
+          eyebrow={label}
+          title={title}
+          lede={lede}
+          tone={dark ? "dark" : "light"}
+          accent={accent}
+        />
         <div className={title || lede ? "mt-10" : "mt-8"}>{children}</div>
       </div>
     </section>

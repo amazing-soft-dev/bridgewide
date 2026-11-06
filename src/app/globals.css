@@ -77,6 +77,11 @@
   clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
 }
 
+/* The same cut, larger, for the contact page's form card and answer panel. */
+@utility corner-cut-lg {
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%);
+}
+
 @theme {
   --color-ink: #111111;
   --color-ink-soft: #3a3a3a;

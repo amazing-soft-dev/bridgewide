@@ -51,3 +51,28 @@ export const wordVariantsVisible: Variants = {
     transition: { duration: 0.55, ease },
   },
 };
+
+/** The brand block behind an accented heading word: wipes in from the left after the word rises. */
+export const accentBlockVariants: Variants = {
+  hidden: { scaleX: 0 },
+  visible: {
+    scaleX: 1,
+    transition: { duration: 0.8, ease: [0.7, 0, 0.2, 1], delay: 0.45 },
+  },
+};
+
+/**
+ * The accented word itself: it flips to white once the block is behind it.
+ * The hidden colours are the `ink` and `cloud` tokens from globals.css; Motion
+ * cannot interpolate `var()`, so the hex values are repeated here.
+ */
+export const accentTextVariants: Record<"light" | "dark", Variants> = {
+  light: {
+    hidden: { color: "#111111" },
+    visible: { color: "#ffffff", transition: { duration: 0.3, delay: 0.95 } },
+  },
+  dark: {
+    hidden: { color: "#f4f0e8" },
+    visible: { color: "#ffffff", transition: { duration: 0.3, delay: 0.95 } },
+  },
+};
