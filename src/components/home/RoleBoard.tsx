@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { formatCompactSalary } from "@/components/pages/format";
-import { usePrefersReducedMotion } from "@/lib/motion";
+import { useInView } from "@/hooks/use-in-view";
+import { usePageVisible, usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { placements, roles, type Role } from "@/content/site";
 
 const VISIBLE = 6;
@@ -171,6 +172,11 @@ function RoleRow({
 
 export function RoleBoard() {
   const reduced = usePrefersReducedMotion();
+  const boardRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(boardRef, { rootMargin: "80px" });
+  const visible = usePageVisible();
+  /** Timers run only while the board can be seen; off screen or in a background tab they stop. */
+  const live = inView && visible;
   const hoveredRef = useRef<number | null>(null);
   const [slots, setSlots] = useState(() => roles.slice(0, VISIBLE).map((_, index) => index));
   const [clock, setClock] = useState<string | null>(null);
@@ -183,13 +189,13 @@ export function RoleBoard() {
   useEffect(() => {
     const tick = () => setClock(formatSfTime(new Date()));
     tick();
-    if (reduced) return;
+    if (reduced || !live) return;
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
-  }, [reduced]);
+  }, [live, reduced]);
 
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || !live) return;
     let step = 0;
     const id = window.setInterval(() => {
       const row = step;
@@ -202,22 +208,22 @@ export function RoleBoard() {
       });
     }, SWAP_MS);
     return () => window.clearInterval(id);
-  }, [reduced]);
+  }, [live, reduced]);
 
   // One placement at a time, swapped in place (matches the reference footer).
   useEffect(() => {
-    if (reduced || placements.length < 2) return;
+    if (reduced || !live || placements.length < 2) return;
     const id = window.setInterval(
       () => setFeedIndex((index) => (index + 1) % placements.length),
       FEED_MS,
     );
     return () => window.clearInterval(id);
-  }, [reduced]);
+  }, [live, reduced]);
 
   const placement = placements[feedIndex];
 
   return (
-    <div className="@container relative rounded-xl border border-white/12 bg-[#080c1c]/74 p-1.5 text-cloud shadow-[0_40px_100px_rgba(8,12,28,0.55),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-[18px] [clip-path:polygon(0_0,calc(100%_-_26px)_0,100%_26px,100%_100%,0_100%)] motion-safe:animate-sth-board-in [&_*]:box-border [&_*]:min-w-0">
+    <div ref={boardRef} className="@container relative rounded-xl border border-white/12 bg-[#080c1c]/74 p-1.5 text-cloud shadow-[0_40px_100px_rgba(8,12,28,0.55),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-[18px] [clip-path:polygon(0_0,calc(100%_-_26px)_0,100%_26px,100%_100%,0_100%)] motion-safe:animate-sth-board-in [&_*]:box-border [&_*]:min-w-0">
       <div className="flex items-center justify-between gap-3 px-3.5 pt-3 pb-2.5">
         <p className="flex items-center gap-2.5 font-mono text-[12px] tracking-[0.16em] text-cloud/80 uppercase">
           <span

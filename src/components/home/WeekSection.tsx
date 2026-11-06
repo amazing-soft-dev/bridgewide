@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
+import { useTrackProgress } from "@/hooks/use-track-progress";
+import { ramp } from "@/hooks/scroll-frame";
 import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
 import { images, week } from "@/content/site";
 
@@ -13,8 +15,6 @@ const weekImages = [
   images.close,
 ] as const;
 
-const motionGate = "(max-width: 899px), (prefers-reduced-motion: reduce)";
-
 export default function WeekSection() {
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -22,61 +22,22 @@ export default function WeekSection() {
   const [active, setActive] = useState(0);
   const stamp = week[week.length - 1]?.title ?? "";
 
-  useEffect(() => {
-    const track = trackRef.current;
-    const stage = stageRef.current;
-    if (!track || !stage) return;
-
-    const gate = window.matchMedia(motionGate);
-    let frame = 0;
-
-    const apply = () => {
-      frame = 0;
-      if (gate.matches) return;
-
-      const rect = track.getBoundingClientRect();
-      const scrollable = rect.height - window.innerHeight;
-      const passed = Math.min(Math.max(-rect.top, 0), Math.max(scrollable, 0));
-      const pp = scrollable > 0 ? passed / scrollable : 0;
-      const u = Math.min(1, Math.max(0, (pp - 0.04) / 0.92));
-
+  useTrackProgress(trackRef, (pp) => {
+    const u = ramp(pp, 0.04, 0.92);
+    const stamped = u >= 0.98 ? "true" : "false";
+    const next = Math.min(week.length - 1, Math.floor(u * week.length));
+    return () => {
+      const stage = stageRef.current;
+      if (!stage) return;
       stage.style.setProperty("--pp", pp.toFixed(4));
       stage.style.setProperty("--u", u.toFixed(4));
-
-      const stamped = u >= 0.98 ? "true" : "false";
       if (stage.dataset.stamped !== stamped) stage.dataset.stamped = stamped;
-
-      const next = Math.min(week.length - 1, Math.floor(u * week.length));
       if (activeRef.current !== next) {
         activeRef.current = next;
         setActive(next);
       }
     };
-
-    const request = () => {
-      if (!frame) frame = requestAnimationFrame(apply);
-    };
-
-    const syncListener = () => {
-      if (gate.matches) {
-        window.removeEventListener("scroll", request);
-        return;
-      }
-      window.addEventListener("scroll", request, { passive: true });
-      request();
-    };
-
-    syncListener();
-    window.addEventListener("resize", request);
-    gate.addEventListener("change", syncListener);
-
-    return () => {
-      window.removeEventListener("scroll", request);
-      window.removeEventListener("resize", request);
-      gate.removeEventListener("change", syncListener);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, []);
+  });
 
   return (
     <section

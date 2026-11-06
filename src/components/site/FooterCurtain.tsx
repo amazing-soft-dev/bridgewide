@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { usePrefersReducedMotion } from "@/lib/motion";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import "./footer.css";
 
 const FooterRevealContext = createContext(true);

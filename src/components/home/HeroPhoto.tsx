@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useMotionValue, useScroll, useSpring, useTransform } from "motion/react";
+import { m, useMotionValue, useScroll, useSpring, useTransform } from "motion/react";
 import { useEffect, useRef } from "react";
-import { usePrefersReducedMotion } from "@/lib/motion";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 
 export function HeroPhoto({ src, alt }: { src: string; alt: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -52,12 +52,10 @@ export function HeroPhoto({ src, alt }: { src: string; alt: string }) {
 
   return (
     <div ref={ref} className="absolute inset-0 overflow-hidden">
-      <motion.div
+      {/* No fade-in: this photo is the page's LCP element and must paint at once. */}
+      <m.div
         className="absolute inset-x-[-8%] -top-[12%] -bottom-[12%]"
         data-motion="parallax"
-        initial={reduced ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: reduced ? 0 : 0.9, ease: [0.22, 1, 0.36, 1] }}
         style={reduced ? undefined : { x: lagX, y }}
       >
         <Image
@@ -68,7 +66,7 @@ export function HeroPhoto({ src, alt }: { src: string; alt: string }) {
           sizes="100vw"
           className="object-cover [filter:saturate(0.9)_contrast(1.05)]"
         />
-      </motion.div>
+      </m.div>
     </div>
   );
 }

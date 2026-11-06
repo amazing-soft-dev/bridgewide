@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import type { Transition, Variants } from "motion/react";
+
+export { usePrefersReducedMotion } from "@/hooks/use-media-query";
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
@@ -41,20 +42,14 @@ export const wordVariants: Variants = {
 };
 
 /**
- * Starts false so the server and the first client render match.
- * A stylesheet rule already keeps [data-motion] still and visible
- * when the visitor prefers reduced motion.
+ * Rise without the fade. Used on the page `<h1>`, which is often the Largest
+ * Contentful Paint element: text at opacity 0 is not painted, so a fade-in
+ * would push LCP back by the length of the animation.
  */
-export function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduced(query.matches);
-    update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
-
-  return reduced;
-}
+export const wordVariantsVisible: Variants = {
+  hidden: { y: "0.55em" },
+  visible: {
+    y: 0,
+    transition: { duration: 0.55, ease },
+  },
+};

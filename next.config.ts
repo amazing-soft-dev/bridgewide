@@ -20,6 +20,21 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_BASE_PATH: basePath,
     NEXT_PUBLIC_STATIC_EXPORT: staticExport ? "1" : "",
   },
+  // Automatic memoization, run as native code inside Turbopack.
+  reactCompiler: true,
+  experimental: {
+    turbopackRustReactCompiler: true,
+    // `motion/react` is a barrel; import only the members each file uses.
+    optimizePackageImports: ["motion"],
+  },
+  ...(!staticExport && {
+    images: {
+      // AVIF first, WebP for browsers without it. One quality keeps the
+      // optimizer's cache small and the `/_next/image` surface closed.
+      formats: ["image/avif", "image/webp"],
+      qualities: [75],
+    },
+  }),
   ...(staticExport && {
     output: "export",
     basePath,

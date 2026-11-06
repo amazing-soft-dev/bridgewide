@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AccentLine } from "@/components/roles/AccentLine";
 import { deskWrap } from "@/components/roles/desk";
-import { useEntered } from "@/components/roles/use-entered";
+import { useEntered } from "@/hooks/use-entered";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
+import { useScrollFrame } from "@/hooks/scroll-frame";
 import { Button } from "@/components/ui/Button";
 import { formatCompactSalary } from "@/components/pages/format";
 import type { Role } from "@/content/site";
 import { firstTag, isNewTag, placeLine, postedLabel } from "@/lib/role-desk";
-import { usePrefersReducedMotion } from "@/lib/motion";
 
 export function RoleHero({
   role,
@@ -29,23 +30,10 @@ export function RoleHero({
   const [shift, setShift] = useState(0);
   const tag = firstTag(role);
 
-  useEffect(() => {
-    if (reduced) return;
-    let frame = 0;
-    const measure = () => {
-      frame = 0;
-      setShift(Math.min(1, window.scrollY / 800) * 60);
-    };
-    const request = () => {
-      if (!frame) frame = requestAnimationFrame(measure);
-    };
-    measure();
-    window.addEventListener("scroll", request, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", request);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, [reduced]);
+  useScrollFrame(() => {
+    const next = Math.min(1, window.scrollY / 800) * 60;
+    return () => setShift(next);
+  }, !reduced);
 
   useEffect(() => {
     if (!copied) return;

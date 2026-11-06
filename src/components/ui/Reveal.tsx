@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import type { ReactNode } from "react";
 import {
   revealTransition,
@@ -9,8 +9,8 @@ import {
 } from "@/lib/motion";
 
 const groupTags = {
-  div: motion.div,
-  dl: motion.dl,
+  div: m.div,
+  dl: m.dl,
 } as const;
 
 export function Reveal({
@@ -23,7 +23,7 @@ export function Reveal({
   delay?: number;
 }) {
   return (
-    <motion.div
+    <m.div
       className={className}
       data-motion="reveal"
       initial={{ opacity: 0, y: 24 }}
@@ -32,7 +32,7 @@ export function Reveal({
       transition={{ ...revealTransition, delay }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -75,8 +75,8 @@ export function RevealItem({
   className?: string;
 }) {
   return (
-    <motion.div className={className} data-motion="reveal" variants={staggerChild}>
+    <m.div className={className} data-motion="reveal" variants={staggerChild}>
       {children}
-    </motion.div>
+    </m.div>
   );
 }
