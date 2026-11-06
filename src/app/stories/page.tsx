@@ -41,7 +41,7 @@ export default function StoriesPage() {
                     className="aspect-[4/3]"
                   />
                   <div>
-                    <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
+                    <p className="eyebrow">
                       {region.name} · {story.metric}
                     </p>
                     <h3 className="font-display mt-3 text-3xl text-ink">

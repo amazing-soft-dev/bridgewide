@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { sectionContainer } from "@/components/ui/SectionHeading";
+
 import { Button } from "@/components/ui/Button";
 
 export function AiTrainingBand() {
@@ -8,10 +8,10 @@ export function AiTrainingBand() {
       id="ai-training"
       aria-labelledby="ai-training-heading"
       data-header-tone="light"
-      className="relative z-10 mt-[calc(var(--seam)*-1)] bg-cloud pt-20 pb-24 text-ink [clip-path:polygon(0_var(--seam),100%_0,100%_100%,0_100%)]"
+      className="relative z-10 bg-cloud pt-20 pb-24 text-ink seam-left"
     >
-      <div className={sectionContainer}>
-        <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">AI training</p>
+      <div className="wrap">
+        <p className="eyebrow">AI training</p>
         <h2
           id="ai-training-heading"
           className="font-display mt-3 max-w-3xl text-4xl leading-[1.05] md:text-6xl"

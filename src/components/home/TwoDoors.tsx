@@ -38,7 +38,7 @@ export function TwoDoors() {
   const reduced = usePrefersReducedMotion();
 
   return (
-    <section className="mt-[calc(var(--seam)*-1)] [clip-path:polygon(0_var(--seam),100%_0,100%_100%,0_100%)] relative z-10 bg-cloud" aria-labelledby="doors-heading">
+    <section className="seam-left relative z-10 bg-cloud" aria-labelledby="doors-heading">
       <h2 id="doors-heading" className="sr-only">
         Employers and engineers
       </h2>
@@ -75,7 +75,7 @@ export function TwoDoors() {
                 aria-hidden
               />
               <div className="relative flex min-h-[28rem] flex-col justify-end px-6 pt-8 pb-24 md:min-h-[36rem] md:px-10 md:pb-28">
-                <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
+                <p className="eyebrow">
                   {door.eyebrow}
                 </p>
                 <h3 className="mt-3 max-w-md font-display text-4xl leading-[1.05] text-cloud">

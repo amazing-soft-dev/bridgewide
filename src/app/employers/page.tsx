@@ -40,21 +40,21 @@ export default function EmployersPage() {
       >
         <ol className="grid gap-8 md:grid-cols-3">
           <li className="border-t border-brand pt-4">
-            <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">01</p>
+            <p className="eyebrow">01</p>
             <h3 className="font-display mt-3 text-2xl">Name the bar</h3>
             <p className="mt-3 leading-7 text-ink-soft">
               The hiring manager, the system the hire will own, the salary band you will actually offer, and the interview loop.
             </p>
           </li>
           <li className="border-t border-brand pt-4">
-            <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">02</p>
+            <p className="eyebrow">02</p>
             <h3 className="font-display mt-3 text-2xl">Read the shortlist</h3>
             <p className="mt-3 leading-7 text-ink-soft">
               A long list arrives with notes on depth. The shortlist that follows carries salary, notice, and a plain reason each engineer fits.
             </p>
           </li>
           <li className="border-t border-brand pt-4">
-            <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">03</p>
+            <p className="eyebrow">03</p>
             <h3 className="font-display mt-3 text-2xl">Stay through the start</h3>
             <p className="mt-3 leading-7 text-ink-soft">
               Offers go out with the desk still on the thread. A confidential search holds the company name until a first conversation.
@@ -71,7 +71,7 @@ export default function EmployersPage() {
         <ol className="grid gap-8 md:grid-cols-5">
           {week.map((step) => (
             <li key={step.id} className="border-t border-brand pt-4">
-              <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">{step.day}</p>
+              <p className="eyebrow">{step.day}</p>
               <h3 className="font-display mt-3 text-2xl">{step.title}</h3>
               <p className="mt-3 text-sm leading-6 text-cloud-soft">{step.copy}</p>
             </li>

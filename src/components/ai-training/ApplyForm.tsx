@@ -1,10 +1,11 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
+import { cvFileError } from "@/components/forms/CvForm";
 import { Field, Honeypot } from "@/components/forms/Field";
+import { FormStatus, SubmitButton } from "@/components/forms/FormFeedback";
 import { submitForm } from "@/components/forms/read-submission";
-import { Button } from "@/components/ui/Button";
+import { useFormSubmit } from "@/hooks/use-form-submit";
 import {
   availabilities,
   englishLevels,
@@ -25,7 +26,7 @@ import {
   trainingRegionField,
   workTypeField,
 } from "@/lib/ai-training-form";
-import { CV_ACCEPT, CV_HINT, inspectCv } from "@/lib/cv-file";
+import { CV_ACCEPT, CV_HINT } from "@/lib/cv-file";
 import { allOk } from "@/lib/form";
 
 type ApplyErrors = Partial<
@@ -50,17 +51,7 @@ export function ApplyForm({
   roleSlug?: string;
   roleTitle?: string;
 }) {
-  const [errors, setErrors] = useState<ApplyErrors>({});
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
-  const [serverError, setServerError] = useState("");
-  const sending = useRef(false);
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (sending.current) return;
-
-    const form = event.currentTarget;
-    const data = new FormData(form);
+  const { status, errors, serverError, sending, onSubmit } = useFormSubmit<ApplyErrors>((data, form) => {
     const fields = {
       name: textField(data.get("name"), limits.name, "Name"),
       email: emailField(data.get("email")),
@@ -71,49 +62,17 @@ export function ApplyForm({
       availability: availabilityField(data.get("availability")),
       consent: consentField(data.get("consent")),
     };
-    const nextErrors: ApplyErrors = { ...fieldErrors(fields) };
-    const uploaded = data.get("file");
-
-    if (!(uploaded instanceof File) || uploaded.size === 0) {
-      nextErrors.file = "Attach a CV.";
-    } else {
-      const checked = inspectCv(uploaded);
-      if (!checked.ok) nextErrors.file = checked.error;
-    }
-
-    if (!allOk(fields) || nextErrors.file) {
-      setErrors(nextErrors);
-      setServerError("");
-      setStatus("idle");
-      return;
-    }
-
-    setErrors({});
-    setServerError("");
-    setStatus("sending");
-    sending.current = true;
-
-    try {
-      const result = await submitForm("/api/ai-training/apply", new FormData(form));
-      if (!result.ok) {
-        setStatus("error");
-        setServerError(result.error);
-        return;
-      }
-      form.reset();
-      setErrors({});
-      setStatus("success");
-    } finally {
-      sending.current = false;
-    }
-  }
+    const file = cvFileError(data.get("file"));
+    if (!allOk(fields) || file) return { ok: false, errors: { ...fieldErrors(fields), file } };
+    return { ok: true, send: () => submitForm("/api/ai-training/apply", new FormData(form)) };
+  });
 
   return (
     <form
       className="relative grid max-w-xl gap-4"
       noValidate
       aria-label="Apply for AI training work"
-      aria-busy={status === "sending"}
+      aria-busy={sending}
       onSubmit={onSubmit}
     >
       <Honeypot />
@@ -230,19 +189,12 @@ export function ApplyForm({
           </p>
         ) : null}
       </div>
-      {status === "success" ? (
-        <p role="status" className="text-sm text-ink">
-          Thanks. The desk aims to review this within three business days.
-        </p>
-      ) : null}
-      {status === "error" ? (
-        <p role="alert" className="text-sm font-medium text-ink">
-          {serverError}
-        </p>
-      ) : null}
-      <Button type="submit" variant="primary" disabled={status === "sending"}>
-        {status === "sending" ? "Sending…" : "Apply"}
-      </Button>
+      <FormStatus
+        status={status}
+        error={serverError}
+        success="Thanks. The desk aims to review this within three business days."
+      />
+      <SubmitButton sending={sending}>Apply</SubmitButton>
     </form>
   );
 }

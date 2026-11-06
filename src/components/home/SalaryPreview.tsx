@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { RevealItem, RevealGroup } from "@/components/ui/Reveal";
-import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { regions, salaryBands } from "@/content/site";
 
 const money = new Intl.NumberFormat("en-US", {
@@ -14,10 +14,10 @@ export default function SalaryPreview() {
 
   return (
     <section
-      className="mt-[calc(var(--seam)*-1)] [clip-path:polygon(0_0,100%_var(--seam),100%_100%,0_100%)] relative z-10 bg-cloud pt-24 pb-24 md:pt-28 md:pb-28"
+      className="seam-right relative z-10 bg-cloud pt-24 pb-24 md:pt-28 md:pb-28"
       aria-labelledby="salary-heading"
     >
-      <div className={sectionContainer}>
+      <div className="wrap">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <SectionHeading
             id="salary-heading"

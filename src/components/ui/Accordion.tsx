@@ -2,19 +2,14 @@
 
 import { useId, useState } from "react";
 
-export type AccordionItem = {
-  id: string;
-  label?: string;
-  question: string;
-  answer: string;
-};
+import type { FaqItem } from "@/components/ui/Faq";
 
 /**
  * Answers stay in the HTML when collapsed (only visually hidden and `inert`),
  * so search engines and AI crawlers can read them. The open/close animation is
  * CSS-only (grid rows 0fr -> 1fr) and is turned off for reduced motion.
  */
-export function Accordion({ items }: { items: readonly AccordionItem[] }) {
+export function Accordion({ items }: { items: readonly FaqItem[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const baseId = useId();
 

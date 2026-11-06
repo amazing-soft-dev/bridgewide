@@ -54,7 +54,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           alt: `Photograph for the ${story.company} story`,
         }}
         meta={
-          <span className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
+          <span className="eyebrow">
             {story.metric}
           </span>
         }

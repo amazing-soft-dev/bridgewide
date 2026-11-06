@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { TrainingRoleTicket } from "@/components/ai-training/TrainingRoleTicket";
-import { pageWrap, textLink } from "@/components/pages/format";
+import { textLink } from "@/components/pages/format";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { trainingRoles, workTypes, type WorkTypeSlug } from "@/content/ai-training";
 
 export function TrainingRoleList() {
@@ -20,11 +21,8 @@ export function TrainingRoleList() {
 
   return (
     <section id="roles" aria-labelledby="roles-heading" className="scroll-mt-24 border-t border-cloud-soft bg-cloud text-ink">
-      <div className={`${pageWrap} py-16 md:py-24`}>
-        <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">Roles</p>
-        <h2 id="roles-heading" className="font-display mt-3 max-w-3xl text-3xl leading-tight md:text-5xl">
-          The range of the work.
-        </h2>
+      <div className={`wrap py-16 md:py-24`}>
+        <SectionHeading id="roles-heading" eyebrow="Roles" title="The range of the work." />
         <div className="mt-8 flex flex-wrap gap-2" role="group" aria-label="Filter by kind of work">
           {chips.map((chip) => {
             const selected = filter === chip.id;

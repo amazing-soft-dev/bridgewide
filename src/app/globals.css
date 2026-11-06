@@ -30,6 +30,53 @@
   font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+/* The small mono label above a heading. `eyebrow-muted` is the quiet variant. */
+@utility eyebrow {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  line-height: calc(1 / 0.75);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+}
+
+@utility eyebrow-muted {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  line-height: calc(1 / 0.75);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-stone);
+}
+
+/* The page column: centered, full width to 72rem, with the side gutter. */
+@utility wrap {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding-inline: 1rem;
+}
+
+/*
+ * Diagonal seams between sections. The section pulls up over the one before
+ * it by --seam and clips its own top edge, so the previous section shows
+ * through the cut. `seam-left` is lower on the left; `seam-right` on the right.
+ */
+@utility seam-left {
+  margin-top: calc(var(--seam) * -1);
+  clip-path: polygon(0 var(--seam), 100% 0, 100% 100%, 0 100%);
+}
+
+@utility seam-right {
+  margin-top: calc(var(--seam) * -1);
+  clip-path: polygon(0 0, 100% var(--seam), 100% 100%, 0 100%);
+}
+
+/* The clipped top-right corner on tickets, cards, and figure panels. */
+@utility corner-cut {
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+}
+
 @theme {
   --color-ink: #111111;
   --color-ink-soft: #3a3a3a;
@@ -144,55 +191,6 @@
   :focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
-  }
-}
-
-@keyframes platform-run {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.portrait-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-@media (max-width: 899px) {
-  .portrait-row {
-    display: flex;
-    margin-inline: -1rem;
-    padding-inline: 1rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-  }
-
-  .portrait-row::-webkit-scrollbar {
-    display: none;
-  }
-
-  .portrait-row > li {
-    flex: 0 0 58%;
-    scroll-snap-align: start;
-  }
-}
-
-@media (max-width: 699px) {
-  .portrait-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-inline: 0;
-    padding-inline: 0;
-    overflow: visible;
-  }
-
-  .portrait-row > li {
-    flex: none;
   }
 }
 

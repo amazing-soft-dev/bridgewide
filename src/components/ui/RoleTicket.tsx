@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 const shell =
-  "group relative grid items-center gap-2.5 overflow-hidden rounded-lg border border-cloud-soft bg-white px-3.5 py-3.5 text-ink no-underline [clip-path:polygon(0_0,calc(100%-12px)_0,100%_12px,100%_100%,0_100%)] transition-[translate,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:translate-x-1 hover:border-[color-mix(in_srgb,var(--color-brand)_40%,var(--color-cloud-soft))] hover:shadow-[0_18px_40px_color-mix(in_srgb,var(--color-ink)_10%,transparent)] focus-visible:translate-x-1 focus-visible:border-[color-mix(in_srgb,var(--color-brand)_40%,var(--color-cloud-soft))] focus-visible:shadow-[0_18px_40px_color-mix(in_srgb,var(--color-ink)_10%,transparent)]";
+  "group relative grid items-center gap-2.5 overflow-hidden rounded-lg border border-cloud-soft bg-white px-3.5 py-3.5 text-ink no-underline corner-cut transition-[translate,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:translate-x-1 hover:border-[color-mix(in_srgb,var(--color-brand)_40%,var(--color-cloud-soft))] hover:shadow-[0_18px_40px_color-mix(in_srgb,var(--color-ink)_10%,transparent)] focus-visible:translate-x-1 focus-visible:border-[color-mix(in_srgb,var(--color-brand)_40%,var(--color-cloud-soft))] focus-visible:shadow-[0_18px_40px_color-mix(in_srgb,var(--color-ink)_10%,transparent)]";
 
 /**
  * Shared job row. Callers supply the trailing columns; the shell owns the
@@ -16,6 +16,7 @@ export function RoleTicket({
   children,
   className,
   arrowAt = 900,
+  heading = "b",
 }: {
   href: string;
   code: string;
@@ -25,8 +26,11 @@ export function RoleTicket({
   className?: string;
   /** Width at which the arrow joins the row. */
   arrowAt?: 700 | 900;
+  /** Element for the title: a heading when the row is a list entry of its own. */
+  heading?: "b" | "h2" | "h3";
 }) {
   const arrowShown = arrowAt === 700 ? "min-[700px]:block" : "min-[900px]:block";
+  const Title = heading;
 
   return (
     <Link href={href} className={className ? `${shell} ${className}` : shell}>
@@ -38,7 +42,7 @@ export function RoleTicket({
         {code}
       </span>
       <span className="grid min-w-0 gap-1">
-        <b className="font-display text-lg leading-tight font-bold tracking-[-0.02em]">{title}</b>
+        <Title className="m-0 font-display text-lg leading-tight font-bold tracking-[-0.02em]">{title}</Title>
         <span className="text-sm text-stone">{summary}</span>
       </span>
       {children}

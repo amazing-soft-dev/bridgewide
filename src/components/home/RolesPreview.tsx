@@ -1,19 +1,18 @@
-import Link from "next/link";
+import { RoleTicketRow } from "@/components/roles/RoleTicketRow";
 import { Button } from "@/components/ui/Button";
-import { HoverLift } from "@/components/ui/HoverLift";
 import { RevealItem, RevealGroup } from "@/components/ui/Reveal";
-import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
-import { getRegion, roles } from "@/content/site";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { roles } from "@/content/site";
 
 export default function RolesPreview() {
   const preview = roles.slice(0, 4);
 
   return (
     <section
-      className="mt-[calc(var(--seam)*-1)] [clip-path:polygon(0_var(--seam),100%_0,100%_100%,0_100%)] relative z-10 bg-cloud pt-24 pb-24 md:pt-28 md:pb-28"
+      className="seam-left relative z-10 bg-cloud pt-24 pb-24 md:pt-28 md:pb-28"
       aria-labelledby="roles-heading"
     >
-      <div className={sectionContainer}>
+      <div className="wrap">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <SectionHeading
             id="roles-heading"
@@ -25,44 +24,12 @@ export default function RolesPreview() {
             See all roles
           </Button>
         </div>
-        <RevealGroup className="mt-8 divide-y divide-ink/15 border-y border-ink/15">
-          {preview.map((role) => {
-            const code = getRegion(role.region)?.code;
-            return (
-              <RevealItem key={role.slug}>
-                <HoverLift>
-                <article className="grid gap-4 py-6 md:grid-cols-[minmax(0,1.4fr)_auto_auto] md:items-baseline md:gap-8">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="font-display text-2xl leading-tight text-ink">
-                        <Link
-                          href={`/roles/${role.slug}`}
-                          className="text-ink no-underline decoration-brand underline-offset-4 hover:text-brand hover:underline"
-                        >
-                          {role.title}
-                        </Link>
-                      </h3>
-                      {role.tags?.map((tag) => (
-                        <span
-                          key={tag}
-                          className="font-mono text-[11px] tracking-[0.14em] text-brand uppercase"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <p className="mt-2 font-mono text-xs tracking-wide text-ink-soft uppercase">
-                      {role.city}
-                      {code ? ` · ${code}` : ""} · {role.workMode} · {role.engagement}
-                    </p>
-                  </div>
-                  <p className="text-sm text-ink-soft">{role.discipline}</p>
-                  <p className="text-sm text-ink md:text-right">{role.salary}</p>
-                </article>
-                </HoverLift>
-              </RevealItem>
-            );
-          })}
+        <RevealGroup as="ul" className="mt-8 grid list-none gap-1.5 p-0">
+          {preview.map((role) => (
+            <RevealItem key={role.slug} as="li">
+              <RoleTicketRow role={role} heading="h3" />
+            </RevealItem>
+          ))}
         </RevealGroup>
       </div>
     </section>

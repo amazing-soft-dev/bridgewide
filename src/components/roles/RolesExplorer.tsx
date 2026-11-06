@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { deskWrap } from "@/components/roles/desk";
 import { Button } from "@/components/ui/Button";
-import { RoleTicket } from "@/components/ui/RoleTicket";
+import { RoleTicketRow } from "@/components/roles/RoleTicketRow";
 import { regions, roles, rolesListedOn, type Role } from "@/content/site";
 import { formatCompactSalary } from "@/components/pages/format";
 import {
@@ -156,7 +156,7 @@ export function RolesExplorer() {
                 className="motion-safe:animate-hero-row-in"
                 style={{ animationDelay: `${Math.min(index, 10) * 45}ms` }}
               >
-                <RoleRow role={role} age={age} />
+                <RoleTicketRow role={role} age={age} />
               </li>
             ))}
           </ol>
@@ -250,40 +250,3 @@ function Pill({
   );
 }
 
-function RoleRow({ role, age }: { role: Role; age: string }) {
-  const tag = firstTag(role);
-
-  return (
-    <RoleTicket
-      href={`/roles/${role.slug}`}
-      code={role.boardCode}
-      title={role.title}
-      summary={role.summary}
-      className="grid-cols-[40px_minmax(0,1fr)_auto] min-[900px]:grid-cols-[44px_minmax(0,1fr)_120px_90px_20px] min-[900px]:gap-3.5 min-[900px]:px-[18px] min-[1200px]:grid-cols-[48px_minmax(0,1fr)_130px_92px_116px_120px_70px_20px]"
-    >
-      <span className="hidden font-mono text-xs tracking-[0.04em] text-stone min-[900px]:block">
-        {placeLine(role)}
-      </span>
-      <span className="hidden font-mono text-xs tracking-[0.04em] text-stone min-[1200px]:block">
-        {role.engagement}
-      </span>
-      <span className="text-[15px] font-bold tracking-[-0.02em] min-[900px]:text-[17px]">
-        {formatCompactSalary(role.salaryMin, role.salaryUnit)}
-      </span>
-      {tag ? (
-        <span
-          className={`hidden max-w-full justify-self-start rounded-[3px] px-1.5 py-1 font-mono text-xs tracking-[0.12em] uppercase min-[1200px]:inline-block ${
-            isNewTag(tag) ? "bg-brand text-white" : "bg-cloud text-stone"
-          }`}
-        >
-          {tag}
-        </span>
-      ) : (
-        <span className="hidden min-[1200px]:block" />
-      )}
-      <span className="hidden font-mono text-xs tracking-[0.08em] text-stone uppercase min-[1200px]:block">
-        {age}
-      </span>
-    </RoleTicket>
-  );
-}

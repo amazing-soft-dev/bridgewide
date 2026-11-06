@@ -1,12 +1,8 @@
 "use client";
 
 import { m } from "motion/react";
-import {
-  revealViewport,
-  usePrefersReducedMotion,
-  wordVariants,
-  wordVariantsVisible,
-} from "@/lib/motion";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
+import { revealViewport, wordVariants, wordVariantsVisible } from "@/lib/motion";
 
 export function SplitWords({
   text,

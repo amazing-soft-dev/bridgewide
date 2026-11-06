@@ -1,65 +1,47 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useInView } from "@/hooks/use-in-view";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 
 function FlapCell({ char, delay }: { char: string; delay: number }) {
   const symbol = !/^\d$/.test(char);
   const [shown, setShown] = useState(symbol ? char : "0");
   const [flipping, setFlipping] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
+  const reduced = usePrefersReducedMotion();
+  const inView = useInView(ref, { threshold: 0.4, once: true });
+  /** Under reduced motion the digit lands at once, with no flip sequence. */
+  const display = reduced ? char : shown;
 
   useEffect(() => {
-    if (symbol) return;
-    const node = ref.current;
-    if (!node) return;
+    if (symbol || !inView || reduced) return;
 
     const target = Number(char);
+    const total = 10 + target;
+    let step = 0;
     let timer = 0;
-    let started = false;
+    let flip = 0;
 
-    const land = () => {
-      setFlipping(false);
-      setShown(char);
-    };
-
-    const play = () => {
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (reduced) {
-        land();
+    const tick = () => {
+      if (step > total) {
+        setFlipping(false);
+        setShown(char);
         return;
       }
-
-      let step = 0;
-      const total = 10 + target;
-      const tick = () => {
-        setShown(String(step % 10));
-        setFlipping(true);
-        window.setTimeout(() => setFlipping(false), 120);
-        step += 1;
-        if (step > total) {
-          land();
-          return;
-        }
-        timer = window.setTimeout(tick, 70);
-      };
-      timer = window.setTimeout(tick, delay);
+      setShown(String(step % 10));
+      setFlipping(true);
+      flip = window.setTimeout(() => setFlipping(false), 120);
+      step += 1;
+      timer = window.setTimeout(tick, 70);
     };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting || started) return;
-        started = true;
-        play();
-      },
-      { threshold: 0.4 },
-    );
-    observer.observe(node);
+    timer = window.setTimeout(tick, delay);
 
     return () => {
-      observer.disconnect();
       window.clearTimeout(timer);
+      window.clearTimeout(flip);
     };
-  }, [char, delay, symbol]);
+  }, [char, delay, inView, reduced, symbol]);
 
   return (
     <span
@@ -70,7 +52,7 @@ function FlapCell({ char, delay }: { char: string; delay: number }) {
           : "w-[0.8em] rounded-[5px] bg-ink shadow-[inset_0_1px_0_rgb(244_240_232/0.1),0_8px_22px_rgb(0_0_0/0.3)]"
       } ${flipping ? "animate-flap-fold" : ""}`}
     >
-      {shown}
+      {display}
     </span>
   );
 }
