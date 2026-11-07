@@ -452,8 +452,8 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
   {
     title: "Paid by the platform",
     copy: "The platform pays you directly, on its own schedule, hourly or per task. The rate is the platform's, and the desk briefs you on it before you accept.",
-    figure: "USD",
-    unit: "paid straight to you by the platform",
+    figure: "$1,500",
+    unit: "Agency fees absorbed by platforms",
     note: "Part-time starts at about ten hours a week; full-time is available.",
     image: "/images/story-4.webp",
     alt: "A team working side by side",
@@ -461,8 +461,8 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
   {
     title: "Your say on sharing",
     copy: "Applying puts you on the desk's list, not on every platform's. Each introduction is proposed to you first, with the platform named.",
-    figure: "1",
-    unit: "yes from you before a profile is shared",
+    figure: "100%",
+    unit: "Transparent partner controls",
     note: "Ask the desk to pause or delete your profile at any time.",
     image: "/images/story-1.webp",
     alt: "People in a meeting around a table",
