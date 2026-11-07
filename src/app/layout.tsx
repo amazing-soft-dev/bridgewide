@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: { default: "BridgeWide", template: "%s · BridgeWide" },
   description:
-    "BridgeWide places software engineers for companies across the USA, Canada, LATAM, and Europe.",
+    "BridgeWide places software engineers for companies across the USA, Canada, LATAM, Europe, and Asia.",
   applicationName: "BridgeWide",
   authors: [{ name: "BridgeWide", url: siteUrl }],
   creator: "BridgeWide",

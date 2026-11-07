@@ -8,7 +8,7 @@ import { useEntered } from "@/hooks/use-entered";
 import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollFrame } from "@/hooks/scroll-frame";
 
-const chips = ["Salary on every role", "Named consultant", "Four regions"] as const;
+const chips = ["Salary on every role", "Named consultant", "Five regions"] as const;
 
 export function RolesHero() {
   const on = useEntered();

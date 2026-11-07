@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ContentImage } from "@/components/pages/ContentImage";
@@ -48,11 +49,51 @@ function Breadcrumb({ trail }: { trail: readonly Crumb[] }) {
   );
 }
 
+export type HeroFrame = {
+  /** The rotated label pinned over the photo's top right corner: "Brief to shortlist · 9 days". */
+  ribbon: string;
+  /** The card under the photo: a mono label and one display line. */
+  caption: { label: string; value: string };
+};
+
+/**
+ * The photo as a white card: the picture with a ribbon over its corner,
+ * and a caption strip underneath. Loads eagerly, since it is often the
+ * page's largest paint.
+ */
+function FramedPhoto({ image, frame }: { image: { src: string; alt: string }; frame: HeroFrame }) {
+  return (
+    <Reveal immediate delay={0.2}>
+      <figure className="corner-cut-lg m-0 overflow-hidden rounded-lg border border-cloud-soft bg-white shadow-[0_28px_60px_rgb(17_17_17/0.12)]">
+        <div className="relative aspect-[4/3] overflow-hidden bg-ink-soft">
+          <Image
+            src={image.src}
+            alt={image.alt}
+            fill
+            priority
+            sizes="(min-width: 768px) 44vw, 100vw"
+            className="object-cover"
+          />
+          <span className="absolute top-5 -right-3 rotate-[-6deg] rounded-[3px] bg-brand px-4 py-2 font-mono text-[11px] tracking-[0.16em] whitespace-nowrap text-white uppercase shadow-[0_10px_24px_rgb(17_17_17/0.25)]">
+            {frame.ribbon}
+          </span>
+        </div>
+        <figcaption className="px-5 py-4">
+          <p className="m-0 font-mono text-[11px] tracking-[0.16em] text-brand uppercase">{frame.caption.label}</p>
+          <p className="m-0 mt-1 font-display text-xl leading-tight tracking-tight text-ink">{frame.caption.value}</p>
+        </figcaption>
+      </figure>
+    </Reveal>
+  );
+}
+
 export function PageHero({
   eyebrow,
   title,
   lede,
   image,
+  frame,
+  chips,
   meta,
   crumbs,
   accent = false,
@@ -62,6 +103,10 @@ export function PageHero({
   title: string;
   lede: string;
   image?: { src: string; alt: string };
+  /** With `image`: the photo becomes a card with a ribbon and a caption, and the eyebrow a chip. */
+  frame?: HeroFrame;
+  /** Short facts under the lede, each as a bordered chip. */
+  chips?: readonly string[];
   meta?: ReactNode;
   /** Route line above the eyebrow. Leave out on pages that do not show one. */
   crumbs?: readonly Crumb[];
@@ -69,11 +114,17 @@ export function PageHero({
   accent?: boolean;
   children?: ReactNode;
 }) {
+  const framed = Boolean(image && frame);
+
   return (
     <header className="bg-cloud">
       <div
         className={`wrap grid gap-10 py-16 md:py-24 ${
-          image ? "md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-end" : ""
+          framed
+            ? "md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] md:items-center md:gap-14"
+            : image
+              ? "md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-end"
+              : ""
         }`}
       >
         <div>
@@ -85,9 +136,13 @@ export function PageHero({
             meta={meta}
             actions={children}
             accent={accent}
+            eyebrowChip={framed}
+            chips={chips}
           />
         </div>
-        {image ? (
+        {image && frame ? (
+          <FramedPhoto image={image} frame={frame} />
+        ) : image ? (
           <ContentImage
             src={image.src}
             alt={image.alt}

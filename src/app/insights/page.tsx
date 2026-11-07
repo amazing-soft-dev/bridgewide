@@ -10,7 +10,7 @@ import { breadcrumbs } from "@/lib/structured-data";
 export const metadata = pageMetadata({
   title: "Insights",
   description:
-    "Notes for hiring managers on briefs, contract seats, and reading salary bands across four regions.",
+    "Notes for hiring managers on briefs, contract seats, and reading salary bands across five regions.",
   path: "/insights",
 });
 
