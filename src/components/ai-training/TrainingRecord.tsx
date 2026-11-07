@@ -11,7 +11,7 @@ export function TrainingRecord() {
       title="One application, paid by the platform."
       stats={trainingStats}
       seam="left"
-      className="scroll-mt-24 pt-[calc(var(--seam)+5rem)] pb-[calc(var(--seam)+5rem)] md:pt-[calc(var(--seam)+7rem)] md:pb-[calc(var(--seam)+7rem)]"
+      className="scroll-mt-24"
     />
   );
 }

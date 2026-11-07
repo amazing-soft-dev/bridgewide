@@ -99,7 +99,6 @@
   --animate-sth-blink: sth-blink 1.4s steps(2) infinite;
   --animate-sth-board-in: sth-board-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.35s both;
   --animate-role-stamp: role-stamp 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  --animate-stats-drift: stats-drift 48s linear infinite;
 
   @keyframes flap-fold {
     50% {
@@ -176,13 +175,6 @@
     from {
       opacity: 0;
       scale: 1.8;
-    }
-  }
-
-  /* The stats band's outline word: each copy slides its own width, so the two copies loop. */
-  @keyframes stats-drift {
-    to {
-      translate: -100% 0;
     }
   }
 }
