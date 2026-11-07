@@ -11,13 +11,12 @@ export default function DeskSection() {
       lede="Former engineers and managers. Each consultant keeps a region or a discipline, and stays on the search until someone starts."
       cta={{ href: "/about", label: "Meet the team" }}
       phrase="MEET THE DESK"
-      phraseCol={1}
       image={images.desk}
       columns={people.length}
       clearance="bottom"
-    >
-      {people.map((person) => (
-        <li key={person.id}>
+      cards={people.map((person) => ({
+        id: person.id,
+        node: (
           <PersonCard
             href={`/about#${person.id}`}
             name={person.name}
@@ -26,10 +25,10 @@ export default function DeskSection() {
             badge={`${person.placementCount} placements`}
             image={person.image}
             alt={person.name}
-            sizes="(max-width: 899px) 68vw, 18vw"
+            sizes="(max-width: 699px) 50vw, (max-width: 899px) 58vw, 18vw"
           />
-        </li>
-      ))}
-    </TileWall>
+        ),
+      }))}
+    />
   );
 }
