@@ -434,8 +434,8 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
   {
     title: "One application",
     copy: "You apply to BridgeWide once instead of starting from scratch on a dozen platforms.",
-    figure: "146",
-    unit: "applications for every platform in the directory",
+    figure: "8+",
+    unit: "Hours saved per candidate",
     note: "The desk aims to review it within three business days.",
     image: "/images/training-benefits.webp",
     alt: "People working together at a table",
@@ -443,8 +443,8 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
   {
     title: "Free for candidates",
     copy: "Platforms and companies pay the agency. You do not pay to be screened or introduced.",
-    figure: "842",
-    unit: "to be screened, briefed, or introduced",
+    figure: "$1,500",
+    unit: "Agency fees absorbed by platforms",
     note: "Platforms and companies pay BridgeWide. Candidates never do.",
     image: "/images/story-3.webp",
     alt: "A laptop open on a desk",
@@ -452,7 +452,7 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
   {
     title: "Paid by the platform",
     copy: "Earnings come from the platform, in USD. BridgeWide does not take a percentage.",
-    figure: "72%",
+    figure: "0%",
     unit: "of your earnings taken by BridgeWide",
     note: "The platform pays you in USD, on its own terms.",
     image: "/images/story-4.webp",
@@ -461,8 +461,8 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
   {
     title: "Your say on sharing",
     copy: "A profile goes to a platform only after you agree to that introduction.",
-    figure: "34",
-    unit: "profiles shared without your yes",
+    figure: "100%",
+    unit: "Transparent partner controls",
     note: "Applying does not send your name to every platform in the directory.",
     image: "/images/story-1.webp",
     alt: "People in a meeting around a table",
@@ -528,7 +528,7 @@ export const trainingStats: readonly TrainingStat[] = [
   { value: String(platforms.length), label: "Platforms in the directory" },
   { value: "Worldwide", label: "Remote, including the United States" },
   { value: "$0", label: "Cost to candidates" },
-  { value: "1", label: "Application" },
+  { value: "24", label: "Hours to review response" },
 ];
 
 export function trainingRegion(slug: string): TrainingRegion | undefined {
