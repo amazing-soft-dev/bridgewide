@@ -23,7 +23,7 @@ export default function EmployersPage() {
         eyebrow="For employers"
         title="A shortlist your managers will interview."
         accent
-        lede="Tell us the stack, the hiring manager, and what the first ninety days need. We source from the USA, Canada, Latin America, and Europe, and we stay on the search until the engineer starts."
+        lede="Tell us the stack, the hiring manager, and what the first ninety days need. We source from the USA, Canada, Latin America, Europe, and Asia, and we stay on the search until the engineer starts."
         chips={[`Shortlist in ${stats[1].value} days`, "12-week guarantee", "Billed when they start"]}
         image={{
           src: images.employers,
