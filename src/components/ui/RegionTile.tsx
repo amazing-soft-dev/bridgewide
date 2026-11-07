@@ -21,14 +21,20 @@ type Props = {
 };
 
 /**
- * One region, in one of three shapes:
+ * One region, in one of four shapes:
  * - card: light, photo above the copy, the name is the link (region list page);
- * - panel: dark block, the whole tile is the link (home);
+ * - panel: dark block, photo above the copy, the whole tile is the link;
+ * - bento: full-bleed photo with the code at the top and the copy over the
+ *   bottom, lifting on hover; the whole tile is the link (home);
  * - photo: full-bleed photo with the copy over it (AI training).
  */
-export function RegionTile({ variant, ...props }: Props & { variant: "card" | "panel" | "photo" }) {
+export function RegionTile({
+  variant,
+  ...props
+}: Props & { variant: "card" | "panel" | "bento" | "photo" }) {
   if (variant === "card") return <CardTile {...props} />;
   if (variant === "panel") return <PanelTile {...props} />;
+  if (variant === "bento") return <BentoTile {...props} />;
   return <PhotoTile {...props} />;
 }
 
@@ -76,6 +82,51 @@ function PanelTile({ href, name, summary, image, alt, code, meta, sizes }: Props
             <p className="mt-auto font-mono text-xs tracking-[0.14em] text-brand uppercase">{meta}</p>
           ) : null}
         </div>
+      </Link>
+    </HoverLift>
+  );
+}
+
+function BentoTile({
+  href,
+  name,
+  summary,
+  image,
+  alt,
+  code,
+  meta,
+  sizes,
+  aspectClassName = "aspect-[4/5]",
+}: Props) {
+  return (
+    <HoverLift>
+      <Link
+        href={href}
+        className={`group relative block overflow-hidden bg-ink text-cloud no-underline ${aspectClassName}`}
+      >
+        <Image
+          src={image}
+          alt={alt}
+          fill
+          sizes={sizes}
+          className="object-cover motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:scale-105"
+        />
+        <span className="absolute inset-0 bg-gradient-to-t from-ink via-ink/55 to-ink/10" aria-hidden />
+        {code ? (
+          <span className="absolute top-4 left-5 font-mono text-xs tracking-[0.16em] text-brand uppercase">
+            {code}
+          </span>
+        ) : null}
+        <span className="absolute inset-x-0 bottom-0 grid gap-2 p-5">
+          <span className="font-display text-3xl leading-none">{name}</span>
+          {/* Three tiles share a row from 768px, so the summary is clamped there until the tiles widen. */}
+          <span className="max-w-[34rem] text-sm leading-6 text-cloud/90 md:line-clamp-4 lg:line-clamp-none">
+            {summary}
+          </span>
+          {meta ? (
+            <span className="mt-1 font-mono text-xs tracking-[0.14em] text-brand uppercase">{meta}</span>
+          ) : null}
+        </span>
       </Link>
     </HoverLift>
   );

@@ -15,10 +15,11 @@ The ids below are Unsplash image CDN ids (`images.unsplash.com/photo-{id}`). The
 | `story-2.webp` | https://unsplash.com/ | `1497366216548-37526070297c` |
 | `story-3.webp` | https://unsplash.com/ | `1504384308090-c894fdcc538d` |
 | `story-4.webp` | https://unsplash.com/ | `1521737711867-e3b97375f902` |
-| `region-usa.webp` | https://unsplash.com/ | `1485871981521-5b1fd3805eee` |
-| `region-canada.webp` | https://unsplash.com/ | `1517935706615-2717063c2225` |
-| `region-latam.webp` | https://unsplash.com/ | `1483729558449-99ef09a8c325` |
-| `region-europe.webp` | https://unsplash.com/ | `1513635269975-59663e0ac1ad` |
+| `region-usa.webp` | https://unsplash.com/ | `1499092346589-b9b6be3e94b2` |
+| `region-canada.webp` | https://unsplash.com/ | `1507992781348-310259076fe0` |
+| `region-latam.webp` | https://unsplash.com/ | `1676383045685-41cf03b900b4` |
+| `region-europe.webp` | https://unsplash.com/ | `1506501139174-099022df5260` |
+| `region-asia.webp` | https://unsplash.com/ | `1628933978056-81ee94ad6856` |
 | `person-lena.webp` | https://unsplash.com/ | `1573496359142-b8d87734a5a2` |
 | `person-henrik.webp` | https://unsplash.com/ | `1500648767791-00dcc994a43e` |
 | `person-sofia.webp` | https://unsplash.com/ | `1580489944761-15a19d654956` |
