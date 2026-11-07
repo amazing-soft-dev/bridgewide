@@ -434,8 +434,8 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
   {
     title: "One application",
     copy: "You apply to BridgeWide once instead of starting from scratch on a dozen platforms.",
-    figure: "146",
-    unit: "applications for every platform in the directory",
+    figure: "12+",
+    unit: "Top-tier platforms accessed from a single submission",
     note: "The desk aims to review it within three business days.",
     image: "/images/training-benefits.webp",
     alt: "People working together at a table",
