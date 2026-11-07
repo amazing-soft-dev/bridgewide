@@ -365,14 +365,6 @@ export const footerColumns: readonly FooterColumn[] = [
       { label: "How it works", href: "/ai-training/how-it-works" },
     ],
   },
-  {
-    title: "The Desk",
-    items: [
-      { label: contact.email, href: `mailto:${contact.email}` },
-      { label: contact.location },
-      { label: "Terms", href: "/terms" },
-    ],
-  },
 ];
 
 export const images: SiteImages = {
