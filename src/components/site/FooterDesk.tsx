@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { deskIsOpen } from "@/components/contact/DeskCard";
 import { contact } from "@/content/site";
@@ -88,6 +89,11 @@ export function FooterDesk() {
           >
             <WhatsAppIcon />
           </a>
+        </li>
+        <li>
+          <Link href="/engineers" className={link}>
+            Send a CV
+          </Link>
         </li>
         <li className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] tracking-[0.06em] text-cloud-soft uppercase">
           <span>{contact.address.split(",")[0]}</span>

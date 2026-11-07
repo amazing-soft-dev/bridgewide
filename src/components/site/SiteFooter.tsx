@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
-import { FooterCandidate } from "@/components/site/FooterCandidate";
 import { FooterCurtain } from "@/components/site/FooterCurtain";
 import { FooterDesk } from "@/components/site/FooterDesk";
 import { FooterSignup } from "@/components/site/FooterSignup";
@@ -37,7 +36,6 @@ export function SiteFooter() {
             <div className="grid content-start gap-6">
               <Logo variant="full" className="text-cloud" />
               <FooterSignup />
-              <FooterCandidate />
             </div>
             <nav
               aria-label="Footer"

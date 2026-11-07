@@ -1,5 +1,7 @@
 import { inspectCv, MAX_CV_BYTES } from "@/lib/cv-file";
 import {
+  cvTrackField,
+  cvTrackLabel,
   emailField,
   honeypotTripped,
   limits,
@@ -30,6 +32,9 @@ export async function POST(request: Request) {
   const email = emailField(form.get("email"));
   if (!email.ok) return jsonResult({ ok: false, error: email.error, status: 400 });
 
+  const track = cvTrackField(form.get("track"));
+  if (!track.ok) return jsonResult({ ok: false, error: track.error, status: 400 });
+
   const region = regionField(form.get("region"));
   if (!region.ok) return jsonResult({ ok: false, error: region.error, status: 400 });
 
@@ -59,9 +64,11 @@ export async function POST(request: Request) {
   }
 
   const seatLine = seat.value && ref.value ? `${seat.value} (${ref.value})` : seat.value;
+  const trackLine = cvTrackLabel(track.value);
   const lines = [
     `Name: ${name.value}`,
     `Email: ${email.value}`,
+    `For: ${trackLine}`,
     `Region: ${regionName(region.value)} (${region.value})`,
     phone.value ? `Phone: ${phone.value}` : "",
     seatLine ? `Role: ${seatLine}` : "",
@@ -70,7 +77,7 @@ export async function POST(request: Request) {
 
   return jsonResult(
     await sendFormEmail({
-      subject: seatLine ? `CV from ${name.value} — ${seatLine}` : `CV from ${name.value}`,
+      subject: seatLine ? `CV from ${name.value} — ${seatLine}` : `CV from ${name.value} — ${trackLine}`,
       replyTo: email.value,
       text: lines.join("\n"),
       attachments: [

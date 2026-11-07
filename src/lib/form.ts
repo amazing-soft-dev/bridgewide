@@ -17,6 +17,20 @@ export const limits = {
 
 export const engagementOptions = ["Permanent", "Contract"] as const satisfies readonly Engagement[];
 
+/** What a CV is for. The footer's "Send a CV" serves both services, so the form asks. */
+export const cvTracks = [
+  { value: "staffing", label: "Staffing roles" },
+  { value: "ai-training", label: "AI training" },
+] as const;
+
+export type CvTrack = (typeof cvTracks)[number]["value"];
+
+const tracks = new Set<string>(cvTracks.map((track) => track.value));
+
+export function cvTrackLabel(track: CvTrack): string {
+  return cvTracks.find((item) => item.value === track)?.label ?? track;
+}
+
 const regionSlugs = new Set<string>(regions.map((region) => region.slug));
 const engagements = new Set<string>(engagementOptions);
 
@@ -80,6 +94,15 @@ export function topicField(value: unknown): FieldResult<ContactTopic> {
     return { ok: false, error: "Choose a topic from the list." };
   }
   return { ok: true, value: value as ContactTopic };
+}
+
+/** The CV's track. Empty means staffing, so a role application needs no field of its own. */
+export function cvTrackField(value: unknown): FieldResult<CvTrack> {
+  if (value == null || value === "") return { ok: true, value: "staffing" };
+  if (typeof value !== "string" || !tracks.has(value)) {
+    return { ok: false, error: "Choose what the CV is for." };
+  }
+  return { ok: true, value: value as CvTrack };
 }
 
 export function emailField(value: unknown): FieldResult {

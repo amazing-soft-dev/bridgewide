@@ -339,14 +339,13 @@ export const footerColumns: readonly FooterColumn[] = [
     ],
   },
   {
-    // Clients first, then engineers.
+    // Clients first, then engineers. "Send a CV" sits under The desk, for both services.
     title: "Staffing",
     items: [
       { label: "Hire engineers", href: "/employers" },
       { label: "How hiring works", href: "/employers#how" },
       { label: "Salary guide", href: "/salary-guide" },
       { label: "Open roles", href: "/roles" },
-      { label: "Send a CV", href: "/engineers" },
     ],
   },
   {
