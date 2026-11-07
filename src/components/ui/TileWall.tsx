@@ -129,15 +129,16 @@ export function TileWall({
             </ul>
           </div>
           <div
-            className="pointer-events-none absolute inset-0 z-[4] grid grid-cols-[repeat(16,1fr)] grid-rows-[repeat(9,1fr)] gap-[3px] p-[3px] [perspective:1400px] gate:hidden"
+            // No gaps: the grid lines are the tiles' own borders, so the photo shows only where a tile has flipped away.
+            className="pointer-events-none absolute inset-0 z-[4] grid grid-cols-[repeat(16,1fr)] grid-rows-[repeat(9,1fr)] [perspective:1400px] gate:hidden"
             aria-hidden
           >
             {tiles.map((tile, index) => (
               <span
                 key={index}
-                className={`relative grid origin-[50%_0] place-items-center rounded-[3px] font-mono text-[clamp(1.1rem,2.4vw,2.4rem)] font-semibold text-cloud [backface-visibility:hidden] [--f:clamp(0,(var(--u)_-_var(--t)*0.78)/0.16,1)] [opacity:clamp(0,calc((1_-_var(--f))*8),1)] [transform:rotateX(calc(var(--f)*-92deg))] after:absolute after:top-1/2 after:right-0 after:left-0 after:h-px after:bg-black/45 after:content-[''] ${
-                  tile.marked ? "bg-brand" : "bg-[#14181f]"
-                }`}
+                className={`relative grid origin-[50%_0] place-items-center border border-cloud/10 font-mono text-[clamp(1.1rem,2.4vw,2.4rem)] font-semibold text-cloud [backface-visibility:hidden] [--f:clamp(0,(var(--u)_-_var(--t)*0.78)/0.16,1)] [opacity:clamp(0,calc((1_-_var(--f))*8),1)] [transform:rotateX(calc(var(--f)*-92deg))] after:absolute after:top-1/2 after:right-0 after:left-0 after:h-px after:bg-black/35 after:content-[''] ${
+                  tile.marked ? "bg-brand outline-brand" : "bg-[#0c1017] outline-[#0c1017]"
+                } outline outline-1`}
                 style={{ "--t": tile.t.toFixed(3) } as CSSProperties}
               >
                 {tile.letter}
