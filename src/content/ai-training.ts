@@ -443,8 +443,8 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
   {
     title: "Free for candidates",
     copy: "Platforms and companies pay the agency. You do not pay to be screened or introduced.",
-    figure: "842",
-    unit: "to be screened, briefed, or introduced",
+    figure: "$1,500",
+    unit: "Agency fees absorbed by platforms",
     note: "Platforms and companies pay BridgeWide. Candidates never do.",
     image: "/images/story-3.webp",
     alt: "A laptop open on a desk",
