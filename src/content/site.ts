@@ -158,6 +158,8 @@ export type WeekStep = {
   id: "brief" | "long-list" | "interviews" | "shortlist" | "sent";
   title: string;
   copy: string;
+  /** Background photo for this step on the home "The week" stage. */
+  image: string;
 };
 
 export type Person = {
@@ -222,11 +224,24 @@ export type Fees = {
 };
 
 export type SiteImages = {
+  /** Home hero. The LCP image. */
   hero: string;
+  /** `/employers` hero. */
   employers: string;
+  /** `/engineers` hero. */
   engineers: string;
+  /** `/about` hero. */
   desk: string;
+  /** Closing band on `/`. */
   close: string;
+  /** Employers door tile on `/`. */
+  doorEmployers: string;
+  /** Engineers door tile on `/`. */
+  doorEngineers: string;
+  /** Backdrop of the "Meet the desk" wall on `/`. */
+  deskWall: string;
+  /** Closing band on `/roles`. */
+  rolesClose: string;
 };
 
 /** Day the current open roles were listed. validThrough is 90 days later. */
@@ -366,6 +381,10 @@ export const images: SiteImages = {
   engineers: "/images/engineers.webp",
   desk: "/images/desk.webp",
   close: "/images/close.webp",
+  doorEmployers: "/images/door-employers.webp",
+  doorEngineers: "/images/door-engineers.webp",
+  deskWall: "/images/desk-wall.webp",
+  rolesClose: "/images/roles-close.webp",
 };
 
 export const hero: Hero = {
@@ -428,30 +447,35 @@ export const week: readonly WeekStep[] = [
     id: "brief",
     title: "Brief",
     copy: "You tell us the stack, the hiring manager, and what good looks like in the first ninety days.",
+    image: "/images/week-1.webp",
   },
   {
     day: "Tue",
     id: "long-list",
     title: "Long list",
     copy: "We send a long list with notes on depth, so your team can see who is worth a conversation.",
+    image: "/images/week-2.webp",
   },
   {
     day: "Wed",
     id: "interviews",
     title: "Interviews",
     copy: "We run the first conversations and hold the calendar for people your managers should meet.",
+    image: "/images/week-3.webp",
   },
   {
     day: "Thu",
     id: "shortlist",
     title: "Shortlist",
     copy: "A short list arrives with salary, notice, and a plain reason each engineer fits this brief.",
+    image: "/images/week-4.webp",
   },
   {
     day: "Fri",
     id: "sent",
     title: "Sent",
     copy: "Offers go out with our desk still on the thread until the engineer starts.",
+    image: "/images/week-5.webp",
   },
 ];
 

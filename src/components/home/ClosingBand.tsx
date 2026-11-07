@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { ClosingBand as Band } from "@/components/ui/ClosingBand";
-import { hero, roles } from "@/content/site";
+import { hero, images, roles } from "@/content/site";
 
 export function ClosingBand() {
   return (
@@ -12,6 +12,7 @@ export function ClosingBand() {
       stamp="Open"
       count={roles.length}
       countLabel="roles open right now"
+      image={images.close}
       actions={
         <>
           <Button href={hero.primaryCta.href}>{hero.primaryCta.label}</Button>

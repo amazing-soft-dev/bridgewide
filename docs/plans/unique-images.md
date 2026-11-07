@@ -1,78 +1,54 @@
 # Every photo used once
 
-Issue: (to be created; see "Issues and branches")
+Issues: #161 (home and staffing pages), #162 (`/ai-training` slides and the check).
 
-Every photo under `public/images` should appear in exactly one place on the site. Today three files are byte-for-byte copies of other files, and several photos are wired into more than one slot. The platform logos under `public/images/platforms/` are company marks, each used once, and are out of scope.
+Every photo under `public/images` appears in exactly one slot on the site. The platform logos under `public/images/platforms/` are company marks, each used once, and are out of scope.
 
 ## Inventory
 
-34 photos in `public/images` (plus 18 platform logos). All photo paths live in `src/content/site.ts`, `src/content/ai-training.ts`, and four components (`ai-training/page.tsx`, `MissionBand.tsx`, `PathSteps.tsx`, `PortraitWall.tsx`). `npm run images` (`scripts/optimize-images.mjs`) builds the responsive WebPs into the ignored `public/_img/` and writes the committed `src/lib/image-manifest.json`, keyed by a content hash, so every photo change needs a manifest rebuild.
+47 photos in `public/images` (plus 18 platform logos). All photo paths live in `src/content/site.ts`, `src/content/ai-training.ts`, and four components (`ai-training/page.tsx`, `MissionBand.tsx`, `PathSteps.tsx`, `PortraitWall.tsx`). `npm run images` (`scripts/optimize-images.mjs`) builds the responsive WebPs into the ignored `public/_img/` and writes the committed `src/lib/image-manifest.json`, keyed by a content hash, so every photo change needs a manifest rebuild.
 
-### A. Byte-identical files (md5 and perceptual hash both match)
+### A. Byte-identical files
 
-All three were introduced by commit `14ed04a` (Asia as the fifth region), which copied existing photos as stand-ins.
-
-| Copy to replace | Original | Where the copy shows |
-| --- | --- | --- |
-| `person-mei.webp` | `portraits/hanae.webp` | Mei Tan: desk wall on `/`, `/about`, consultant card on `/roles/[slug]`, Person JSON-LD |
-| `region-asia.webp` | `training-region-asia.webp` | Asia: coverage row on `/`, `/regions` card, `/regions/asia` hero, hero of every Asia role |
-| `story-5.webp` | `training-mission.webp` | Lumen Pay story: `/`, `/stories`, `/stories/lumen-pay-settlements` |
+None. The three stand-in copies from the Asia region work (`person-mei`, `region-asia`, `story-5`) were replaced by their own photos in #155 and #158. A perceptual-hash pass over all 47 photos finds no near-duplicates either.
 
 ### B. One file wired into several slots (different content, same photo)
 
-| File | Primary slot (keeps the file) | Secondary slots (get a new photo) |
-| --- | --- | --- |
-| `training-benefits.webp` | `/ai-training` hero | "One application" benefit slide on the same page |
-| `story-1.webp` | Northline story (`/`, `/stories`, detail) | "Your say on sharing" slide on `/ai-training` |
-| `story-3.webp` | Campo Health story | "Free for candidates" slide on `/ai-training` |
-| `story-4.webp` | Keel Systems story | "Paid by the platform" slide on `/ai-training` |
-| `hero.webp` | Home hero (LCP image, untouched) | "The week" step 1 background on `/` |
-| `employers.webp` | `/employers` hero | Employers door tile on `/`, "The week" step 2 |
-| `engineers.webp` | `/engineers` hero | Engineers door tile on `/`, "The week" step 3 |
-| `desk.webp` | `/about` hero | "Meet the desk" wall photo on `/`, "The week" step 4 |
-| `close.webp` | Closing band on `/` | Closing band on `/roles`, "The week" step 5 |
+Resolved by #161 and #162. Each secondary slot got its own photo, named for the slot.
 
-New photos needed: 1 + 3 + 9 = 13.
+| File | Primary slot (keeps the file) | Former secondary slots | New file |
+| --- | --- | --- | --- |
+| `hero.webp` | Home hero (LCP image) | "The week" step 1 | `week-1.webp` |
+| `employers.webp` | `/employers` hero | Employers door tile on `/` | `door-employers.webp` |
+| | | "The week" step 2 | `week-2.webp` |
+| `engineers.webp` | `/engineers` hero | Engineers door tile on `/` | `door-engineers.webp` |
+| | | "The week" step 3 | `week-3.webp` |
+| `desk.webp` | `/about` hero | "Meet the desk" wall backdrop on `/` | `desk-wall.webp` |
+| | | "The week" step 4 | `week-4.webp` |
+| `close.webp` | Closing band on `/` | Closing band on `/roles` | `roles-close.webp` |
+| | | "The week" step 5 | `week-5.webp` |
+| `training-benefits.webp` | `/ai-training` hero | "One application" slide | `training-benefit-1.webp` |
+| `story-3.webp` | Campo Health story | "Free for candidates" slide | `training-benefit-2.webp` |
+| `story-4.webp` | Keel Systems story | "Paid by the platform" slide | `training-benefit-3.webp` |
+| `story-1.webp` | Northline story | "Your say on sharing" slide | `training-benefit-4.webp` |
 
-### C. Same entity's own photo on several pages (proposed: not a duplicate)
+The week's five photos follow its five steps (brief, long list, interviews, shortlist, sent) and live on each `WeekStep` in the content. The door tiles, desk wall and roles band are keys on `images` in `site.ts`, and `ClosingBand` takes its photo as a prop.
 
-A story's photo on `/` → `/stories` → `/stories/[slug]`, a region's photo on `/` → `/regions` → `/regions/[region]` → the heroes of its roles, a consultant's portrait on `/` → `/about` → the role apply card. The photo is the entity's identity across the site, like a logo. Replacing these would mean a different photo for the same story or region on each page, which reads as a mistake. Left as is unless told otherwise.
+### C. Same entity's own photo on several pages (not a duplicate)
 
-## Plan
+A story's photo on `/` → `/stories` → `/stories/[slug]`, a region's photo on `/` → `/regions` → `/regions/[region]` → the heroes of its roles, a consultant's portrait on `/` → `/about` → the role apply card. The photo is the entity's identity across the site, like a logo. Each is referenced once, in its content entry, however many pages render it. Confirmed as the intended reading when #161 was planned.
 
-1. **Create the issue(s)** on `amazing-soft-dev/bridgewide` with the tables above, label `enhancement`.
-2. **Branch** from `origin/dev` (two commits ahead of local `dev`) as `fix/<n>-<slug>`.
-3. **Pick replacement photos** on unsplash.com (free photos only, no Unsplash+), one per slot, matched to the subject and the slot's aspect ratio:
-   - Portrait for Mei Tan: 4:5 professional headshot, a different person from every other portrait, crop that keeps the face under the wall's `object-[50%_18%]` crop. Source size 960×1184 like the other portraits.
-   - Asia region: a city or landmark in India, Pakistan, Indonesia, or Singapore (the region's named countries), landscape, 1920 wide.
-   - Lumen Pay story: a fintech or settlements team scene in Singapore, 16:9 like the other story photos.
-   - Benefit slides: four office or candidate scenes distinct from the five employer stories, 1920×1280.
-   - The week: five scenes that follow the five steps (brief, search, interview, offer, start), 1920×1280.
-   - Door tiles, about desk wall, roles closing band: team and desk scenes distinct from the page heroes.
-4. **Download and convert** each pick from `images.unsplash.com/photo-<id>?w=<width>&q=80` with sharp to WebP at quality 80 (the existing sources are 100–400 KB; stay in that range). Each file needs the user's download OK; the plan asks for one blanket OK for the listed ids.
-5. **Wire the files**: the copies in A keep their names and get new bytes. The secondary slots in B get new files named for the slot: `training-benefit-1..4.webp`, `week-1..5.webp`, `door-employers.webp`, `door-engineers.webp`, `desk-wall.webp`, `roles-close.webp`. Update the paths and every alt text that describes the photo (`StoriesSection.storyAlt`, `trainingBenefits[].alt`, `TwoDoors` alts).
-6. **Credits**: add a row per new photo to `public/images/ATTRIBUTION.md`. Note: the ten `training-*` photos have no row today and their Unsplash ids are not recoverable from the repo.
-7. **Guard** (optional): make `npm run images` fail when two source photos share a content hash, so a copy cannot land again.
-8. **Rebuild and check**: `npm run images` (commit the manifest), `npm run lint && npm run typecheck && npm run build`, then view every changed page on the running dev server at the desktop and phone widths and confirm the crops (object-position tweaks where a face or horizon lands wrong).
-9. **Commit** with a Conventional Commit subject and the shark314 and tomost8 co-author trailers, push, and let `open-pull-request.yml` open the PR into `dev`.
+## Guard
 
-## Issues and branches
+`npm run check:images` (`scripts/check-images.mjs`) runs in the CI quality job and fails when:
 
-Proposed split, one branch each, in this order:
+- two files under `public/images` have the same bytes, or
+- one `/images/<file>` path is referenced from more than one place in `src/` (comment lines and the generated manifest do not count).
 
-1. `fix/<n>-asia-stand-in-photos`: section A, three photos.
-2. `fix/<n>-ai-training-own-photos`: section B on `/ai-training`, four photos. Continues issue #96, which gave the mission band and path steps their own photos.
-3. `fix/<n>-home-photos-used-once`: section B on the home set, nine photos.
+## Adding a photo
 
-All three touch `ATTRIBUTION.md` and `image-manifest.json`, and each branch auto-merges into `dev` when CI is green, so branch 2 is cut after branch 1 merges, and branch 3 after branch 2, to avoid conflicts.
-
-## Edge cases and open questions
-
-1. Scope: A only (3 photos), A + B (13 photos), or A + B + C?
-2. Three issues and branches as above, or one issue and one branch?
-3. Download OK: one blanket OK for the chosen Unsplash files, or approve the list of ids before any download?
-4. Photo choice: pick them myself, or show a contact sheet of candidates first?
-5. Add the duplicate-hash guard to the image script?
-6. The ten uncredited `training-*` photos: leave them, or try to identify them on Unsplash and add rows?
-7. The home hero is the LCP image and stays. The week's step 1 gets the new photo instead. OK?
-8. Mei Tan's portrait is a stand-in "until the Asia consultant's own photo is in". The new one is still a stand-in. The comment stays.
+1. Pick a free Unsplash photo (no Unsplash+), 2400px wide for scenes, 1600px wide for portraits, and convert it to WebP at quality 80 with sharp.
+2. Save it under `public/images/` with a name for its slot, and reference it once: from a content entry when it belongs to an entity, otherwise from a key on `images` in `site.ts`.
+3. Add its row to `public/images/ATTRIBUTION.md`.
+4. Run `npm run images` and commit `src/lib/image-manifest.json`.
+5. `npm run check:images` must pass.
