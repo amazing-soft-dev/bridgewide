@@ -52,6 +52,18 @@ export const wordVariantsVisible: Variants = {
   },
 };
 
+/**
+ * The masked rise from the reference's section headings: the word slides up
+ * from below its line, with no fade, over a second.
+ */
+export const maskedWordVariants: Variants = {
+  hidden: { y: "108%" },
+  visible: {
+    y: 0,
+    transition: { duration: 1, ease: [0.2, 0.75, 0.2, 1] },
+  },
+};
+
 /** The brand block behind an accented heading word: wipes in from the left after the word rises. */
 export const accentBlockVariants: Variants = {
   hidden: { scaleX: 0 },
@@ -66,7 +78,7 @@ export const accentBlockVariants: Variants = {
  * The hidden colours are the `ink` and `cloud` tokens from globals.css; Motion
  * cannot interpolate `var()`, so the hex values are repeated here.
  */
-export const accentTextVariants: Record<"light" | "dark", Variants> = {
+export const accentTextVariants: Record<"light" | "dark" | "brand", Variants> = {
   light: {
     hidden: { color: "#111111" },
     visible: { color: "#ffffff", transition: { duration: 0.3, delay: 0.95 } },
@@ -74,5 +86,10 @@ export const accentTextVariants: Record<"light" | "dark", Variants> = {
   dark: {
     hidden: { color: "#f4f0e8" },
     visible: { color: "#ffffff", transition: { duration: 0.3, delay: 0.95 } },
+  },
+  /** On the brand-red band the heading is white before and after; only the ink pill moves. */
+  brand: {
+    hidden: { color: "#ffffff" },
+    visible: { color: "#ffffff" },
   },
 };
