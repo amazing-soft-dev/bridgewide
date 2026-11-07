@@ -1,13 +1,8 @@
 import { PinnedSteps } from "@/components/ui/PinnedSteps";
-import { images, week } from "@/content/site";
+import { week } from "@/content/site";
 
-const weekImages = [
-  images.hero,
-  images.employers,
-  images.engineers,
-  images.desk,
-  images.close,
-] as const;
+/** One photo per step, from the content, so each day of the week has its own scene. */
+const weekImages = week.map((step) => step.image);
 
 export default function WeekSection() {
   return (
