@@ -29,41 +29,24 @@ function WhatsAppIcon() {
   );
 }
 
-const clock = new Intl.DateTimeFormat("en-GB", {
-  timeZone: contact.hours.timeZone,
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23",
-});
-
-/** Re-reads once a minute. The server and first client render show no time, so the markup matches. */
+/** Re-checks once a minute. The server and first client render show no mark, so the markup matches. */
 function subscribe(onChange: () => void) {
   const id = window.setInterval(onChange, 60_000);
   return () => window.clearInterval(id);
 }
 
-type DeskClock = { time: string; open: boolean };
-
-/** The same object is returned while the minute lasts, as useSyncExternalStore requires. */
-let cached: DeskClock | null = null;
-
-function readClock(): DeskClock {
-  const now = new Date();
-  const time = clock.format(now);
-  if (!cached || cached.time !== time) cached = { time, open: deskIsOpen(contact.hours, now) };
-  return cached;
-}
-
-function useDeskClock() {
-  return useSyncExternalStore(subscribe, readClock, () => null);
+/** Whether the desk answers right now, in its own time zone; null until the client has rendered. */
+function useDeskOpen(): boolean | null {
+  return useSyncExternalStore(subscribe, () => deskIsOpen(contact.hours), () => null);
 }
 
 /**
  * The desk column in the footer: email, phone with a WhatsApp link to the
- * same number, the city with the desk's live local time, and the hours.
+ * same number and an Open or Closed mark that carries the hours, and the
+ * Send a CV link for both services.
  */
 export function FooterDesk() {
-  const state = useDeskClock();
+  const open = useDeskOpen();
 
   return (
     <div>
@@ -89,27 +72,23 @@ export function FooterDesk() {
           >
             <WhatsAppIcon />
           </a>
+          {open !== null ? (
+            <span
+              title={contact.hours.label}
+              className={`rounded-[2px] px-1.5 py-0.5 font-mono text-[10px] tracking-[0.08em] uppercase ${
+                open ? "bg-brand text-white" : "bg-white/10 text-cloud-soft"
+              }`}
+            >
+              {open ? "Open" : "Closed"}
+              <span className="sr-only">. {contact.hours.label}</span>
+            </span>
+          ) : null}
         </li>
         <li>
           <Link href="/engineers" className={link}>
             Send a CV
           </Link>
         </li>
-        <li className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] tracking-[0.06em] text-cloud-soft uppercase">
-          <span>{contact.address.split(",")[0]}</span>
-          {state ? (
-            <>
-              <span aria-hidden>·</span>
-              <time dateTime={state.time}>{state.time}</time>
-              <span
-                className={`rounded-[2px] px-1.5 py-0.5 ${state.open ? "bg-brand text-white" : "bg-white/10 text-cloud"}`}
-              >
-                {state.open ? "Open" : "Closed"}
-              </span>
-            </>
-          ) : null}
-        </li>
-        <li className="font-mono text-[11px] tracking-[0.06em] text-cloud-soft/80 uppercase">{contact.hours.label}</li>
       </ul>
     </div>
   );
