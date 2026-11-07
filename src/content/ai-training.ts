@@ -433,9 +433,9 @@ export const trainingSteps: readonly TrainingStep[] = [
 export const trainingBenefits: readonly TrainingBenefit[] = [
   {
     title: "One application",
-    copy: "One form and one CV cover every platform in the directory. You give us your discipline, region, English level, and hours once, and the desk matches from there.",
+    copy: "A single form and CV cover every platform in the directory. Tell the desk your discipline, region, English level, and hours, and it matches from there.",
     figure: "3 min",
-    unit: "to apply once, CV attached",
+    unit: "to fill in, CV attached",
     note: "The desk aims to review it within three business days.",
     image: "/images/training-benefits.webp",
     alt: "People working together at a table",
@@ -451,16 +451,16 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
   },
   {
     title: "Paid by the platform",
-    copy: "The platform pays you directly, in USD, on its own schedule: hourly or per task, part-time from about ten hours a week or full-time.",
-    figure: "100%",
-    unit: "of the platform's rate is yours",
-    note: "BridgeWide is paid by the platform, not out of your rate.",
+    copy: "The platform pays you directly, on its own schedule, hourly or per task. The rate is the platform's, and the desk briefs you on it before you accept.",
+    figure: "USD",
+    unit: "paid straight to you by the platform",
+    note: "Part-time starts at about ten hours a week; full-time is available.",
     image: "/images/story-4.webp",
     alt: "A team working side by side",
   },
   {
     title: "Your say on sharing",
-    copy: "Applying puts you on the desk's list, not on every platform's. A profile goes to a platform only after you agree to that introduction.",
+    copy: "Applying puts you on the desk's list, not on every platform's. Each introduction is proposed to you first, with the platform named.",
     figure: "1",
     unit: "yes from you before a profile is shared",
     note: "Ask the desk to pause or delete your profile at any time.",
@@ -528,7 +528,7 @@ export const trainingStats: readonly TrainingStat[] = [
   { value: String(platforms.length), label: "Platforms in the directory" },
   { value: "Worldwide", label: "Remote, including the United States" },
   { value: "$0", label: "Cost to candidates" },
-  { value: "24", label: "Hours to review response" },
+  { value: "48", label: "Hours to review response" },
 ];
 
 export function trainingRegion(slug: string): TrainingRegion | undefined {
