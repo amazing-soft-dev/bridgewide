@@ -7,7 +7,6 @@ import { deskWrap } from "@/components/roles/desk";
 import { useEntered } from "@/hooks/use-entered";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { useScrollFrame } from "@/hooks/scroll-frame";
-import { images } from "@/content/site";
 
 function chamfer(progress: number) {
   const easedIn = Math.min(1, Math.max(0, (progress - 0.08) / 0.3));
@@ -35,6 +34,7 @@ export function ClosingBand({
   stamp,
   count,
   countLabel,
+  image,
   wide = false,
 }: {
   headingId: string;
@@ -46,6 +46,8 @@ export function ClosingBand({
   stamp: string;
   count: number;
   countLabel: string;
+  /** Background photo. Each band on the site has its own. */
+  image: string;
   /** Use the wider roles-desk column instead of the page column. */
   wide?: boolean;
 }) {
@@ -71,7 +73,7 @@ export function ClosingBand({
       <div className="relative min-h-[max(88vh,640px)] overflow-hidden bg-brand" style={{ clipPath: shape.clip }}>
         <div className="absolute inset-0" aria-hidden style={{ scale: String(shape.scale) }}>
           <Image
-            src={images.close}
+            src={image}
             alt=""
             fill
             sizes="100vw"
