@@ -528,7 +528,7 @@ export const trainingStats: readonly TrainingStat[] = [
   { value: String(platforms.length), label: "Platforms in the directory" },
   { value: "Worldwide", label: "Remote, including the United States" },
   { value: "$0", label: "Cost to candidates" },
-  { value: "1", label: "Application" },
+  { value: "56", label: "Applications" },
 ];
 
 export function trainingRegion(slug: string): TrainingRegion | undefined {
