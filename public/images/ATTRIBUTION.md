@@ -44,3 +44,16 @@ The ids below are Unsplash image CDN ids (`images.unsplash.com/photo-{id}`). The
 | `training-path-2.webp` | https://unsplash.com/ | `1531482615713-2afd69097998` |
 | `training-path-3.webp` | https://unsplash.com/ | `1517245386807-bb43f82c33c4` |
 | `training-path-4.webp` | https://unsplash.com/ | `1553877522-43269d4ea984` |
+| `week-1.webp` | https://unsplash.com/ | `1581091877018-dac6a371d50f` |
+| `week-2.webp` | https://unsplash.com/ | `1698047681432-006d2449c631` |
+| `week-3.webp` | https://unsplash.com/ | `1759752394757-323a0adc0d62` |
+| `week-4.webp` | https://unsplash.com/ | `1630487656049-6db93a53a7e9` |
+| `week-5.webp` | https://unsplash.com/ | `1758519288480-1489c17b1519` |
+| `door-employers.webp` | https://unsplash.com/ | `1573167507387-6b4b98cb7c13` |
+| `door-engineers.webp` | https://unsplash.com/ | `1629904869392-ae2a682d4d01` |
+| `desk-wall.webp` | https://unsplash.com/ | `1791298043030-3a9dc4a1e1f9` |
+| `roles-close.webp` | https://unsplash.com/ | `1758518726324-62bef7c815b0` |
+| `training-benefit-1.webp` | https://unsplash.com/ | `1602016736566-7ed6a58894bd` |
+| `training-benefit-2.webp` | https://unsplash.com/ | `1611095973763-414019e72400` |
+| `training-benefit-3.webp` | https://unsplash.com/ | `1664575198308-3959904fa430` |
+| `training-benefit-4.webp` | https://unsplash.com/ | `1758873268528-af4613d099b6` |

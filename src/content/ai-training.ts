@@ -437,8 +437,8 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
     figure: "3 min",
     unit: "to fill in, CV attached",
     note: "The desk aims to review it within three business days.",
-    image: "/images/training-benefits.webp",
-    alt: "People working together at a table",
+    image: "/images/training-benefit-1.webp",
+    alt: "A woman filling in a form on her laptop",
   },
   {
     title: "Free for candidates",
@@ -446,8 +446,8 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
     figure: "$0",
     unit: "charged to you, at any step",
     note: "If anyone asks you for money to reach a platform, it is not us.",
-    image: "/images/story-3.webp",
-    alt: "A laptop open on a desk",
+    image: "/images/training-benefit-2.webp",
+    alt: "A man working on his laptop over coffee",
   },
   {
     title: "Paid by the platform",
@@ -455,8 +455,8 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
     figure: "$1,500",
     unit: "Agency fees absorbed by platforms",
     note: "Part-time starts at about ten hours a week; full-time is available.",
-    image: "/images/story-4.webp",
-    alt: "A team working side by side",
+    image: "/images/training-benefit-3.webp",
+    alt: "A woman at her home desk with a laptop",
   },
   {
     title: "Your say on sharing",
@@ -464,8 +464,8 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
     figure: "100%",
     unit: "Transparent partner controls",
     note: "Ask the desk to pause or delete your profile at any time.",
-    image: "/images/story-1.webp",
-    alt: "People in a meeting around a table",
+    image: "/images/training-benefit-4.webp",
+    alt: "A woman taking a call at her desk",
   },
 ];
 

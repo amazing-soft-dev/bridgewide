@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "images": "node scripts/optimize-images.mjs",
+    "check:images": "node scripts/check-images.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint --max-warnings=0",

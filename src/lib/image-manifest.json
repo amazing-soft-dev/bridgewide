@@ -1,6 +1,9 @@
 {
   "/images/close.webp": "549f709ac0",
+  "/images/desk-wall.webp": "409715ec55",
   "/images/desk.webp": "cf6e668d6c",
+  "/images/door-employers.webp": "d2048889b0",
+  "/images/door-engineers.webp": "a663798f60",
   "/images/employers.webp": "033d440c9e",
   "/images/engineers.webp": "3f740905cb",
   "/images/hero.webp": "a68048a654",
@@ -33,11 +36,16 @@
   "/images/region-europe.webp": "3f95e7b2f6",
   "/images/region-latam.webp": "e65dbc3a8c",
   "/images/region-usa.webp": "8b07f2d468",
+  "/images/roles-close.webp": "b2c6afc3e0",
   "/images/story-1.webp": "932b9d7b84",
   "/images/story-2.webp": "7e6f3887a9",
   "/images/story-3.webp": "ce7cd35d9b",
   "/images/story-4.webp": "b60d18beff",
   "/images/story-5.webp": "d6950cfb07",
+  "/images/training-benefit-1.webp": "f45d10be2d",
+  "/images/training-benefit-2.webp": "fb9d5f61c1",
+  "/images/training-benefit-3.webp": "020244083b",
+  "/images/training-benefit-4.webp": "21e3890be0",
   "/images/training-benefits.webp": "0f5785c0fa",
   "/images/training-mission.webp": "8870bb0590",
   "/images/training-path-1.webp": "6a01a7352a",
@@ -50,5 +58,10 @@
   "/images/training-region-europe.webp": "e3091bb2bd",
   "/images/training-region-latam.webp": "4c3198ab48",
   "/images/training-region-usa.webp": "5902b741a3",
-  "/images/training-team.webp": "1c44282836"
+  "/images/training-team.webp": "1c44282836",
+  "/images/week-1.webp": "9674067737",
+  "/images/week-2.webp": "16021d488c",
+  "/images/week-3.webp": "6e152768f1",
+  "/images/week-4.webp": "c426f8b0f2",
+  "/images/week-5.webp": "f42220568d"
 }

@@ -11,7 +11,7 @@ export default function DeskSection() {
       lede="Former engineers and managers. Each consultant keeps a region or a discipline, and stays on the search until someone starts."
       cta={{ href: "/about", label: "Meet the team" }}
       phrase="MEET THE DESK"
-      image={images.desk}
+      image={images.deskWall}
       columns={people.length}
       clearance="bottom"
       cards={people.map((person) => ({

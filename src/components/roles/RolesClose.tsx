@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { ClosingBand } from "@/components/ui/ClosingBand";
-import { hero, roles } from "@/content/site";
+import { hero, images, roles } from "@/content/site";
 
 export function RolesClose() {
   return (
@@ -11,6 +11,7 @@ export function RolesClose() {
       stamp="Open"
       count={roles.length}
       countLabel="roles open right now"
+      image={images.rolesClose}
       wide
       actions={
         <>
