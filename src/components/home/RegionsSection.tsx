@@ -8,6 +8,7 @@ const regionAlt: Record<RegionSlug, string> = {
   canada: "Toronto skyline beside the lake",
   latam: "Rio de Janeiro from above",
   europe: "A London street",
+  asia: "Singapore at dusk",
 };
 
 export default function RegionsSection() {
@@ -20,10 +21,10 @@ export default function RegionsSection() {
         <SectionHeading
           id="regions-heading"
           eyebrow="Coverage"
-          title="Four regions"
+          title="Five regions"
           lede="Hybrid and remote seats, permanent and contract. Each region has its own desk."
         />
-        <RevealGroup className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <RevealGroup className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {regions.map((region) => (
             <RevealItem key={region.slug} className="h-full">
               <RegionTile
@@ -35,7 +36,7 @@ export default function RegionsSection() {
                 alt={regionAlt[region.slug]}
                 code={region.code}
                 meta={`${region.openRoleCount} open roles`}
-                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                sizes="(min-width: 1024px) 20vw, (min-width: 640px) 50vw, 100vw"
               />
             </RevealItem>
           ))}

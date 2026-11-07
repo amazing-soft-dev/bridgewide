@@ -59,7 +59,7 @@ function keyPages(): string[] {
     `- [For engineers](${url("/engineers")}): The free, confidential path for software engineers, and CV submission.`,
     `- [Open roles](${url("/roles")}): Engineering roles by region, discipline, and engagement type.`,
     `- [Salary guide](${url("/salary-guide")}): ${salaryBands.edition}. ${salaryBands.basis} by region for backend, frontend, data, cloud, mobile, and engineering leadership.`,
-    `- [Regions](${url("/regions")}): The four hiring regions.`,
+    `- [Regions](${url("/regions")}): The five hiring regions.`,
     `- [About](${url("/about")}): The desk and its consultants.`,
     `- [Contact](${url("/contact")}): Send a brief or a question.`,
     `- [Insights feed](${url("/insights/feed.xml")}): RSS of the articles.`,

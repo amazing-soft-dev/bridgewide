@@ -2,9 +2,9 @@
  * Marketing content for BridgeWide.
  */
 
-export type RegionSlug = "usa" | "canada" | "latam" | "europe";
+export type RegionSlug = "usa" | "canada" | "latam" | "europe" | "asia";
 
-export type RegionCode = "USA" | "CAN" | "LATAM" | "EUR";
+export type RegionCode = "USA" | "CAN" | "LATAM" | "EUR" | "ASIA";
 
 export type WorkMode = "Hybrid" | "Remote";
 
@@ -243,14 +243,15 @@ export const contentUpdatedOn = "2026-11-06";
 export const organization = {
   name: "BridgeWide",
   description:
-    "BridgeWide is a recruitment firm that places software engineers with companies, sourcing from the United States, Canada, Latin America, and Europe on permanent and contract terms. BridgeWide also matches candidates to remote AI-training work on specialist platforms, worldwide, including the United States.",
-  areaServed: ["United States", "Canada", "Latin America", "Europe"],
+    "BridgeWide is a recruitment firm that places software engineers with companies, sourcing from the United States, Canada, Latin America, Europe, and Asia on permanent and contract terms. BridgeWide also matches candidates to remote AI-training work on specialist platforms, worldwide, including the United States.",
+  areaServed: ["United States", "Canada", "Latin America", "Europe", "Asia"],
   knowsAbout: [
     "Software engineering recruitment",
     "Technical recruiting",
     "Contract software engineers",
     "Nearshore engineering hiring in Latin America",
     "Hiring software engineers in Europe",
+    "Hiring software engineers in Asia",
     "Engineering salary benchmarks",
   ],
   /** Each service points at the page section that describes it, so the schema.org Offer has a real URL. */
@@ -274,7 +275,7 @@ export const contact: Contact = {
   phoneHref: "+14425671328",
   whatsappHref: "https://wa.me/14425671328",
   address: "San Francisco, CA",
-  location: "San Francisco · remote desks in four regions",
+  location: "San Francisco · remote desks in five regions",
   hours: {
     label: "Mon–Fri · 08:00–18:00 PT",
     days: [1, 2, 3, 4, 5],
@@ -301,13 +302,13 @@ export const contactFaq: readonly ContactFaqItem[] = [
     label: "General",
     question: "Which regions do you cover?",
     answer:
-      "Four: the United States, Canada, Latin America, and Europe. Each region has its own desk with a consultant who has hired in that market, and one search can draw from more than one region when you want the comparison.",
+      "Five: the United States, Canada, Latin America, Europe, and Asia. Each region has its own desk with a consultant who has hired in that market, and one search can draw from more than one region when you want the comparison.",
   },
   {
     label: "General",
     question: "Where are you based?",
     answer:
-      "The desk sits in San Francisco. Consultants work from the four regions we hire in, and most first conversations happen on video, in the hours that suit the team you are hiring for.",
+      "The desk sits in San Francisco. Consultants work from the five regions we hire in, and most first conversations happen on video, in the hours that suit the team you are hiring for.",
   },
   {
     label: "General",
@@ -371,7 +372,7 @@ export const hero: Hero = {
   eyebrow: "Software engineers for hiring teams",
   headline: "A shortlist managers will interview.",
   subcopy:
-    "BridgeWide places software engineers for companies. We source from the USA, Canada, LATAM, and Europe, and we stay on the search until the seat is filled.",
+    "BridgeWide places software engineers for companies. We source from the USA, Canada, LATAM, Europe, and Asia, and we stay on the search until the seat is filled.",
   primaryCta: { label: "Hire engineers", href: "/employers" },
   secondaryCta: { label: "Find a role", href: "/engineers" },
 };
@@ -404,6 +405,13 @@ export const placements: readonly Placement[] = [
     region: "LATAM",
     engagement: "Contract",
     days: 8,
+  },
+  {
+    title: "Senior Backend Engineer",
+    company: "Lumen Pay",
+    region: "ASIA",
+    engagement: "Permanent",
+    days: 14,
   },
   {
     title: "Platform Engineer",
@@ -481,6 +489,15 @@ export const people: readonly Person[] = [
     image: "/images/person-marcus.webp",
   },
   {
+    id: "mei-tan",
+    name: "Mei Tan",
+    role: "Consultant, former backend engineer",
+    focus: "Asia · Backend",
+    placementCount: 14,
+    // Placeholder portrait until the Asia consultant's own photo is in.
+    image: "/images/person-mei.webp",
+  },
+  {
     id: "priya-raman",
     name: "Priya Raman",
     role: "Director, former engineering manager",
@@ -491,6 +508,78 @@ export const people: readonly Person[] = [
 ];
 
 export const roles: readonly Role[] = [
+  // Placeholder Asia listings until the desk has real openings there.
+  {
+    slug: "senior-backend-engineer-singapore",
+    title: "Senior Backend Engineer",
+    boardTitle: "Senior Backend",
+    boardCode: "ENG",
+    region: "asia",
+    city: "Singapore",
+    country: "Singapore",
+    countryCode: "SGP",
+    workMode: "Remote",
+    engagement: "Permanent",
+    salary: "$95,000–$130,000",
+    salaryMin: 95000,
+    salaryMax: 130000,
+    salaryUnit: "year",
+    discipline: "Backend",
+    summary:
+      "A senior backend seat on a Singapore fintech’s settlements team, remote across Asia with a daily overlap on Singapore hours. The engineer should have run Kotlin or Go services in production and be ready to own a queue-backed workflow end to end.",
+    consultantName: "Mei Tan",
+    tags: ["New"],
+    duties: [
+      "Own the settlements workflow for a Singapore fintech",
+      "Keep a daily overlap with the team on Singapore hours",
+      "Carry a queue-backed service from design to on-call",
+    ],
+    requirements: [
+      "Run Kotlin or Go services in production",
+      "Comfortable owning a workflow end to end",
+      "Based in Asia, with Singapore hours in the working day",
+    ],
+    benefits: [
+      "Salary $95,000–$130,000",
+      "Remote across Asia",
+      "Permanent seat, with Mei Tan on the search",
+    ],
+  },
+  {
+    slug: "senior-data-engineer-bangalore",
+    title: "Senior Data Engineer",
+    boardTitle: "Senior Data",
+    boardCode: "DAT",
+    region: "asia",
+    city: "Bangalore",
+    country: "India",
+    countryCode: "IND",
+    workMode: "Hybrid",
+    engagement: "Permanent",
+    salary: "$85,000–$115,000",
+    salaryMin: 85000,
+    salaryMax: 115000,
+    salaryUnit: "year",
+    discipline: "Data",
+    summary:
+      "A senior data seat on a Bangalore analytics team that serves product managers in three time zones. The engineer should have run dbt and a cloud warehouse at scale and be able to explain a model to the people who read its numbers.",
+    consultantName: "Mei Tan",
+    duties: [
+      "Own the warehouse models a product team reads every morning",
+      "Serve consumers across three time zones from Bangalore",
+      "Keep the pipeline’s production path in one owner’s hands",
+    ],
+    requirements: [
+      "Run dbt and a cloud warehouse at scale",
+      "Able to explain a model to its readers",
+      "Hybrid in Bangalore, three days a week on site",
+    ],
+    benefits: [
+      "Salary $85,000–$115,000",
+      "Hybrid in Bangalore",
+      "Permanent seat, with Mei Tan on the search",
+    ],
+  },
   {
     slug: "staff-backend-engineer-san-francisco",
     title: "Staff Backend Engineer",
@@ -961,6 +1050,14 @@ const regionSeed: readonly Omit<Region, "openRoleCount">[] = [
       "London, Berlin, Amsterdam, Dublin, and other UK and EU hubs. Hybrid seats for product companies that need senior engineers and engineering leaders on the ground.",
     image: "/images/region-europe.webp",
   },
+  {
+    slug: "asia",
+    name: "Asia",
+    code: "ASIA",
+    summary:
+      "Singapore, Bangalore, Manila, and other hubs, with remote seats across the region that overlap Singapore or US West hours. Teams use this desk for follow-the-sun coverage and for senior engineers who join a distributed product team.",
+    image: "/images/region-asia.webp",
+  },
 ];
 
 export const regions: readonly Region[] = regionSeed.map((region) => ({
@@ -986,6 +1083,7 @@ export const salaryBands: SalaryBands = {
         canada: { low: 130000, high: 185000, median: 155000 },
         latam: { low: 72000, high: 128000, median: 96000 },
         europe: { low: 110000, high: 178000, median: 142000 },
+        asia: { low: 66000, high: 118000, median: 88000 },
       },
     },
     {
@@ -996,6 +1094,7 @@ export const salaryBands: SalaryBands = {
         canada: { low: 120000, high: 175000, median: 145000 },
         latam: { low: 64000, high: 115000, median: 86000 },
         europe: { low: 100000, high: 165000, median: 130000 },
+        asia: { low: 59000, high: 106000, median: 79000 },
       },
     },
     {
@@ -1006,6 +1105,7 @@ export const salaryBands: SalaryBands = {
         canada: { low: 135000, high: 195000, median: 162000 },
         latam: { low: 76000, high: 140000, median: 102000 },
         europe: { low: 115000, high: 185000, median: 148000 },
+        asia: { low: 70000, high: 129000, median: 94000 },
       },
     },
     {
@@ -1016,6 +1116,7 @@ export const salaryBands: SalaryBands = {
         canada: { low: 140000, high: 200000, median: 168000 },
         latam: { low: 80000, high: 145000, median: 108000 },
         europe: { low: 120000, high: 190000, median: 152000 },
+        asia: { low: 74000, high: 133000, median: 99000 },
       },
     },
     {
@@ -1026,6 +1127,7 @@ export const salaryBands: SalaryBands = {
         canada: { low: 125000, high: 180000, median: 150000 },
         latam: { low: 68000, high: 120000, median: 90000 },
         europe: { low: 105000, high: 170000, median: 136000 },
+        asia: { low: 63000, high: 110000, median: 83000 },
       },
     },
     {
@@ -1036,12 +1138,30 @@ export const salaryBands: SalaryBands = {
         canada: { low: 180000, high: 270000, median: 220000 },
         latam: { low: 120000, high: 200000, median: 155000 },
         europe: { low: 160000, high: 260000, median: 205000 },
+        asia: { low: 110000, high: 184000, median: 143000 },
       },
     },
   ],
 };
 
 export const stories: readonly Story[] = [
+  // Placeholder Asia story until the desk has one of its own.
+  {
+    slug: "lumen-pay-settlements",
+    company: "Lumen Pay",
+    region: "asia",
+    quote:
+      "The shortlist arrived with the overlap hours already checked. We interviewed three people and hired the second.",
+    attribution: "Wei Lin, CTO, Lumen Pay",
+    result: "Senior backend engineer placed in Singapore",
+    metric: "14 days",
+    image: "/images/story-5.webp",
+    body: [
+      "Lumen Pay’s settlements team in Singapore had grown a queue-backed workflow faster than its owners, and the two engineers who knew it were covering on-call between them. The CTO wanted a senior engineer who could take the service, and who would keep Singapore hours in a team spread across Asia.",
+      "We wrote the brief around the workflow, the languages in production, and the overlap the team needed each day. The long list was nine names across Singapore, Kuala Lumpur, and Bangalore. The shortlist was three, each with their working hours and notice on the same page.",
+      "The engineer started fourteen days after the brief and took the on-call rota in the first month. The CTO reopened the same brief for a data seat the following quarter.",
+    ],
+  },
   {
     slug: "northline-ledger-owner",
     company: "Northline",
@@ -1141,7 +1261,7 @@ export const insights: readonly Insight[] = [
   },
   {
     slug: "reading-salary-bands-across-regions",
-    title: "How to read salary bands across four regions",
+    title: "How to read salary bands across five regions",
     kicker: "Pay",
     date: "2 September 2026",
     minutes: 7,
@@ -1191,7 +1311,7 @@ export const faq: readonly FaqItem[] = [
     audience: "Employers",
     question: "Which regions do you hire from?",
     answer:
-      "Four: the United States, Canada, Latin America, and Europe. Each region has its own desk. We place hybrid and remote engineers, on permanent and contract terms, and we can run one search that draws from more than one region when you want that comparison.",
+      "Five: the United States, Canada, Latin America, Europe, and Asia. Each region has its own desk. We place hybrid and remote engineers, on permanent and contract terms, and we can run one search that draws from more than one region when you want that comparison.",
   },
 ];
 
