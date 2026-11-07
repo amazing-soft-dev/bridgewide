@@ -334,26 +334,18 @@ export const footerColumns: readonly FooterColumn[] = [
     items: [
       { label: "About", href: "/about" },
       { label: "Regions", href: "/regions" },
+      { label: "Stories", href: "/stories" },
       { label: "Insights", href: "/insights" },
-      { label: "Contact", href: "/contact" },
     ],
   },
   {
-    title: "For employers",
+    // Clients first, then engineers. "Send a CV" sits under The desk, for both services.
+    title: "Staffing",
     items: [
       { label: "Hire engineers", href: "/employers" },
       { label: "How hiring works", href: "/employers#how" },
       { label: "Salary guide", href: "/salary-guide" },
-      { label: "Contact the desk", href: "/contact" },
-    ],
-  },
-  {
-    title: "For candidates",
-    items: [
       { label: "Open roles", href: "/roles" },
-      { label: "Send a CV", href: "/engineers" },
-      { label: "Insights", href: "/insights" },
-      { label: "Privacy", href: "/privacy" },
     ],
   },
   {
@@ -361,8 +353,8 @@ export const footerColumns: readonly FooterColumn[] = [
     items: [
       { label: "Overview", href: "/ai-training" },
       { label: "For candidates", href: "/ai-training/for-candidates" },
+      { label: "For partners", href: "/ai-training/for-partners" },
       { label: "Jobs", href: "/ai-training/jobs" },
-      { label: "How it works", href: "/ai-training/how-it-works" },
     ],
   },
 ];

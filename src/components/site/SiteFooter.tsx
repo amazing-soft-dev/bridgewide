@@ -39,7 +39,7 @@ export function SiteFooter() {
             </div>
             <nav
               aria-label="Footer"
-              className="grid gap-10 md:grid-cols-3 lg:grid-cols-[repeat(4,minmax(0,1fr))_minmax(0,1.6fr)] lg:gap-6"
+              className="grid gap-10 md:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,1.5fr)] lg:gap-8"
             >
               {footerColumns.map((column) => (
                 <div key={column.title}>

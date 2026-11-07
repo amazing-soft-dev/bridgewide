@@ -6,9 +6,18 @@ import { submitForm } from "@/components/forms/read-submission";
 import { useFormSubmit } from "@/hooks/use-form-submit";
 import { regions } from "@/content/site";
 import { CV_ACCEPT, CV_HINT, inspectCv } from "@/lib/cv-file";
-import { allOk, emailField, fieldErrors, limits, regionField, textField } from "@/lib/form";
+import {
+  allOk,
+  cvTrackField,
+  cvTracks,
+  emailField,
+  fieldErrors,
+  limits,
+  regionField,
+  textField,
+} from "@/lib/form";
 
-type CvErrors = Partial<Record<"name" | "email" | "region" | "file", string>>;
+type CvErrors = Partial<Record<"name" | "email" | "track" | "region" | "file", string>>;
 
 /** Field error for the CV upload, or undefined when the file passes. */
 export function cvFileError(uploaded: FormDataEntryValue | null) {
@@ -22,6 +31,7 @@ export function CvForm() {
     const fields = {
       name: textField(data.get("name"), limits.name, "Name"),
       email: emailField(data.get("email")),
+      track: cvTrackField(data.get("track")),
       region: regionField(data.get("region")),
     };
     const file = cvFileError(data.get("file"));
@@ -47,6 +57,21 @@ export function CvForm() {
         required
         error={errors.email}
       />
+      <Field
+        as="select"
+        label="This is for"
+        name="track"
+        required
+        defaultValue={cvTracks[0].value}
+        hint="Staffing places you with a company. AI training matches you to platforms that pay for model work."
+        error={errors.track}
+      >
+        {cvTracks.map((track) => (
+          <option key={track.value} value={track.value}>
+            {track.label}
+          </option>
+        ))}
+      </Field>
       <Field as="select" label="Region" name="region" required defaultValue="" error={errors.region}>
         <option value="">Choose a region</option>
         {regions.map((region) => (
