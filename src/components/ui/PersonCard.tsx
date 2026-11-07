@@ -12,8 +12,9 @@ function tilt(event: PointerEvent<HTMLElement>) {
   const rect = event.currentTarget.getBoundingClientRect();
   const x = (event.clientX - rect.left) / rect.width - 0.5;
   const y = (event.clientY - rect.top) / rect.height - 0.5;
-  event.currentTarget.style.setProperty("--ry", `${x * 8}deg`);
-  event.currentTarget.style.setProperty("--rx", `${-y * 8}deg`);
+  // The reference's factors: up to 6 degrees sideways and 5 degrees forward.
+  event.currentTarget.style.setProperty("--ry", `${x * 12}deg`);
+  event.currentTarget.style.setProperty("--rx", `${-y * 10}deg`);
 }
 
 function settle(event: PointerEvent<HTMLElement>) {
@@ -53,16 +54,16 @@ export function PersonCard({
           alt={alt}
           fill
           sizes={sizes}
-          className="object-cover saturate-[.6] transition duration-700 group-hover/card:scale-105 group-hover/card:saturate-100"
+          className="object-cover saturate-[.6] [transition:filter_0.6s_ease,scale_1s_cubic-bezier(0.2,0.8,0.2,1)] group-hover/card:scale-105 group-hover/card:saturate-100"
         />
       </span>
-      <span className="pointer-events-none absolute top-2.5 right-2.5 rotate-6 rounded-[3px] bg-brand px-2 py-1 font-mono text-[11px] tracking-[0.14em] text-cloud uppercase opacity-100 transition duration-300 [@media(hover:hover)]:scale-110 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/card:scale-100 [@media(hover:hover)]:group-hover/card:opacity-100">
+      <span className="pointer-events-none absolute top-2.5 right-2.5 rotate-6 rounded-[3px] bg-brand px-2 py-[5px] font-mono text-xs tracking-[0.14em] text-cloud uppercase opacity-100 [transition:opacity_0.3s_ease,scale_0.4s_cubic-bezier(0.2,1.5,0.3,1)] [@media(hover:hover)]:scale-[1.4] [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/card:scale-100 [@media(hover:hover)]:group-hover/card:opacity-100">
         {badge}
       </span>
       <span className="grid flex-1 content-start gap-0.5 border-t-[1.5px] border-dashed border-cloud-soft px-3 py-3">
-        <h3 className="m-0 font-display text-[15px] tracking-tight">{name}</h3>
+        <h3 className="m-0 font-display text-[15px] tracking-[-0.02em]">{name}</h3>
         <span className="text-xs text-stone">{line}</span>
-        <span className="mt-1 font-mono text-[11px] tracking-[0.12em] text-brand uppercase">{focus}</span>
+        <span className="mt-1 font-mono text-xs tracking-[0.12em] text-brand uppercase">{focus}</span>
       </span>
     </>
   );
