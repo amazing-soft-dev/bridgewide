@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ChipLabel, EyebrowChip } from "@/components/ui/EyebrowChip";
 import { Reveal } from "@/components/ui/Reveal";
 import { SplitWords } from "@/components/ui/SplitWords";
 
@@ -26,6 +27,8 @@ export function HeroCopy({
   actions,
   tone = "light",
   accent = false,
+  eyebrowChip = false,
+  chips,
   titleClassName,
   ledeClassName,
   actionsClassName = "mt-8 flex flex-wrap gap-3",
@@ -39,15 +42,25 @@ export function HeroCopy({
   tone?: "light" | "dark";
   /** Brand block behind the title's last word. */
   accent?: boolean;
+  /** The eyebrow as the bordered chip instead of the plain mono line. */
+  eyebrowChip?: boolean;
+  /** Short facts under the lede, each as a bordered chip. */
+  chips?: readonly string[];
   titleClassName?: string;
   ledeClassName?: string;
   actionsClassName?: string;
 }) {
   return (
     <>
-      <p className="eyebrow">
-        <SplitWords text={eyebrow} immediate />
-      </p>
+      {eyebrowChip ? (
+        <EyebrowChip tone={tone} immediate>
+          {eyebrow}
+        </EyebrowChip>
+      ) : (
+        <p className="eyebrow">
+          <SplitWords text={eyebrow} immediate />
+        </p>
+      )}
       <h1 id={titleId} className={titleClassName ?? titleClass[tone]}>
         <SplitWords
           text={title}
@@ -61,6 +74,17 @@ export function HeroCopy({
       <Reveal immediate delay={0.16}>
         <p className={ledeClassName ?? ledeClass[tone]}>{lede}</p>
       </Reveal>
+      {chips && chips.length > 0 ? (
+        <Reveal immediate delay={0.2}>
+          <ul className="mt-6 flex list-none flex-wrap gap-2.5 p-0">
+            {chips.map((chip) => (
+              <li key={chip}>
+                <ChipLabel tone={tone}>{chip}</ChipLabel>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+      ) : null}
       {meta ? <div className="mt-6 text-sm text-stone">{meta}</div> : null}
       {actions ? (
         <Reveal immediate delay={0.24} className={actionsClassName}>

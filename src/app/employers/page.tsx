@@ -3,7 +3,7 @@ import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { pageMetadata } from "@/components/pages/metadata";
 import { Button } from "@/components/ui/Button";
-import { fees, images, week } from "@/content/site";
+import { fees, images, regions, stats, week } from "@/content/site";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbs } from "@/lib/structured-data";
 
@@ -19,12 +19,19 @@ export default function EmployersPage() {
     <>
       <JsonLd data={breadcrumbs([{ name: "Employers", path: "/employers" }])} />
       <PageHero
-        eyebrow="Employers"
+        crumbs={[{ label: "Home", href: "/" }, { label: "Employers" }]}
+        eyebrow="For employers"
         title="A shortlist your managers will interview."
-        lede="Tell us the stack, the hiring manager, and what the first ninety days need. We source from the USA, Canada, Latin America, and Europe, and we stay on the search until the engineer starts."
+        accent
+        lede="Tell us the stack, the hiring manager, and what the first ninety days need. We source from the USA, Canada, Latin America, Europe, and Asia, and we stay on the search until the engineer starts."
+        chips={[`Shortlist in ${stats[1].value} days`, "12-week guarantee", "Billed when they start"]}
         image={{
           src: images.employers,
           alt: "Photograph for companies hiring engineers",
+        }}
+        frame={{
+          ribbon: `Brief to shortlist · ${stats[1].value} days`,
+          caption: { label: "Placements in the past year", value: `${stats[0].value} engineers, ${regions.length} regions` },
         }}
       >
         <Button href="#brief">Open a search</Button>
