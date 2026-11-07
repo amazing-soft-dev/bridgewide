@@ -1,28 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { deskIsOpen } from "@/components/contact/DeskCard";
-import { Button } from "@/components/ui/Button";
 import { contact } from "@/content/site";
-
-/**
- * The two doors for the section the visitor is in, and the quiet link to the
- * other service. Staffing is every page outside /ai-training.
- */
-const doors = {
-  staffing: {
-    primary: { label: "Hire engineers", href: "/employers" },
-    secondary: { label: "Send a CV", href: "/engineers" },
-    other: { label: "Also: AI training", href: "/ai-training" },
-  },
-  training: {
-    primary: { label: "Apply once", href: "/ai-training/for-candidates" },
-    secondary: { label: "For partners", href: "/ai-training/for-partners" },
-    other: { label: "Also: staffing", href: "/" },
-  },
-} as const;
 
 const link = "text-sm text-cloud no-underline transition-colors duration-300 hover:text-brand";
 
@@ -79,13 +59,10 @@ function useDeskClock() {
 
 /**
  * The desk column in the footer: email, phone with a WhatsApp link to the
- * same number, the city with the desk's live local time, the hours, and the
- * two buttons for the section the visitor is in.
+ * same number, the city with the desk's live local time, and the hours.
  */
 export function FooterDesk() {
   const state = useDeskClock();
-  const pathname = usePathname();
-  const section = pathname.startsWith("/ai-training") ? doors.training : doors.staffing;
 
   return (
     <div>
@@ -128,20 +105,6 @@ export function FooterDesk() {
         </li>
         <li className="font-mono text-[11px] tracking-[0.06em] text-cloud-soft/80 uppercase">{contact.hours.label}</li>
       </ul>
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        <Button href={section.primary.href} compact>
-          {section.primary.label}
-        </Button>
-        <Button href={section.secondary.href} compact variant="onDark">
-          {section.secondary.label}
-        </Button>
-      </div>
-      <Link
-        href={section.other.href}
-        className="mt-3 inline-block font-mono text-[11px] tracking-[0.06em] text-cloud-soft uppercase no-underline transition-colors duration-300 hover:text-brand"
-      >
-        {section.other.label} →
-      </Link>
     </div>
   );
 }
