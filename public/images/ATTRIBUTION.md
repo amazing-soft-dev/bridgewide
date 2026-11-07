@@ -53,3 +53,7 @@ The ids below are Unsplash image CDN ids (`images.unsplash.com/photo-{id}`). The
 | `door-engineers.webp` | https://unsplash.com/ | `1629904869392-ae2a682d4d01` |
 | `desk-wall.webp` | https://unsplash.com/ | `1791298043030-3a9dc4a1e1f9` |
 | `roles-close.webp` | https://unsplash.com/ | `1758518726324-62bef7c815b0` |
+| `training-benefit-1.webp` | https://unsplash.com/ | `1602016736566-7ed6a58894bd` |
+| `training-benefit-2.webp` | https://unsplash.com/ | `1611095973763-414019e72400` |
+| `training-benefit-3.webp` | https://unsplash.com/ | `1664575198308-3959904fa430` |
+| `training-benefit-4.webp` | https://unsplash.com/ | `1758873268528-af4613d099b6` |
