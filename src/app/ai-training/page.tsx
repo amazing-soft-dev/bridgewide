@@ -15,7 +15,7 @@ import { pageMetadata } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/Button";
 import { Faq } from "@/components/ui/Faq";
-import { testimonials, trainingFaq, trainingHero } from "@/content/ai-training";
+import { platforms, testimonials, trainingFaq, trainingHero, trainingRegions } from "@/content/ai-training";
 import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
@@ -28,7 +28,19 @@ export default function AiTrainingPage() {
   return (
     <>
       <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }])} />
-      <PageHero eyebrow={trainingHero.eyebrow} title={trainingHero.headline} lede={trainingHero.subcopy}>
+      <PageHero
+        crumbs={[{ label: "Home", href: "/" }, { label: "AI training" }]}
+        eyebrow={trainingHero.eyebrow}
+        title={trainingHero.headline}
+        accent
+        lede={trainingHero.subcopy}
+        chips={["Apply once", "Reviewed in three business days", "Paid by the platform"]}
+        image={{ src: "/images/training-benefits.webp", alt: "People working together at a table" }}
+        frame={{
+          ribbon: "Apply to brief · 3 days",
+          caption: { label: "The directory", value: `${platforms.length} platforms, ${trainingRegions.length} regions` },
+        }}
+      >
         <Button href="/ai-training/for-candidates">Apply</Button>
         <Button href="/ai-training/for-partners" variant="secondary">
           For partners
