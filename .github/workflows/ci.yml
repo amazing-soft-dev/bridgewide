@@ -41,6 +41,8 @@ jobs:
         run: npm run lint
       - name: Type check
         run: npm run typecheck
+      - name: Check photos are used once
+        run: npm run check:images
 
   build:
     name: Build (${{ matrix.target }})

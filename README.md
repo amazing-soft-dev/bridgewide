@@ -42,6 +42,7 @@ Open <http://localhost:3000>.
 | `npm run lint` | Run ESLint (fails on any warning) |
 | `npm run typecheck` | Generate route types and run `tsc --noEmit` |
 | `npm run images` | Build the responsive WebP variants in `public/_img` (needed for the static export) |
+| `npm run check:images` | Fail if two photos in `public/images` are the same file or one photo is wired into more than one slot |
 
 ## Environment variables
 
