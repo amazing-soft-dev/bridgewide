@@ -1055,7 +1055,7 @@ const regionSeed: readonly Omit<Region, "openRoleCount">[] = [
     name: "Asia",
     code: "ASIA",
     summary:
-      "Singapore, Bangalore, Manila, and other hubs, with remote seats across the region that overlap Singapore or US West hours. Teams use this desk for follow-the-sun coverage and for senior engineers who join a distributed product team.",
+      "India, Pakistan, Indonesia, and Singapore, with remote seats across the region that overlap Singapore or US West hours. Teams use this desk for follow-the-sun coverage and for senior engineers who join a distributed product team.",
     image: "/images/region-asia.webp",
   },
 ];
