@@ -65,6 +65,8 @@ export type Contact = {
   phone: string;
   /** The tel: link, digits only with the country code. */
   phoneHref: string;
+  /** The WhatsApp chat link for the same number. */
+  whatsappHref: string;
   address: string;
   location: string;
   hours: ContactHours;
@@ -235,7 +237,7 @@ export const rolesListedOn = "2026-10-18";
  * lastModified, the Dataset and Organization dateModified, and llms.txt.
  * Bump it when copy, roles, bands, or stories change.
  */
-export const contentUpdatedOn = "2026-11-05";
+export const contentUpdatedOn = "2026-11-06";
 
 /** Facts used for Organization structured data and /llms.txt. */
 export const organization = {
@@ -268,8 +270,9 @@ export const organization = {
 
 export const contact: Contact = {
   email: "michael.allen@bridgewide.org",
-  phone: "+1 (415) 555-0142",
-  phoneHref: "+14155550142",
+  phone: "+1 (442) 567-1328",
+  phoneHref: "+14425671328",
+  whatsappHref: "https://wa.me/14425671328",
   address: "San Francisco, CA",
   location: "San Francisco · remote desks in four regions",
   hours: {
