@@ -7,7 +7,7 @@ import { TwoDoors } from "@/components/home/TwoDoors";
 import { hero } from "@/content/site";
 
 export const metadata = pageMetadata({
-  title: { absolute: "BridgeWide — Engineers across four regions" },
+  title: { absolute: "BridgeWide — Engineers across five regions" },
   description: hero.subcopy,
   path: "/",
 });

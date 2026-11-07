@@ -10,7 +10,7 @@ import { breadcrumbs } from "@/lib/structured-data";
 export const metadata = pageMetadata({
   title: "Regions",
   description:
-    "Four desks for hiring software engineers: the United States, Canada, Latin America, and Europe.",
+    "Five desks for hiring software engineers: the United States, Canada, Latin America, Europe, and Asia.",
   path: "/regions",
 });
 
@@ -20,7 +20,7 @@ export default function RegionsPage() {
       <JsonLd data={breadcrumbs([{ name: "Regions", path: "/regions" }])} />
       <PageHero
         eyebrow="Regions"
-        title="Four desks. One search if you want the comparison."
+        title="Five desks. One search if you want the comparison."
         lede="Hybrid seats where the team sits together, and remote seats where the hours overlap. Each region has its own consultant coverage."
       />
       <PageSection id="desks" label="Desks" title="Where we hire">

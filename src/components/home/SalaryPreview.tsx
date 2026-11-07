@@ -34,7 +34,7 @@ export default function SalaryPreview() {
             <RevealItem key={discipline.slug}>
               <article className="border-t border-ink/15 pt-5">
                 <h3 className="font-display text-2xl text-ink">{discipline.label}</h3>
-                <dl className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+                <dl className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
                   {regions.map((region) => {
                     const band = discipline.bands[region.slug];
                     return (

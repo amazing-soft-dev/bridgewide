@@ -9,7 +9,7 @@ import { breadcrumbs, desk } from "@/lib/structured-data";
 export const metadata = pageMetadata({
   title: "About",
   description:
-    "The BridgeWide desk: consultants who hire for the engineering work they used to do, across four regions.",
+    "The BridgeWide desk: consultants who hire for the engineering work they used to do, across five regions.",
   path: "/about",
 });
 

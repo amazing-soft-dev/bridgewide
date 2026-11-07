@@ -24,7 +24,7 @@ export default function StoriesPage() {
       <PageHero
         eyebrow="Stories"
         title="Searches that ended with a start date."
-        lede="Four employer stories, one from each desk. The day counts are the time from a complete brief to a hire."
+        lede="Five employer stories, one from each desk. The day counts are the time from a complete brief to a hire."
       />
       <PageSection id="list" label="Employers" title="From the desks">
         <RevealGroup className="grid gap-14">
