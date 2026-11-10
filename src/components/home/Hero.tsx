@@ -23,8 +23,12 @@ export function Hero() {
         aria-hidden
       />
       <HeroCursor sectionRef={sectionRef} />
-      <div className="relative flex h-full w-full flex-col justify-center px-4 pt-[calc(var(--header-h)+2rem)] pb-[calc(var(--seam)+3rem)] lg:h-[100svh] lg:px-[4vw] lg:pt-[calc(var(--header-h)+2rem)] lg:pb-[calc(var(--header-h)+2rem)]">
-        <div className="mx-auto grid w-full max-w-[1520px] items-center gap-10 lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:gap-8">
+      <div className="relative flex h-full w-full flex-col justify-center px-4 pt-[calc(var(--header-h)+2rem)] pb-[calc(var(--seam)+3rem)] lg:h-[100svh] lg:justify-start lg:px-[4vw] lg:pt-[var(--header-h)] lg:pb-10">
+        <div
+          aria-hidden
+          className="hidden min-h-[4.5rem] w-full grow-0 basis-[clamp(4.5rem,calc((100svh-var(--header-h)-40.5rem)/2),12rem)] lg:block lg:shrink"
+        />
+        <div className="mx-auto grid w-full max-w-[1520px] items-center gap-10 lg:shrink-0 lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:gap-8">
           <div>
             <HeroCopy
               tone="dark"
