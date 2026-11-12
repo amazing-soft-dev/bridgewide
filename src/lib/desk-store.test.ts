@@ -2,7 +2,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { expiredTalent } from "@/app/api/cron/talent-retention/route";
+import { expiredTalent } from "@/lib/talent-retention";
 import { canIntroduce, guaranteeEnd, saveSubmission } from "@/lib/desk-store";
 import { deliverIntake } from "@/lib/intake";
 import { allowRequest, resetRateLimit } from "@/lib/rate-limit";

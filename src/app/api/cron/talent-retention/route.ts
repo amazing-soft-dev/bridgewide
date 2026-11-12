@@ -1,20 +1,13 @@
 import { listSubmissions, updateSubmission } from "@/lib/desk-store";
 import { jsonResult, sendFormEmail } from "@/lib/mail";
+import { expiredTalent } from "@/lib/talent-retention";
 
 export const runtime = "nodejs";
-
-const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
 function authorized(request: Request): boolean {
   const secret = process.env.CRON_SECRET?.trim();
   if (!secret) return process.env.NODE_ENV !== "production";
   return request.headers.get("authorization") === `Bearer ${secret}`;
-}
-
-export function expiredTalent(at: string, now = Date.now()): boolean {
-  const time = Date.parse(at);
-  if (Number.isNaN(time)) return false;
-  return now - time > YEAR_MS;
 }
 
 export async function GET(request: Request) {

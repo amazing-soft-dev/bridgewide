@@ -79,6 +79,9 @@ jobs:
       - if: matrix.target == 'static'
         name: Build responsive images
         run: npm run images
+      - if: matrix.target == 'static'
+        name: Omit cron routes from the static export
+        run: rm -rf src/app/api/cron
       - name: Build
         run: npx --no-install next build
         env:
