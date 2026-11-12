@@ -344,7 +344,7 @@ export const portraits: readonly Portrait[] = [
   {
     id: "amara",
     name: "Amara",
-    place: "Chicago, United States (USA)",
+    place: "Chicago, United States",
     region: "usa",
     focus: "Data and benchmarks",
     image: "/images/portraits/amara.webp",
