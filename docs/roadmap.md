@@ -42,9 +42,19 @@ Answered in review (2026-11-12):
 - **The 32 AI-training cards are verified by you.** I will not re-verify them. I will ask, with selectable options, only about a specific card if something looks unclear.
 - **Case study is a named client quote** (still need the client, quote, one measured result, and written permission).
 
+Answered in the third review round (2026-11-12):
+
+- **Records keep everything that is emailed to the contact address**, meaning every form field and the full message text, for all form kinds. The CV file itself is still email-only (an earlier answer), so the record keeps no CV bytes and no file key. Consequence: the full text is personal data in the database, so retention (C10), consent records (E4), the data-request path (E5) and the privacy notice must all cover it.
+- **Asia roles gain a notice period and the client name** on both roles. This replaces your earlier line that kept those off the listing. The client name shows on both roles (no role is Confidential), in the page and in `JobPosting.hiringOrganization` alongside BridgeWide. I need the values (section 8).
+- **Close dates:** roles stay open until you send each date. Unchanged; B1 removes the shared `2027-01-16`.
+- **Labels:** Priya Raman is in New York, so her country is the United States. A bracket is dropped when it repeats the country, so `Canada` and `United States` stand alone. `United Kingdom (Europe)`, `Mexico (LATAM)`, `Singapore (Asia)` and the city forms keep their brackets.
+- **Legal review:** one multi-jurisdiction firm signs off all six markets. The firm's name is still to come.
+- **Inboxes:** only `michael.allen@bridgewide.org` exists, so it is used for every purpose (hiring, candidates, press, privacy and data requests). Role addresses are not created now. Risk noted in F6.
+- **Case study format: challenge, approach, result**, with the named client quote under the result and a metric headline. I need the details (section 8).
+
 Defaults I chose where you gave no answer (reversible; say so and I will change them):
 
-- **Records store:** Neon Postgres (Vercel Marketplace) holding **metadata only**: id, kind, status, consent version and time, region, role key, right-to-work, guarantee dates. No CV, and a short intake summary rather than the whole message body unless you want the body kept. This is needed for duplicate checks, the digest date, status mail, and the limiter. Alternative: Upstash Redis.
+- **Records store:** Neon Postgres (Vercel Marketplace) holding every submitted field and the full message text, plus id, kind, status, consent version and time, right-to-work, and guarantee dates. No CV bytes. This is needed for duplicate checks, the digest date, status mail, and the limiter. Alternative: Upstash Redis.
 - **Training-card markup:** keep `JobPosting` as shipped, since you verified the cards, but record each card's source URL and verification date in the data file, and note the policy risk that a posting for a job BridgeWide does not hold can draw a Google action.
 
 ---
@@ -141,7 +151,7 @@ About **70 candidate issues**, each its own branch from the latest `origin/dev`,
 | B4 | `fix/closed-role-metadata` | Closed page keeps 200, emits no `JobPosting`, and carries the metadata you choose (section 8) |
 | B5 | `feat/digest-failure-alert` | A failed digest send is logged and alerts the desk by a second channel |
 | B6 | `feat/close-boundary-tests` | Tests cross both DST changes and a close at 17:59 versus 18:01 Pacific |
-| B7 | `feat/asia-roles-data-audit` (gated) | Each Asia role has the fields you confirm; right-to-work line verified on both |
+| B7 | `feat/asia-notice-and-client` (gated) | Singapore and Bangalore each show a notice period and the client name on the page, in the description, and in `JobPosting.hiringOrganization` with BridgeWide; right-to-work line verified on both; test fixtures updated |
 | B8 | `feat/role-pay-basis` (gated) | Each posting states range, currency, and basis; per-market wording confirmed by counsel |
 
 ### C. Persistence and delivery
@@ -157,7 +167,7 @@ About **70 candidate issues**, each its own branch from the latest `origin/dev`,
 | C7 | `feat/form-challenge` | An invisible challenge (for example Turnstile) is checked server-side on public forms, with a keyboard-accessible fallback |
 | C8 | `feat/mail-outbox-retry` | A forced Resend outage still notifies the desk exactly once after recovery |
 | C9 | `fix/duplicate-rule` | A second role by the same person creates a record; an exact repeat inside a window returns the old id |
-| C10 | `fix/retention-deletes-personal-data` | Expiry removes or anonymizes email and body in the record and logs a count; the privacy notice says the CV email sits in the desk mailbox and the desk deletes it on the same schedule |
+| C10 | `fix/retention-deletes-personal-data` | Expiry removes or anonymizes email, full message text, and every personal field in the record and logs a count; the privacy notice says the CV email sits in the desk mailbox and the desk deletes it on the same schedule |
 | C11 | `fix/digest-state-persisted` | Two digest runs on one Pacific date send one email across restarts |
 | C12 | `docs/email-authentication` | SPF, DKIM, DMARC documented and a test message verified |
 | C13 | `fix/cron-auth` | Constant-time compare; missing secret fails closed unless an explicit dev flag is set |
@@ -175,7 +185,7 @@ About **70 candidate issues**, each its own branch from the latest `origin/dev`,
 
 | ID | Branch slug | Acceptance |
 | --- | --- | --- |
-| E1 | `docs/privacy-market-matrix` | A checklist of notice items per market, signed off by your reviewer |
+| E1 | `docs/privacy-market-matrix` | A checklist of notice items per market, sent to the one multi-jurisdiction firm and signed off by it |
 | E2 | `feat/privacy-notice-final` | Notice names controller, purposes, recipients, transfers, retention, rights |
 | E3 | `feat/terms-final` | Terms reviewed; fee and guarantee wording matches `fees` |
 | E4 | `feat/consent-records-all-forms` | Hire, contact, salary guide, talent pool, AI forms store basis and version |
@@ -191,12 +201,13 @@ About **70 candidate issues**, each its own branch from the latest `origin/dev`,
 | ID | Branch slug | Acceptance |
 | --- | --- | --- |
 | F1 | `docs/stat-basis` (gated) | 186, 94%, 9 and 11 each show period and definition |
-| F2 | `docs/permissions-log` (gated) | Each named client and consultant has permission recorded; others anonymized |
-| F3 | `feat/named-client-quote` (gated) | A named client's quote with one measured result and written permission, replacing the median-based story |
+| F2 | `docs/permissions-log` (gated) | Each named client (including the two Asia clients now shown by name) and consultant has permission recorded; others anonymized |
+| F3 | `feat/named-client-quote` (gated) | A challenge, approach, result case study with a metric headline and the named client's quote, written permission recorded, replacing the median-based story |
 | F4 | `docs/training-card-sources` | Each of the 32 cards stores its source URL and verification date in the data file; no re-verification by me |
 | F5 | `docs/salary-guide-method` (gated) | Method, sample size, collection dates, currency note |
-| F6 | `feat/role-mailboxes` (gated) | `hello@`, `privacy@`, `careers@` exist; footer and JSON-LD match |
-| F7 | `fix/country-label-format` (gated) | Redundant labels settled; Priya Raman's country confirmed |
+| F6 | `docs/single-inbox-risk` | Every purpose uses `michael.allen@bridgewide.org` as decided; the privacy notice names it for data requests; a note records the risk of one person's mailbox (leave, outage, access control) and a trigger to move to role aliases |
+| F8 | `fix/story-06-background` | Employer stories slide 06 (`anon-canada-contract`, the last of six) uses a real 2400x1600 Unsplash team-in-office photo in the same style as `story-1` to `story-4`, replacing `story-anon-canada.webp`, which is a 1200x800 generated magenta and blue pattern (not a photo, not in `ATTRIBUTION.md`, mean colour far from the others). The new file is wired to this slot only, has an `ATTRIBUTION.md` row, a regenerated `image-manifest.json` entry, passes `npm run check:images` (no duplicate photo, none used in two slots), and looks right under the slide's dark overlay on desktop and mobile. If F3 replaces this story with the named-client case study, the photo moves with it |
+| F7 | `fix/country-label-format` | `Canada` and `United States` show without brackets; Priya Raman reads `United States`; other labels unchanged; AI-training portraits follow the same rule; a test covers the rule |
 
 ### G. Forms, accessibility, and error pages
 
@@ -241,12 +252,12 @@ About **70 candidate issues**, each its own branch from the latest `origin/dev`,
 
 | ID | Branch slug | Acceptance |
 | --- | --- | --- |
-| J1 | `docs/release-layout-review` | Desktop, mobile, form states, images, keyboard, reduced motion on `/`, `/contact`, `/ai-training/contact`, an open role, a closed role, an empty region |
+| J1 | `docs/release-layout-review` | Desktop, mobile, form states, images, keyboard, reduced motion on `/`, `/contact`, `/ai-training/contact`, an open role, a closed role, an empty region, and all six employer-story slides (especially slide 06 after F8) |
 | J2 | `ci/release-checks` | Lint, typecheck, image checks, server build, static build all green |
 | J3 | `docs/release-metadata-check` | Titles, canonicals, sitemap, and JSON-LD match verified content |
 | J4 | `docs/release-production-delivery` | One real send from each contact form after deploy; desk confirms receipt |
 
-Total: A5 + B8 + C14 + D3 + E10 + F7 + G6 + H13 + I5 + J4 = **75**. If you want a smaller first wave, A, B, C1 to C3, C10, C13, and J give about 20 and fix the most serious defects above.
+Total: A5 + B8 + C14 + D3 + E10 + F8 + G6 + H13 + I5 + J4 = 76 rows, of which C4 is dropped, so **75 issues**. F8 is small and independent, so it can go in Wave 1 if you want the visible fix early. If you want a smaller first wave, A, B, C1 to C3, C10, C13, and J give about 20 and fix the most serious defects above.
 
 ---
 
@@ -271,15 +282,14 @@ Suggested waves: **Wave 0** Step 0 and A. **Wave 1** B, C1 to C3, C10, C11, C13,
 
 ## 8. Questions for you
 
-Asked with options in the review message. Still open after that:
+Answered, so no longer open: records body (keep everything), Asia fields (notice period and client name), close dates (stay open until sent), Priya Raman's country, redundant labels, legal reviewer (one firm), inboxes (`michael.allen@` for all), case-study format (challenge, approach, result).
 
-- **Case study:** which client (Harbor Metrics, Keel Systems, Northline, Campo Health, or another), the exact quote, the one measured result, and the permission.
-- **Records body:** keep only metadata, or also the full message text of briefs and contact messages?
-- **Asia data:** which fields are missing on the two Asia roles (for example notice period, headcount, client name, local-currency band)? Your plan keeps those off the listing. Say if any should now be added.
-- **Close dates:** the real `closesOn` for each role (B1). Until you send them, roles stay open.
-- **Stat definitions:** period and meaning for 186, 94%, 9 and 11.
-- **Permissions:** whether written permission and real photos exist for Northline, Harbor Metrics, Campo Health, Keel Systems, Lumen Pay, and each consultant.
-- **Labels:** `Canada (Canada)` and `United States (USA)` read as redundant; and Priya Raman covers New York and Dublin, so is her country the United States or Ireland?
-- **Legal reviewer** for each of the six markets.
-- **Shared inboxes** that exist today.
+Still needed, grouped by the issue it unblocks:
+
+- **Case study (F3):** the client (for example Harbor Metrics, Keel Systems, Northline, or Campo Health), the challenge in one or two sentences, what the desk did, the measured result (days to start, or 12-month retention), the exact quote with the speaker's name and title, and written permission to publish.
+- **Asia roles (B7):** for the Singapore and Bangalore roles, the notice period (for example "30 days" or "1 to 3 months") and the client name, and confirmation each client agreed to be named (F2).
+- **Close dates (B1):** send each role's `closesOn` when you have it. Until then every role stays open.
+- **Stat definitions (F1):** period and meaning for 186, 94%, 9 and 11.
+- **Permissions (F2):** whether written permission and real photos exist for Northline, Harbor Metrics, Campo Health, Keel Systems, Lumen Pay, and each consultant.
+- **Legal firm (E1):** the firm's name and a contact, so the market checklist can be sent.
 - **Edge cases I may still be missing:** a candidate applying to two regions; a role closing while the form is open; a deletion request after an introduction; a client reopening after the 12-week window; a contract converting to permanent; a candidate with no right to work in the role's country. Tell me which you have seen.
