@@ -26,6 +26,7 @@ import {
   week,
 } from "@/content/site";
 import { regionFor, formatUsd } from "@/components/pages/format";
+import { isRoleOpen } from "@/lib/desk-clock";
 
 /**
  * Plain-Markdown views of the site for AI assistants and AI search
@@ -100,7 +101,7 @@ export function llmsSummary(): string {
     ...keyPages(),
     "## Open roles",
     "",
-    ...roles.map(roleLine),
+    ...roles.filter((role) => isRoleOpen(role)).map(roleLine),
     "",
     "## Salary bands",
     "",
@@ -131,6 +132,10 @@ export function llmsSummary(): string {
     ...platforms.map(
       (platform) =>
         `- [${platform.name}](${url(`/ai-training/platforms/${platform.slug}`)}): ${platform.summary}`,
+    ),
+    "",
+    ...trainingRoles.map(
+      (role) => `- [${role.title}](${url(`/ai-training/jobs/${role.slug}`)}): ${role.platform}, ${role.place}.`,
     ),
     "",
     `- [AI training](${url("/ai-training")}): The candidate offer, roles, and platform directory.`,
@@ -193,7 +198,7 @@ export function llmsFull(): string {
     "",
     "Listed on the roles desk; each role names its consultant.",
     "",
-    ...roles.flatMap((role) => {
+    ...roles.filter((role) => isRoleOpen(role)).flatMap((role) => {
       const region = regionFor(role.region);
       return [
         `### ${role.title}`,
@@ -291,7 +296,7 @@ export function llmsFull(): string {
     "",
     ...trainingRoles.map(
       (role) =>
-        `- [${role.title}](${url(`/ai-training/jobs/${role.slug}`)}): ${workTypeLabel(role.workType)}, ${role.region}. ${formatHourly(role.payMin, role.payMax)}. ${role.summary}`,
+        `- [${role.title}](${url(`/ai-training/jobs/${role.slug}`)}): ${role.platform}, ${workTypeLabel(role.workType)}, ${role.place}. ${formatHourly(role.payMin, role.payMax)}. ${role.summary}`,
     ),
     "",
     "### Questions",

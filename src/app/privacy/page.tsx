@@ -2,10 +2,11 @@ import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { Prose } from "@/components/pages/Prose";
 import { pageMetadata } from "@/components/pages/metadata";
+import { contact } from "@/content/site";
 
 export const metadata = pageMetadata({
   title: "Privacy",
-  description: "Placeholder privacy note for BridgeWide. This page is not legal advice.",
+  description: "How BridgeWide handles the details you send through the site.",
   path: "/privacy",
   robots: { index: false, follow: true },
 });
@@ -15,22 +16,22 @@ export default function PrivacyPage() {
     <>
       <PageHero
         eyebrow="Privacy"
-        title="A placeholder, not a policy."
-        lede="This page is not legal advice, and it is not a privacy policy you can rely on."
+        title="How the desk handles your details."
+        lede="BridgeWide is the controller for the forms on this site. A lawyer reviews this notice before it is indexed."
       />
-      <PageSection id="draft" label="Draft" title="What this page is">
+      <PageSection id="notice" label="Notice" title="What we collect">
         <Prose>
           <p>
-            BridgeWide will replace this note with a real privacy notice before the site treats it as policy. Until then, read it as a draft and do not use it to decide your rights.
+            The hire, CV, contact, salary-guide, talent-pool, and AI-training forms collect the fields on the form, including a CV when you attach one. The desk email is {contact.email}. Messages go through Resend. The site is hosted on Vercel. Those two companies process the message so it can be delivered and stored.
           </p>
           <p>
-            The hire, CV, and contact forms send the details you type to the desk by email so someone can reply. The salary-guide field in the footer does the same: it emails the address you type so the desk can send the guide. That is a description of the form, not a promise about retention, sharing, or your legal rights.
+            A talent-pool CV is kept for 12 months from the day you consent, then deleted. You can email {contact.email} sooner to pause or delete a profile. AI-training profiles are introduced to a platform only after you agree to that introduction. The platform pays you.
           </p>
           <p>
-            AI-training applications from those pages are emailed to the desk the same way. A candidate profile is introduced to a platform only after that candidate agrees. The platform pays the candidate.
+            Vercel Web Analytics and Speed Insights load only in production. They are skipped when the browser sends Do Not Track. Query strings are stripped, and a hit that includes an email address is dropped. The site does not use a cookie banner for that collection.
           </p>
           <p>
-            If you need advice about privacy law, ask a lawyer. This text was written as a placeholder for the marketing site.
+            Readers in the United States, Canada, the United Kingdom, the European Union, Brazil, and the rest of Latin America can email {contact.email} to ask for a copy or for deletion. This notice stays out of the search index until that review is finished.
           </p>
         </Prose>
       </PageSection>

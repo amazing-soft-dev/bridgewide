@@ -4,19 +4,34 @@ import { HeaderShell } from "@/components/site/HeaderShell";
 import { SearchButton, SearchDrawer, type SearchRole } from "@/components/site/HeaderSearch";
 import { MobileNav } from "@/components/site/MobileNav";
 import { Button } from "@/components/ui/Button";
+import { trainingRoles } from "@/content/ai-training";
 import { announcement, contact, nav, roles } from "@/content/site";
+import { isRoleOpen } from "@/lib/desk-clock";
 import "./header.css";
 
-const searchRoles: readonly SearchRole[] = roles.map((role) => ({
-  slug: role.slug,
-  title: role.title,
-  city: role.city,
-  country: role.country,
-  countryCode: role.countryCode,
-  discipline: role.discipline,
-  engagement: role.engagement,
-  workMode: role.workMode,
-}));
+const searchRoles: readonly SearchRole[] = [
+  ...roles.filter((role) => isRoleOpen(role)).map((role) => ({
+    slug: role.slug,
+    title: role.title,
+    city: role.city,
+    country: role.country,
+    countryCode: role.countryCode,
+    discipline: role.discipline,
+    engagement: role.engagement,
+    workMode: role.workMode,
+  })),
+  ...trainingRoles.map((role) => ({
+    slug: role.slug,
+    title: role.title,
+    city: role.place,
+    country: role.place,
+    countryCode: role.platform.slice(0, 3).toUpperCase(),
+    discipline: role.workType,
+    engagement: role.platform,
+    workMode: "Remote",
+    href: `/ai-training/jobs/${role.slug}`,
+  })),
+];
 
 export function SiteHeader() {
   return (
