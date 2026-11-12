@@ -58,6 +58,39 @@ Copy `.env.example` to `.env.local`. Never commit real keys (`.env` and `.env*.l
 
 If any of the three is missing, the form APIs return a 500 that names the missing variable.
 
+Desk records and crons:
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Neon Postgres connection string for the desk records. Set it in production. With none, records go to a JSON file, which is not durable on Vercel |
+| `DESK_DATA_DIR` | Folder for that JSON file (default `.data/desk`). Local development and tests only |
+| `CRON_SECRET` | Bearer token for `/api/cron/*` and `/api/desk/record`. Required in production; with none the routes refuse every request. Vercel sends it to its cron jobs automatically |
+| `DESK_ALLOW_UNAUTHENTICATED` | Set to `1` to run those routes locally with no `CRON_SECRET`. Ignored when `NODE_ENV` is `production` |
+| `NEXT_PUBLIC_SCOPING_CALL_URL` | Optional. A scoping-call link shown after a complete hire brief |
+
+Site, build, and test:
+
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | Canonical origin for metadata, the sitemap, and robots (default `https://www.bridgewide.org`) |
+| `NEXT_OUTPUT` | `export` builds the static export |
+| `PAGES_BASE_PATH` | Sub-path for the static export when it is not served from the domain root. Empty for the custom domain |
+| `NEXT_PUBLIC_BASE_PATH`, `NEXT_PUBLIC_STATIC_EXPORT` | Set by `next.config.ts` from the two above. Do not set them by hand |
+| `VERCEL_ENV` | Set by Vercel. Analytics load only when it is `production` |
+| `ROLE_CLOCK`, `ROLE_CLOSE_DATES` | Test only. Pin the desk clock and close roles by slug or region. `ROLE_CLOSE_DATES` is ignored unless `ROLE_CLOCK` is set |
+| `NODE_ENV`, `CI`, `LOCALAPPDATA` | Set by Node, CI, and Windows. `LOCALAPPDATA` only places the Next.js cache on the system drive for `npm run dev` and `npm run build` (see `scripts/link-next-dist.mjs`) |
+
+## The desk store
+
+Every form is emailed to the desk and also saved as a record with an id, so the desk can answer, mark status, and keep the 12-month and guarantee clocks.
+
+- **Where it lives.** With `DATABASE_URL` set, records go to Postgres (`src/lib/desk-store-postgres.ts`; the tables are created on first use). With none, they go to a JSON file under `DESK_DATA_DIR`, which is for local work and tests. See `docs/decisions/desk-store.md` for the schema and why.
+- **What a record holds.** Every field and the full message text that was emailed, plus status, consent, right to work, and the guarantee dates. It never holds a CV: the CV is only an attachment on the desk email.
+- **Deletion.** A deletion request, or a talent-pool profile past 12 months, keeps only the id, kind, time, and status. The email, message, and other personal fields are cleared. The CV email stays in the desk mailbox until the desk deletes it.
+- **Duplicates.** One live record per email, kind, and role. A second post gets the first record's id.
+- **Open and closed roles.** A role closes at 18:00 Pacific on its `closesOn` date, and a role with no date stays open. Pages, `/llms.txt`, and `sitemap.xml` regenerate every five minutes in the server build, so no redeploy is needed. The static export is frozen at build time.
+- **Crons** (`vercel.json`): the weekday role digest (`0 16 * * 1-5`, UTC) and the Monday retention job (`0 17 * * 1`). A failed digest returns a non-2xx status and logs `role-digest-failed`.
+
 ## Pages
 
 | Route | Content |
@@ -103,7 +136,7 @@ All routes run on the Node.js runtime and return `{ ok: true }` or `{ ok: false,
 | `POST /api/ai-training/apply` | `multipart/form-data` | candidate fields, `rightToWork`, `consent`, and a CV |
 | `POST /api/ai-training/partner` | JSON | partner fields plus `volume`, `taskType`, `rate`, and `countries` |
 | `GET /api/cron/role-digest` | — | Weekday open-versus-closed report. Requires `Authorization: Bearer CRON_SECRET` in production. |
-| `GET /api/cron/talent-retention` | — | Deletes talent-pool files older than 12 months. |
+| `GET /api/cron/talent-retention` | — | Anonymizes talent-pool records older than 12 months (email, message, and other personal fields). Requires `Authorization: Bearer CRON_SECRET`. |
 | `POST /api/desk/record` | JSON | Desk-only status change. Same bearer secret. |
 
 The server validates every field (`src/lib/form.ts`, `src/lib/cv-file.ts`). Each form includes a hidden `companyWebsite` honeypot: if it is filled, the API returns success without sending anything.
