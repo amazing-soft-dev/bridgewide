@@ -1,6 +1,7 @@
 import { isRecord } from "@/lib/form";
 import {
   canIntroduce,
+  erasePatch,
   guaranteeEnd,
   listSubmissions,
   updateSubmission,
@@ -53,13 +54,20 @@ export async function POST(request: Request) {
     return jsonResult({ ok: false, error: "This record was already reopened once.", status: 400 });
   }
 
-  const updated = await updateSubmission(current.id, {
-    status,
-    rightToWork,
-    startDate,
-    guaranteeEnd: startDate ? guaranteeEnd(startDate, engagement) : undefined,
-    reopenUsed: current.status === "closed" && status !== "closed" ? true : current.reopenUsed,
-  });
+  // A deletion clears everything that identifies the person. The notice below
+  // still goes to the address read before the clearing.
+  const updated = await updateSubmission(
+    current.id,
+    status === "deleted"
+      ? erasePatch()
+      : {
+          status,
+          rightToWork,
+          startDate,
+          guaranteeEnd: startDate ? guaranteeEnd(startDate, engagement) : undefined,
+          reopenUsed: current.status === "closed" && status !== "closed" ? true : current.reopenUsed,
+        },
+  );
 
   const candidate = await sendFormEmail({
     to: current.email,
