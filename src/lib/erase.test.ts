@@ -64,8 +64,7 @@ describe("12-month talent-pool retention", () => {
       person({
         id: "old",
         email: "zed@example.com",
-        body: "Name: Zed Zebra
-Phone: 555-0199",
+        body: "Name: Zed Zebra\nPhone: 555-0199",
         at: new Date(Date.now() - 400 * day).toISOString(),
       }),
     );
