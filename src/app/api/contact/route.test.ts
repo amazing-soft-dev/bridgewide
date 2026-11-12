@@ -1,6 +1,3 @@
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const sendFormEmail = vi.fn(async () => ({ ok: true as const }));
@@ -13,7 +10,6 @@ vi.mock("@/lib/mail", async () => {
 describe("POST /api/contact", () => {
   beforeEach(() => {
     sendFormEmail.mockClear();
-    process.env.DESK_DATA_DIR = mkdtempSync(path.join(tmpdir(), "desk-"));
     process.env.RESEND_API_KEY = "test";
     process.env.CONTACT_TO_EMAIL = "desk@bridgewide.org";
     process.env.CONTACT_FROM_EMAIL = "BridgeWide <noreply@bridgewide.org>";

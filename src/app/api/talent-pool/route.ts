@@ -60,13 +60,11 @@ export async function POST(request: Request) {
   const result = await deliverIntake({
     kind: "talent-pool",
     email: email.value,
-    roleKey: region.value,
     subject: `Talent pool · ${regionName(region.value)} from ${name.value}`,
     ip: clientIp(request),
     visitorSla: sla.role,
     filename: checked.filename,
     fileBase64: bytes.toString("base64"),
-    consent: { version: TALENT_CONSENT_VERSION, at: new Date().toISOString() },
     text: [
       `Name: ${name.value}`,
       `Email: ${email.value}`,

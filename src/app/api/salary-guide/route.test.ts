@@ -1,7 +1,4 @@
-import { mkdtempSync } from "node:fs";
 import { readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resetRateLimit } from "@/lib/rate-limit";
 
@@ -16,7 +13,6 @@ describe("salary guide mail", () => {
   beforeEach(() => {
     sendFormEmail.mockClear();
     resetRateLimit();
-    process.env.DESK_DATA_DIR = mkdtempSync(path.join(tmpdir(), "desk-"));
   });
 
   it("does not promise a private PDF", async () => {

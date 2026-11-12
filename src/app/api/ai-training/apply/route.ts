@@ -97,12 +97,9 @@ export async function POST(request: Request) {
   const result = await deliverIntake({
     kind: "ai-apply",
     email: email.value,
-    roleKey: role?.slug ?? region.value,
     subject: `AI training application from ${name.value}`,
     ip: clientIp(request),
     visitorSla: sla.training,
-    rightToWork: work.value,
-    consent: { version: AI_CONSENT_VERSION, at: new Date().toISOString() },
     filename: checked.filename,
     contentType: checked.contentType,
     fileBase64: bytes.toString("base64"),

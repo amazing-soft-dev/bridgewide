@@ -1,6 +1,3 @@
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_CV_BYTES } from "@/lib/cv-file";
 import { resetRateLimit } from "@/lib/rate-limit";
@@ -16,7 +13,6 @@ describe("POST /api/cv", () => {
   beforeEach(() => {
     sendFormEmail.mockClear();
     resetRateLimit();
-    process.env.DESK_DATA_DIR = mkdtempSync(path.join(tmpdir(), "desk-"));
   });
 
   it("accepts a staffing CV without the AI checkbox", async () => {
