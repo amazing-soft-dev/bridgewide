@@ -16,6 +16,7 @@ The ids below are Unsplash image CDN ids (`images.unsplash.com/photo-{id}`). The
 | `story-3.webp` | https://unsplash.com/ | `1499750310107-5fef28a66643` |
 | `story-4.webp` | https://unsplash.com/ | `1572021335469-31706a17aaef` |
 | `story-5.webp` | https://unsplash.com/ | `1658160806515-fa8ac08887de` |
+| `story-anon-canada.webp` | https://unsplash.com/ | `1554902843-260acd0993f8` |
 | `region-usa.webp` | https://unsplash.com/ | `1499092346589-b9b6be3e94b2` |
 | `region-canada.webp` | https://unsplash.com/ | `1507992781348-310259076fe0` |
 | `region-latam.webp` | https://unsplash.com/ | `1676383045685-41cf03b900b4` |
