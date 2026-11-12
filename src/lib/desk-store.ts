@@ -25,9 +25,8 @@ export type Submission = {
   startDate?: string;
   guaranteeEnd?: string;
   reopenUsed?: boolean;
+  /** Every field the visitor sent, as the desk email shows it. A CV is never part of it. */
   body: string;
-  filename?: string;
-  fileBase64?: string;
 };
 
 /**

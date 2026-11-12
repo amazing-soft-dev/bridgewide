@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     (item) => item.kind === "talent-pool" && item.status !== "deleted" && expiredTalent(item.at),
   );
   for (const item of due) {
-    await updateSubmission(item.id, { status: "deleted", fileBase64: undefined, filename: undefined });
+    await updateSubmission(item.id, { status: "deleted" });
   }
   const sent = await sendFormEmail({
     subject: "Talent pool retention",

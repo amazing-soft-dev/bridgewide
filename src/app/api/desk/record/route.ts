@@ -59,7 +59,6 @@ export async function POST(request: Request) {
     startDate,
     guaranteeEnd: startDate ? guaranteeEnd(startDate, engagement) : undefined,
     reopenUsed: current.status === "closed" && status !== "closed" ? true : current.reopenUsed,
-    ...(status === "deleted" ? { fileBase64: undefined, filename: undefined } : {}),
   });
 
   const candidate = await sendFormEmail({
