@@ -42,7 +42,7 @@ Open <http://localhost:3000>.
 | `npm run lint` | Run ESLint (fails on any warning) |
 | `npm run typecheck` | Generate route types and run `tsc --noEmit` |
 | `npm test` | Run the Vitest suite. A failure exits non-zero, so CI fails. |
-| `npm run test:e2e` | Build with `ROLE_CLOCK` and run the contact and closed-role browser checks |
+| `npm run test:e2e` | Build with `ROLE_CLOCK` and `ROLE_CLOSE_DATES` (test-only: `slug=date,region:usa=date`, ignored unless `ROLE_CLOCK` is set) and run the contact and closed-role browser checks |
 | `npm run images` | Build the responsive WebP variants in `public/_img` (needed for the static export) |
 | `npm run check:images` | Fail if two photos in `public/images` are the same file or one photo is wired into more than one slot |
 
