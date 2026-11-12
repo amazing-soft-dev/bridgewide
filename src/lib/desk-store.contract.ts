@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DeskStore, Submission } from "@/lib/desk-store";
+import { DuplicateSubmissionError, type DeskStore, type Submission } from "@/lib/desk-store";
 
 const record = (over: Partial<Submission> = {}): Submission => ({
   id: `BW-${Math.random().toString(36).slice(2, 8)}`,
@@ -41,6 +41,26 @@ export function deskStoreContract(name: string, makeStore: () => Promise<{ open:
       expect(await store.findDuplicate("ada@example.com", "contact", "Other")).toBeUndefined();
       expect(await store.findDuplicate("ada@example.com", "hire", "Press")).toBeUndefined();
       expect(await store.findDuplicate("bo@example.com", "contact", "Press")).toBeUndefined();
+    });
+
+    it("refuses a second live record for the same person, kind, and role", async () => {
+      const { open } = await makeStore();
+      const store = open();
+      await store.save(record({ id: "A", email: "Ada@Example.com", roleKey: "Press" }));
+      await expect(store.save(record({ id: "B", email: "ada@example.com", roleKey: "Press" }))).rejects.toBeInstanceOf(
+        DuplicateSubmissionError,
+      );
+      await store.save(record({ id: "C", email: "ada@example.com", roleKey: "Other" }));
+      expect((await store.list()).map((item) => item.id)).toEqual(["A", "C"]);
+    });
+
+    it("allows a new record once the old one is deleted", async () => {
+      const { open } = await makeStore();
+      const store = open();
+      await store.save(record({ id: "A" }));
+      await store.update("A", { status: "deleted" });
+      await store.save(record({ id: "B" }));
+      expect((await store.list()).map((item) => item.id)).toEqual(["A", "B"]);
     });
 
     it("does not count a deleted record as a duplicate", async () => {

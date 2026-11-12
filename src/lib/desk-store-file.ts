@@ -1,6 +1,15 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { DeskStore, Submission, SubmissionKind } from "@/lib/desk-store";
+import { DuplicateSubmissionError, type DeskStore, type Submission, type SubmissionKind } from "@/lib/desk-store";
+
+const sameLive = (item: Submission, email: string, kind: SubmissionKind, roleKey?: string) =>
+  item.email.toLowerCase() === email.toLowerCase() &&
+  item.kind === kind &&
+  (item.roleKey ?? "") === (roleKey ?? "") &&
+  item.status !== "deleted";
+
+const isLiveDuplicate = (list: readonly Submission[], entry: Submission) =>
+  entry.status !== "deleted" && list.some((item) => sameLive(item, entry.email, entry.kind, entry.roleKey));
 
 type Database = {
   submissions: Submission[];
@@ -39,19 +48,16 @@ export function createFileStore(directory: () => string): DeskStore {
 
     async save(entry: Submission) {
       const db = await readDb();
+      if (isLiveDuplicate(db.submissions, entry)) {
+        throw new DuplicateSubmissionError(entry.email, entry.kind, entry.roleKey);
+      }
       db.submissions.push(entry);
       await writeDb(db);
     },
 
     async findDuplicate(email: string, kind: SubmissionKind, roleKey?: string) {
       const db = await readDb();
-      return db.submissions.find(
-        (item) =>
-          item.email.toLowerCase() === email.toLowerCase() &&
-          item.kind === kind &&
-          item.roleKey === roleKey &&
-          item.status !== "deleted",
-      );
+      return db.submissions.find((item) => sameLive(item, email, kind, roleKey));
     },
 
     async update(id: string, patch: Partial<Submission>) {
