@@ -1,5 +1,5 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { createFileStore } from "@/lib/desk-store-file";
 
 export type SubmissionKind =
   | "hire"
@@ -30,77 +30,63 @@ export type Submission = {
   fileBase64?: string;
 };
 
-type Database = {
-  submissions: Submission[];
-  digestDate?: string;
-};
+/**
+ * Everything the desk keeps. Callers use the functions below, which go to
+ * whichever adapter is configured, so they never know where the data lives.
+ */
+export interface DeskStore {
+  list(): Promise<Submission[]>;
+  save(entry: Submission): Promise<void>;
+  /** A live (not deleted) record with the same email (any case), kind, and role key. */
+  findDuplicate(email: string, kind: SubmissionKind, roleKey?: string): Promise<Submission | undefined>;
+  /** Merge a patch into a record and return it, or undefined when there is no such id. */
+  update(id: string, patch: Partial<Submission>): Promise<Submission | undefined>;
+  readDigestDate(): Promise<string | undefined>;
+  writeDigestDate(date: string): Promise<void>;
+}
 
 function directory(): string {
   return process.env.DESK_DATA_DIR?.trim() || path.join(process.cwd(), ".data", "desk");
 }
 
-function filePath(): string {
-  return path.join(directory(), "submissions.json");
-}
+let fileStore: DeskStore | undefined;
 
-async function readDb(): Promise<Database> {
-  try {
-    const raw = await readFile(filePath(), "utf8");
-    const parsed = JSON.parse(raw) as Database;
-    return { submissions: parsed.submissions ?? [], digestDate: parsed.digestDate };
-  } catch {
-    return { submissions: [] };
-  }
-}
-
-async function writeDb(db: Database): Promise<void> {
-  await mkdir(directory(), { recursive: true });
-  await writeFile(filePath(), JSON.stringify(db), "utf8");
+/** The store in use. The file adapter is the only one so far. */
+export function getDeskStore(): DeskStore {
+  fileStore ??= createFileStore(directory);
+  return fileStore;
 }
 
 export function newSubmissionId(): string {
   return `BW-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export async function listSubmissions(): Promise<Submission[]> {
-  const db = await readDb();
-  return db.submissions;
+export function listSubmissions(): Promise<Submission[]> {
+  return getDeskStore().list();
 }
 
-export async function saveSubmission(entry: Submission): Promise<void> {
-  const db = await readDb();
-  db.submissions.push(entry);
-  await writeDb(db);
+export function saveSubmission(entry: Submission): Promise<void> {
+  return getDeskStore().save(entry);
 }
 
-export async function findDuplicate(email: string, kind: SubmissionKind, roleKey?: string): Promise<Submission | undefined> {
-  const db = await readDb();
-  return db.submissions.find(
-    (item) =>
-      item.email.toLowerCase() === email.toLowerCase() &&
-      item.kind === kind &&
-      item.roleKey === roleKey &&
-      item.status !== "deleted",
-  );
+export function findDuplicate(
+  email: string,
+  kind: SubmissionKind,
+  roleKey?: string,
+): Promise<Submission | undefined> {
+  return getDeskStore().findDuplicate(email, kind, roleKey);
 }
 
-export async function updateSubmission(id: string, patch: Partial<Submission>): Promise<Submission | undefined> {
-  const db = await readDb();
-  const current = db.submissions.find((item) => item.id === id);
-  if (!current) return undefined;
-  Object.assign(current, patch);
-  await writeDb(db);
-  return current;
+export function updateSubmission(id: string, patch: Partial<Submission>): Promise<Submission | undefined> {
+  return getDeskStore().update(id, patch);
 }
 
-export async function readDigestDate(): Promise<string | undefined> {
-  return (await readDb()).digestDate;
+export function readDigestDate(): Promise<string | undefined> {
+  return getDeskStore().readDigestDate();
 }
 
-export async function writeDigestDate(date: string): Promise<void> {
-  const db = await readDb();
-  db.digestDate = date;
-  await writeDb(db);
+export function writeDigestDate(date: string): Promise<void> {
+  return getDeskStore().writeDigestDate(date);
 }
 
 export function canIntroduce(entry: Pick<Submission, "status" | "rightToWork">): boolean {
