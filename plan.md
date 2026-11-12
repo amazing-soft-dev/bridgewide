@@ -89,7 +89,7 @@ Tokens in Tailwind (`@theme` in `globals.css`), sampled to evoke the reference:
 /engineers            Candidate path (free, confidential), CV form
 /roles                Open engineering roles
 /roles/[slug]         Role detail — region, salary, engagement
-/regions              Four regions (replaces Staffora's six industries)
+/regions              Five regions: usa, canada, latam, europe, asia (replaces Staffora's six industries)
 /regions/[region]     usa | canada | latam | europe
 /about                The desk and consultants
 /salary-guide         Bands by region for backend, frontend, data, cloud,
@@ -99,7 +99,7 @@ Tokens in Tailwind (`@theme` in `globals.css`), sampled to evoke the reference:
 /insights             Short articles
 /insights/[slug]      Single article
 /contact              Brief form
-/privacy  /terms      Short placeholder legal pages (labeled not legal advice)
+/privacy  /terms      Privacy notice and terms; noindex until a lawyer has reviewed them
 ```
 
 Dynamic routes (`[slug]`, `[region]`) use `generateStaticParams` so they
