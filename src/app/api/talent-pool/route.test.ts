@@ -1,6 +1,3 @@
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resetRateLimit } from "@/lib/rate-limit";
 
@@ -27,7 +24,6 @@ describe("POST /api/talent-pool", () => {
   beforeEach(() => {
     sendFormEmail.mockClear();
     resetRateLimit();
-    process.env.DESK_DATA_DIR = mkdtempSync(path.join(tmpdir(), "desk-"));
   });
 
   it("rejects a bad file and missing consent", async () => {
@@ -56,6 +52,6 @@ function poolRequest(values: Record<string, string>, filename = "cv.pdf"): Reque
   for (const [key, value] of Object.entries(values)) {
     if (value) form.set(key, value);
   }
-  form.set("file", new File([new Uint8Array(24)], filename, { type: filename.endsWith(".pdf") ? "application/pdf" : "text/plain" }));
+  form.set("file", new File([new TextEncoder().encode("%PDF-1.4 %%EOF")], filename, { type: filename.endsWith(".pdf") ? "application/pdf" : "text/plain" }));
   return new Request("https://www.bridgewide.org/api/talent-pool", { method: "POST", body: form });
 }

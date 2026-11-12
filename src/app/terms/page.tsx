@@ -2,6 +2,7 @@ import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
 import { Prose } from "@/components/pages/Prose";
 import { pageMetadata } from "@/components/pages/metadata";
+import { disclosures } from "@/content/disclosures";
 import { fees } from "@/content/site";
 
 export const metadata = pageMetadata({
@@ -31,6 +32,15 @@ export default function TermsPage() {
           </p>
         </Prose>
       </PageSection>
+      {disclosures.map((item) => (
+        <PageSection key={item.id} id={item.id} label="Terms" title={item.title}>
+          <Prose>
+            {item.paragraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </Prose>
+        </PageSection>
+      ))}
     </>
   );
 }

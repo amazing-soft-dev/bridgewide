@@ -12,6 +12,7 @@ import { emailField, fieldErrors, limits, optionalText, rightToWorkChoices, righ
 import { sla } from "@/content/sla";
 import { consultantFor } from "@/lib/role-desk";
 import { formsLive } from "@/lib/forms-live";
+import { focusFirstInvalid } from "@/hooks/use-form-submit";
 
 type Errors = Partial<Record<"name" | "email" | "phone" | "file" | "rightToWork", string>>;
 
@@ -55,6 +56,7 @@ export function RoleApply({
       setErrors(nextErrors);
       setServerError("");
       setStatus("idle");
+      focusFirstInvalid(form);
       return;
     }
 

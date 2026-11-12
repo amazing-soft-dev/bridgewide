@@ -6,6 +6,54 @@ Sources: the repo at `origin/dev` (`a0336d0`, merge of PR #260), the uncommitted
 
 ---
 
+## Status (updated 2026-11-12, after Waves 0 to 2)
+
+**The design changed: nothing is stored.** On 2026-11-12 the owner decided every form goes straight to email and there is no database (see `docs/decisions/email-only.md`). That removes or replaces everything below that depended on a store.
+
+### What shipped
+
+| Area | Issues |
+| --- | --- |
+| Repair and process | #264 restore after #262; #266 release label holds `dev` into `main`; #267 LF endings; #268 plan and roadmap; #269 safe roadmap script |
+| Listings | #271 per-role close dates; #272 open counts at render time; #273 five-minute revalidation; #274 closed roles noindex and out of the sitemap; #275 digest failure is logged; #276 close-boundary tests |
+| Email-only | #308 remove the store, status workflow, retention cron, and Neon driver; #322 retry a failed send |
+| Spam and uploads | #313 Cloudflare Turnstile; #319 CV content check; #321 413 before reading a big body |
+| Security and errors | #314 security.txt; #317 security headers; #325 404, error, and global error pages; #331 env check at start |
+| Content and legal drafts | #309 country labels; #327 privacy notice; #329 agency, equal-opportunity, accommodation, and AI-training disclosures |
+| Forms | #333 focus the first invalid field |
+
+### Removed or replaced by the email-only decision
+
+| Item | Now |
+| --- | --- |
+| C1 to C3, C5, C10, C11, D2 (store, Postgres, file adapter, anonymize, digest date, guarantee from record) | Built, then removed in #308. Replaced by `docs/decisions/email-only.md` |
+| C6 shared rate limit | Not possible without a store. Turnstile (C7) is the defence; the per-instance limit stays as a speed bump |
+| C8 mail outbox | Replaced by an inline retry (#322) |
+| C9 duplicate rule | Dropped: no records to compare |
+| C4 CV storage | Dropped earlier: the CV is an attachment only |
+| D1, D3, 5.x desk workflow, status mail, 12-week guarantee clock | Dropped: the desk works from the inbox |
+| C10 retention job | Now a mailbox retention policy, stated in the privacy notice. **The desk must set the rule in its mail system** |
+
+### Still open
+
+| Item | Waiting on |
+| --- | --- |
+| B7 Asia notice period and client name | The values for the two Asia roles, and each client's agreement to be named |
+| B1 real close dates | Each role's date (roles stay open until then) |
+| B8, E9 pay-basis wording and pay transparency | Counsel per market |
+| F1 stat footnotes | The period and the counting rule for 186, 94%, 9 and 11 |
+| F2 permissions log | Whether clients and consultants agreed in writing |
+| F3 named-client case study | Client, quote, one measured result, permission |
+| F5 salary-guide method | Sample size and collection dates |
+| E1 market matrix | The legal firm's name and contact |
+| I1 error monitoring, I4 cron health | An account (for example Sentry) and where to alert |
+| C12 SPF, DKIM, DMARC | DNS access for bridgewide.org |
+| C14 static export | A decision to keep or drop the GitHub Pages build |
+| H, J tests and release checks | More browser tests; one real send from each contact form after deploy |
+| Turnstile keys, `CRON_SECRET`, mailbox retention rule | Set in Vercel and the mail system |
+
+---
+
 ## 1. Reality check (read this first)
 
 Three facts change what "the plan" means.

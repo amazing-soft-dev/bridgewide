@@ -1,6 +1,3 @@
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resetRateLimit } from "@/lib/rate-limit";
 
@@ -30,7 +27,6 @@ describe("POST /api/hire", () => {
   beforeEach(() => {
     sendFormEmail.mockClear();
     resetRateLimit();
-    process.env.DESK_DATA_DIR = mkdtempSync(path.join(tmpdir(), "desk-"));
   });
 
   it("rejects a brief with no stack", async () => {
@@ -50,15 +46,6 @@ describe("POST /api/hire", () => {
     expect(desk?.text).toContain("Stack: Go");
     expect(desk?.text).toContain("Band: $210,000");
     expect(desk?.text).toContain("Regions:");
-  });
-
-  it("saves the engagement on the record, for the guarantee clock", async () => {
-    const { POST } = await import("./route");
-    const { listSubmissions } = await import("@/lib/desk-store");
-    expect((await POST(jsonRequest(brief))).status).toBe(200);
-    expect((await POST(jsonRequest({ ...brief, email: "bo@example.com", engagement: "Contract", duration: "6 months" }))).status).toBe(200);
-    const records = await listSubmissions();
-    expect(records.map((record) => record.engagement)).toEqual(["Permanent", "Contract"]);
   });
 
   it("does not send when the honeypot is filled", async () => {

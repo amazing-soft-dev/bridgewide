@@ -1,28 +1,21 @@
 import { sla } from "@/content/sla";
-import {
-  DuplicateSubmissionError,
-  findDuplicate,
-  newSubmissionId,
-  saveSubmission,
-  type Submission,
-  type SubmissionKind,
-} from "@/lib/desk-store";
 import { sendFormEmail, type MailResult } from "@/lib/mail";
 import { allowRequest } from "@/lib/rate-limit";
-import { statusBody, statusSubjects } from "@/lib/status-mail";
+import { verifyHuman } from "@/lib/turnstile";
+
+/** Which form a submission came from. */
+export type IntakeKind = "hire" | "cv" | "contact" | "salary-guide" | "talent-pool" | "ai-apply" | "partner";
 
 export type IntakeInput = {
-  kind: SubmissionKind;
+  kind: IntakeKind;
   email: string;
-  roleKey?: string;
-  engagement?: "Permanent" | "Contract";
   subject: string;
+  /** Every field of the form, as plain lines. The desk email carries exactly this. */
   text: string;
   ip: string;
   visitorSla: string;
-  rightToWork?: string;
-  consent?: { version: string; at: string };
-  feeAcknowledged?: string;
+  /** The Turnstile token from the form. Ignored when TURNSTILE_SECRET_KEY is not set. */
+  humanToken?: string;
   filename?: string;
   contentType?: string;
   fileBase64?: string;
@@ -32,42 +25,27 @@ export function clientIp(request: Request): string {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
 }
 
-export type IntakeResult = MailResult & { id?: string; duplicate?: boolean };
+export type IntakeResult = MailResult & { id?: string };
 
+/** A short reference both emails quote, so the desk and the visitor can name the same message. */
+export function newReference(): string {
+  return `BW-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * Nothing is stored. A submission becomes two emails: one to the desk with the
+ * whole message (and the CV, if there is one, as an attachment), and a short
+ * confirmation to the visitor.
+ */
 export async function deliverIntake(input: IntakeInput): Promise<IntakeResult> {
   if (!allowRequest(`${input.ip}:${input.kind}`)) {
     return { ok: false, error: "Too many requests. Try again shortly.", status: 429 };
   }
 
-  const existing = await findDuplicate(input.email, input.kind, input.roleKey);
-  if (existing) return { ok: true, id: existing.id, duplicate: true };
+  const human = await verifyHuman(input.humanToken, input.ip);
+  if (!human.ok) return human;
 
-  const id = newSubmissionId();
-  const entry: Submission = {
-    id,
-    kind: input.kind,
-    at: new Date().toISOString(),
-    status: "received",
-    email: input.email,
-    roleKey: input.roleKey,
-    engagement: input.engagement,
-    rightToWork: input.rightToWork,
-    consent: input.consent,
-    feeAcknowledged: input.feeAcknowledged,
-    // The CV goes to the desk email only. A record keeps no file data.
-    body: input.text,
-  };
-  try {
-    await saveSubmission(entry);
-  } catch (error) {
-    // Two posts from one person can pass the check above together. The store's
-    // unique rule lets only one in; the other gets that record's id.
-    if (error instanceof DuplicateSubmissionError) {
-      const winner = await findDuplicate(input.email, input.kind, input.roleKey);
-      if (winner) return { ok: true, id: winner.id, duplicate: true };
-    }
-    throw error;
-  }
+  const id = newReference();
 
   const desk = await sendFormEmail({
     subject: input.subject,
@@ -87,8 +65,12 @@ export async function deliverIntake(input: IntakeInput): Promise<IntakeResult> {
 
   const visitor = await sendFormEmail({
     to: input.email,
-    subject: `${statusSubjects.received} (${id})`,
-    text: [statusBody("received", id), input.visitorSla || sla.employer].join("\n\n"),
+    subject: `BridgeWide received your note (${id})`,
+    text: [
+      `Reference: ${id}`,
+      "We have it. A person will reply within the published desk hours.",
+      input.visitorSla || sla.employer,
+    ].join("\n\n"),
   });
   if (!visitor.ok) return { ...visitor, id };
   return { ok: true, id };

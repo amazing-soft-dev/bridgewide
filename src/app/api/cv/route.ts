@@ -1,5 +1,5 @@
 import { AI_CONSENT_VERSION, sla } from "@/content/sla";
-import { inspectCv, MAX_CV_BYTES } from "@/lib/cv-file";
+import { declaredTooLarge, inspectCv, inspectCvContent, MAX_CV_BYTES } from "@/lib/cv-file";
 import {
   cvTrackField,
   cvTrackLabel,
@@ -13,11 +13,16 @@ import {
   textField,
 } from "@/lib/form";
 import { clientIp, deliverIntake } from "@/lib/intake";
+import { tokenFromForm } from "@/lib/turnstile";
 import { jsonResult } from "@/lib/mail";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  if (declaredTooLarge(request)) {
+    return jsonResult({ ok: false, error: "CV must be 5 MB or smaller.", status: 413 });
+  }
+
   let form: FormData;
   try {
     form = await request.formData();
@@ -71,6 +76,8 @@ export async function POST(request: Request) {
   if (bytes.byteLength > MAX_CV_BYTES) {
     return jsonResult({ ok: false, error: "CV must be 5 MB or smaller.", status: 400 });
   }
+  const content = inspectCvContent(checked.filename, bytes);
+  if (!content.ok) return jsonResult({ ok: false, error: content.error, status: 400 });
 
   const seatLine = seat.value && ref.value ? `${seat.value} (${ref.value})` : seat.value;
   const trackLine = cvTrackLabel(track.value);
@@ -89,16 +96,11 @@ export async function POST(request: Request) {
   const result = await deliverIntake({
     kind: "cv",
     email: email.value,
-    roleKey: seat.value || region.value,
     subject: seatLine ? `CV from ${name.value} — ${seatLine}` : `CV from ${name.value} — ${trackLine}`,
     text: lines.join("\n"),
     ip: clientIp(request),
+    humanToken: tokenFromForm(form),
     visitorSla: track.value === "ai-training" ? sla.training : sla.role,
-    rightToWork: work.value,
-    consent:
-      track.value === "ai-training"
-        ? { version: AI_CONSENT_VERSION, at: new Date().toISOString() }
-        : undefined,
     filename: checked.filename,
     contentType: checked.contentType,
     fileBase64: bytes.toString("base64"),

@@ -1,5 +1,5 @@
 import type { Role } from "@/content/site";
-import { isRoleOpen, isWeekdayPacific, pacificDate, type Closeable } from "@/lib/desk-clock";
+import { isRoleOpen, isWeekdayPacific, type Closeable } from "@/lib/desk-clock";
 
 export function digestText(list: readonly (Role & Closeable)[], now = new Date()): string {
   const open = list.filter((role) => isRoleOpen(role, now));
@@ -14,7 +14,7 @@ export function digestText(list: readonly (Role & Closeable)[], now = new Date()
   ].join("\n");
 }
 
-export function shouldSendDigest(lastDate: string | undefined, now = new Date()): boolean {
-  if (!isWeekdayPacific(now)) return false;
-  return lastDate !== pacificDate(now);
+/** The digest goes out on Pacific weekdays. The cron runs once a day, and nothing is stored. */
+export function isDigestDay(now = new Date()): boolean {
+  return isWeekdayPacific(now);
 }

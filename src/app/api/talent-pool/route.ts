@@ -1,5 +1,5 @@
 import { TALENT_CONSENT_VERSION, sla } from "@/content/sla";
-import { inspectCv, MAX_CV_BYTES } from "@/lib/cv-file";
+import { declaredTooLarge, inspectCv, inspectCvContent, MAX_CV_BYTES } from "@/lib/cv-file";
 import {
   emailField,
   honeypotTripped,
@@ -9,11 +9,16 @@ import {
   textField,
 } from "@/lib/form";
 import { clientIp, deliverIntake } from "@/lib/intake";
+import { tokenFromForm } from "@/lib/turnstile";
 import { jsonResult } from "@/lib/mail";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  if (declaredTooLarge(request)) {
+    return jsonResult({ ok: false, error: "CV must be 5 MB or smaller.", status: 413 });
+  }
+
   let form: FormData;
   try {
     form = await request.formData();
@@ -56,17 +61,18 @@ export async function POST(request: Request) {
   if (bytes.byteLength > MAX_CV_BYTES) {
     return jsonResult({ ok: false, error: "CV must be 5 MB or smaller.", status: 400 });
   }
+  const content = inspectCvContent(checked.filename, bytes);
+  if (!content.ok) return jsonResult({ ok: false, error: content.error, status: 400 });
 
   const result = await deliverIntake({
     kind: "talent-pool",
     email: email.value,
-    roleKey: region.value,
     subject: `Talent pool · ${regionName(region.value)} from ${name.value}`,
     ip: clientIp(request),
+    humanToken: tokenFromForm(form),
     visitorSla: sla.role,
     filename: checked.filename,
     fileBase64: bytes.toString("base64"),
-    consent: { version: TALENT_CONSENT_VERSION, at: new Date().toISOString() },
     text: [
       `Name: ${name.value}`,
       `Email: ${email.value}`,

@@ -1,80 +1,92 @@
-import { mkdtempSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { listSubmissions } from "@/lib/desk-store";
-import { deliverIntake } from "@/lib/intake";
+import { deliverIntake, newReference } from "@/lib/intake";
 import { resetRateLimit } from "@/lib/rate-limit";
+
+type Mail = { to?: string; subject: string; text: string; replyTo?: string; attachments?: unknown };
 
 const sendFormEmail = vi.fn(async (..._args: unknown[]) => ({ ok: true as const }));
 
 vi.mock("@/lib/mail", () => ({ sendFormEmail: (...args: unknown[]) => sendFormEmail(...args) }));
 
-let dir: string;
-
 beforeEach(() => {
   resetRateLimit();
-  sendFormEmail.mockClear();
-  dir = mkdtempSync(path.join(tmpdir(), "intake-"));
-  process.env.DESK_DATA_DIR = dir;
+  sendFormEmail.mockReset();
+  sendFormEmail.mockResolvedValue({ ok: true });
 });
 
-const cv = {
-  kind: "cv" as const,
+const base = {
+  kind: "contact" as const,
   email: "ada@example.com",
-  subject: "CV from Ada",
-  text: "Name: Ada\nFile: cv.pdf",
+  subject: "Contact · Press from Ada",
+  text: "Name: Ada\nMessage: Hello",
   ip: "203.0.113.20",
   visitorSla: "A person answers.",
-  filename: "cv.pdf",
-  contentType: "application/pdf",
-  fileBase64: "JVBERi0xLjQK",
 };
 
-describe("a CV submission", () => {
-  it("is emailed to the desk with the file attached", async () => {
-    const result = await deliverIntake(cv);
+const mail = (index: number) => sendFormEmail.mock.calls[index][0] as Mail;
+
+describe("deliverIntake", () => {
+  it("sends the desk the whole message with a reference, replying to the visitor", async () => {
+    const result = await deliverIntake(base);
     expect(result.ok).toBe(true);
-    const deskMail = sendFormEmail.mock.calls[0][0] as { attachments?: { filename: string; content: string }[] };
-    expect(deskMail.attachments).toEqual([
+    const desk = mail(0);
+    expect(desk.to).toBeUndefined();
+    expect(desk.subject).toBe("Contact · Press from Ada");
+    expect(desk.replyTo).toBe("ada@example.com");
+    expect(desk.text).toMatch(/^Reference: BW-[a-z0-9-]+\nName: Ada\nMessage: Hello$/);
+  });
+
+  it("sends the visitor a confirmation with the same reference", async () => {
+    const result = await deliverIntake(base);
+    const reference = /Reference: (BW-[a-z0-9-]+)/.exec(mail(0).text)![1];
+    expect(result).toEqual({ ok: true, id: reference });
+    const visitor = mail(1);
+    expect(visitor.to).toBe("ada@example.com");
+    expect(visitor.subject).toBe(`BridgeWide received your note (${reference})`);
+    expect(visitor.text).toContain(`Reference: ${reference}`);
+    expect(visitor.text).toContain("A person answers.");
+    expect(visitor.text).not.toContain("Message: Hello");
+  });
+
+  it("attaches a CV to the desk email only", async () => {
+    await deliverIntake({ ...base, kind: "cv", filename: "cv.pdf", contentType: "application/pdf", fileBase64: "JVBERi0xLjQK" });
+    expect(mail(0).attachments).toEqual([
       { filename: "cv.pdf", content: "JVBERi0xLjQK", contentType: "application/pdf" },
     ]);
+    expect(mail(1).attachments).toBeUndefined();
   });
 
-  it("is saved with every field of the message but no file data", async () => {
-    await deliverIntake(cv);
-    const [record] = await listSubmissions();
-    expect(record.body).toBe("Name: Ada\nFile: cv.pdf");
-    expect(record).not.toHaveProperty("fileBase64");
-    expect(record).not.toHaveProperty("filename");
-    const onDisk = readFileSync(path.join(dir, "submissions.json"), "utf8");
-    expect(onDisk).not.toContain("JVBERi0xLjQK");
+  it("does not send the visitor a confirmation when the desk email fails", async () => {
+    sendFormEmail.mockResolvedValueOnce({ ok: false, error: "down", status: 502 } as never);
+    const result = await deliverIntake(base);
+    expect(result).toMatchObject({ ok: false, status: 502 });
+    expect(sendFormEmail).toHaveBeenCalledTimes(1);
   });
 
-  it("does not attach anything to the visitor's confirmation", async () => {
-    await deliverIntake(cv);
-    const visitorMail = sendFormEmail.mock.calls[1][0] as { to?: string; attachments?: unknown };
-    expect(visitorMail.to).toBe("ada@example.com");
-    expect(visitorMail.attachments).toBeUndefined();
+  it("still reports success with a reference when only the confirmation fails", async () => {
+    sendFormEmail.mockResolvedValueOnce({ ok: true });
+    sendFormEmail.mockResolvedValueOnce({ ok: false, error: "bounce", status: 502 } as never);
+    const result = await deliverIntake(base);
+    expect(result.ok).toBe(false);
+    expect(result.id).toMatch(/^BW-/);
+  });
+
+  it("answers 429 after a burst from one address and keeps another address working", async () => {
+    for (let i = 0; i < 8; i += 1) expect((await deliverIntake(base)).ok).toBe(true);
+    expect(await deliverIntake(base)).toMatchObject({ ok: false, status: 429 });
+    expect((await deliverIntake({ ...base, ip: "203.0.113.99" })).ok).toBe(true);
+  });
+
+  it("does not collapse two posts from one person: nothing is stored to compare", async () => {
+    const first = await deliverIntake(base);
+    const second = await deliverIntake(base);
+    expect(first.id).not.toBe(second.id);
+    expect(sendFormEmail).toHaveBeenCalledTimes(4);
   });
 });
 
-describe("two posts from one person at the same moment", () => {
-  it("both get the same reference and only one record is saved", async () => {
-    const { getDeskStore } = await import("@/lib/desk-store");
-    // Let both calls pass the duplicate check, as two simultaneous requests would.
-    vi.spyOn(getDeskStore(), "findDuplicate")
-      .mockResolvedValueOnce(undefined) // first request: nothing yet
-      .mockResolvedValueOnce(undefined); // second request: check ran before the first was saved
-
-    const first = await deliverIntake({ ...cv, kind: "contact", roleKey: "Press", fileBase64: undefined, filename: undefined });
-    const second = await deliverIntake({ ...cv, kind: "contact", roleKey: "Press", fileBase64: undefined, filename: undefined });
-
-    expect(first.ok && second.ok).toBe(true);
-    if (first.ok && second.ok) {
-      expect(second.id).toBe(first.id);
-      expect(second.duplicate).toBe(true);
-    }
-    expect(await listSubmissions()).toHaveLength(1);
+describe("newReference", () => {
+  it("makes a different reference each time", () => {
+    expect(newReference()).not.toBe(newReference());
   });
 });

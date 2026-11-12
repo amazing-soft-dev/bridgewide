@@ -11,6 +11,7 @@ import {
   textField,
 } from "@/lib/form";
 import { clientIp, deliverIntake } from "@/lib/intake";
+import { tokenFromJson } from "@/lib/turnstile";
 import { jsonResult } from "@/lib/mail";
 
 export const runtime = "nodejs";
@@ -87,12 +88,10 @@ export async function POST(request: Request) {
   const result = await deliverIntake({
     kind: "hire",
     email: email.value,
-    roleKey: roleTitle.value,
-    engagement: engagement.value === "Contract" ? "Contract" : "Permanent",
     subject: `Hire brief: ${roleTitle.value} at ${company.value}`,
     ip: clientIp(request),
+    humanToken: tokenFromJson(payload),
     visitorSla: sla.employer,
-    feeAcknowledged: feeLine,
     text: [
       `Name: ${name.value}`,
       `Email: ${email.value}`,

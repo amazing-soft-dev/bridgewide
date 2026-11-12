@@ -1,6 +1,7 @@
 import { sla } from "@/content/sla";
 import { emailField, honeypotTripped, isRecord, limits, textField, topicField } from "@/lib/form";
 import { clientIp, deliverIntake } from "@/lib/intake";
+import { tokenFromJson } from "@/lib/turnstile";
 import { jsonResult } from "@/lib/mail";
 
 export const runtime = "nodejs";
@@ -38,10 +39,10 @@ export async function POST(request: Request) {
   const result = await deliverIntake({
     kind: "contact",
     email: email.value,
-    roleKey: topic.value,
     subject,
     text,
     ip: clientIp(request),
+    humanToken: tokenFromJson(payload),
     visitorSla: sla.employer,
   });
   if (result.ok) return Response.json({ ok: true, id: result.id });

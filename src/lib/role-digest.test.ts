@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Role } from "@/content/site";
-import { digestText, shouldSendDigest } from "@/lib/role-digest";
+import { digestText, isDigestDay } from "@/lib/role-digest";
 
 const base = {
   boardTitle: "Role",
@@ -37,9 +37,11 @@ describe("role digest", () => {
     expect(text).not.toMatch(/@/);
   });
 
-  it("sends once per Pacific weekday", () => {
-    const thursday = new Date("2026-11-12T18:00:00Z");
-    expect(shouldSendDigest(undefined, thursday)).toBe(true);
-    expect(shouldSendDigest("2026-11-12", thursday)).toBe(false);
+  it("goes out on Pacific weekdays only", () => {
+    expect(isDigestDay(new Date("2026-11-12T18:00:00Z"))).toBe(true); // Thursday
+    expect(isDigestDay(new Date("2026-11-14T18:00:00Z"))).toBe(false); // Saturday
+    expect(isDigestDay(new Date("2026-11-15T18:00:00Z"))).toBe(false); // Sunday
+    // 23:00 Sunday in Pacific is already Monday in UTC, but still Sunday at the desk.
+    expect(isDigestDay(new Date("2026-11-16T07:00:00Z"))).toBe(false);
   });
 });
