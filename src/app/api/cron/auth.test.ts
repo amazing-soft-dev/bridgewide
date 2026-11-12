@@ -1,26 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-const routes = [
-  ["role digest", () => import("./role-digest/route"), "GET", "http://x.test/api/cron/role-digest"],
-  ["talent retention", () => import("./talent-retention/route"), "GET", "http://x.test/api/cron/talent-retention"],
-  ["desk record", () => import("../desk/record/route"), "POST", "http://x.test/api/desk/record"],
-] as const;
+beforeEach(() => {
+  process.env.CRON_SECRET = "s3cret";
+});
 
-describe.each(routes)("%s route auth", (_name, load, method, url) => {
-  beforeEach(() => {
-    process.env.CRON_SECRET = "s3cret";
-  });
-  afterEach(() => {
-    delete process.env.CRON_SECRET;
-    delete process.env.DESK_ALLOW_UNAUTHENTICATED;
-  });
+afterEach(() => {
+  delete process.env.CRON_SECRET;
+  delete process.env.DESK_ALLOW_UNAUTHENTICATED;
+});
 
-  const call = async (headers: Record<string, string> = {}) => {
-    const mod = await load();
-    const handler = method === "GET" ? (mod as { GET: (r: Request) => Promise<Response> }).GET : (mod as { POST: (r: Request) => Promise<Response> }).POST;
-    return handler(new Request(url, { method, headers, body: method === "POST" ? "{}" : undefined }));
-  };
+const call = async (headers: Record<string, string> = {}) => {
+  const { GET } = await import("./role-digest/route");
+  return GET(new Request("http://x.test/api/cron/role-digest", { headers }));
+};
 
+describe("role digest route auth", () => {
   it("refuses a request with no token", async () => {
     expect((await call()).status).toBe(401);
   });

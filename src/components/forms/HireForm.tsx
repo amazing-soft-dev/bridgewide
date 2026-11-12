@@ -17,7 +17,7 @@ import {
   textField,
 } from "@/lib/form";
 import { formsLive } from "@/lib/forms-live";
-import { scopingCallUrl } from "@/lib/status-mail";
+import { scopingCallUrl } from "@/lib/scoping-call";
 
 type HireErrors = Partial<
   Record<
