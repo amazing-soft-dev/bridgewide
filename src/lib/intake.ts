@@ -51,9 +51,8 @@ export async function deliverIntake(input: IntakeInput): Promise<IntakeResult> {
     rightToWork: input.rightToWork,
     consent: input.consent,
     feeAcknowledged: input.feeAcknowledged,
+    // The CV goes to the desk email only. A record keeps no file data.
     body: input.text,
-    filename: input.filename,
-    fileBase64: input.fileBase64,
   };
   await saveSubmission(entry);
 
