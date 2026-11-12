@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import imageSizes from "./src/lib/image-sizes.json";
+import { securityHeaders } from "./src/lib/security-headers";
 
 /**
  * Two build targets:
@@ -27,6 +28,12 @@ const nextConfig: NextConfig = {
     // `motion/react` is a barrel; import only the members each file uses.
     optimizePackageImports: ["motion"],
   },
+  // The static export has no server, so only the server build can send headers.
+  ...(!staticExport && {
+    async headers() {
+      return [{ source: "/:path*", headers: [...securityHeaders] }];
+    },
+  }),
   ...(!staticExport && {
     images: {
       // AVIF first, WebP for browsers without it. One quality keeps the
