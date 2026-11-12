@@ -58,6 +58,24 @@ describe("role digest cron", () => {
     expect(sendFormEmail).toHaveBeenCalledTimes(1);
   });
 
+  it("still sends once a day after the server restarts", async () => {
+    sendFormEmail.mockResolvedValue({ ok: true });
+    expect(await (await run()).json()).toEqual({ ok: true, sent: true });
+
+    // A new server instance loads every module again and shares only the store.
+    vi.resetModules();
+    expect(await (await run()).json()).toEqual({ ok: true, sent: false });
+    expect(sendFormEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends again the next weekday", async () => {
+    sendFormEmail.mockResolvedValue({ ok: true });
+    expect(await (await run()).json()).toEqual({ ok: true, sent: true });
+    process.env.ROLE_CLOCK = "2026-11-13T16:00:00.000Z"; // Friday
+    expect(await (await run()).json()).toEqual({ ok: true, sent: true });
+    expect(sendFormEmail).toHaveBeenCalledTimes(2);
+  });
+
   it("skips weekends", async () => {
     process.env.ROLE_CLOCK = "2026-11-14T16:00:00.000Z"; // Saturday
     expect(await (await run()).json()).toEqual({ ok: true, sent: false });
