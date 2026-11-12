@@ -41,6 +41,9 @@ export const schemaStatements: readonly string[] = [
   )`,
 ];
 
+const engagement = (value: unknown): Submission["engagement"] =>
+  value === "Permanent" || value === "Contract" ? value : undefined;
+
 const text = (value: unknown): string | undefined =>
   value === null || value === undefined ? undefined : String(value);
 
@@ -63,6 +66,7 @@ export function rowToSubmission(row: Record<string, unknown>): Submission {
     status: String(row.status) as SubmissionStatus,
     email: String(row.email),
     roleKey: text(row.role_key),
+    engagement: engagement(row.engagement),
     rightToWork: text(row.right_to_work),
     consent: consentVersion && consentAt ? { version: consentVersion, at: consentAt } : undefined,
     feeAcknowledged: text(row.fee_acknowledged),
@@ -78,6 +82,7 @@ const patchColumns: Partial<Record<keyof Submission, string>> = {
   status: "status",
   email: "email",
   roleKey: "role_key",
+  engagement: "engagement",
   rightToWork: "right_to_work",
   feeAcknowledged: "fee_acknowledged",
   startDate: "start_date",
@@ -110,9 +115,9 @@ export function createPostgresStore(sql: SqlClient): DeskStore {
       await ensureSchema();
       const inserted = await sql(
         `insert into submissions
-           (id, kind, at, status, email, role_key, right_to_work, consent_version, consent_at,
+           (id, kind, at, status, email, role_key, engagement, right_to_work, consent_version, consent_at,
             fee_acknowledged, start_date, guarantee_end, reopen_used, body)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
          on conflict do nothing
          returning id`,
         [
@@ -122,6 +127,7 @@ export function createPostgresStore(sql: SqlClient): DeskStore {
           entry.status,
           entry.email,
           entry.roleKey ?? null,
+          entry.engagement ?? null,
           entry.rightToWork ?? null,
           entry.consent?.version ?? null,
           entry.consent?.at ?? null,
