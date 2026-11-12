@@ -41,6 +41,8 @@ jobs:
         run: npm run lint
       - name: Type check
         run: npm run typecheck
+      - name: Test
+        run: npm test
       - name: Check photos are used once
         run: npm run check:images
 
@@ -103,9 +105,24 @@ jobs:
             echo "::error::index.html references /bridgewide/_next/ but the site is served from the domain root"; exit 1
           fi
 
+  e2e:
+    name: Browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Contact forms and closed listings
+        run: npm run test:e2e
+
   ci-passed:
     name: CI passed
-    needs: [quality, build]
+    needs: [quality, build, e2e]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -122,11 +139,12 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
           QUALITY: ${{ needs.quality.result }}
           BUILD: ${{ needs.build.result }}
+          E2E: ${{ needs.e2e.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           icon() { case "$1" in success) echo "✅";; skipped) echo "⏭️";; cancelled) echo "⚪";; *) echo "❌";; esac; }
-          if [ "$QUALITY" = success ] && [ "$BUILD" = success ]; then
+          if [ "$QUALITY" = success ] && [ "$BUILD" = success ] && [ "$E2E" = success ]; then
             verdict="✅ **All checks passed.** This PR will merge automatically."
           else
             verdict="❌ **Checks failed.** Push a fix to this branch; the PR updates and CI runs again."
@@ -145,6 +163,7 @@ jobs:
           | --- | --- |
           | Lint and type check | $(icon "$QUALITY") $QUALITY |
           | Builds (server, static) | $(icon "$BUILD") $BUILD |
+          | Browser | $(icon "$E2E") $E2E |
 
           <details><summary>Changed files ($count)</summary>
 
@@ -164,7 +183,7 @@ jobs:
             gh pr comment "$PR" --repo "$REPO" --body "$body"
           fi
       - name: Fail unless every job succeeded
-        if: needs.quality.result != 'success' || needs.build.result != 'success'
+        if: needs.quality.result != 'success' || needs.build.result != 'success' || needs.e2e.result != 'success'
         run: |
-          echo "::error::Lint and type check: ${{ needs.quality.result }}, builds: ${{ needs.build.result }}"
+          echo "::error::Lint and type check: ${{ needs.quality.result }}, builds: ${{ needs.build.result }}, browser: ${{ needs.e2e.result }}"
           exit 1
