@@ -9,6 +9,7 @@ import { SplitWords } from "@/components/ui/SplitWords";
 import { honeypotValue, useFormSubmit } from "@/hooks/use-form-submit";
 import { salaryBands } from "@/content/site";
 import { emailField } from "@/lib/form";
+import { formsLive } from "@/lib/forms-live";
 
 const rise =
   "transition-[opacity,translate] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none";
@@ -43,6 +44,7 @@ export function FooterSignup() {
       onSubmit={onSubmit}
     >
       <Honeypot />
+      {!formsLive() ? <p className="text-sm text-cloud-soft">This copy of the site cannot send forms.</p> : null}
       <p
         className={`font-mono text-xs tracking-[0.14em] text-cloud-soft uppercase ${rise} ${hidden}`}
       >
@@ -57,7 +59,7 @@ export function FooterSignup() {
           role="status"
           className="rounded-lg border border-dashed border-brand px-4 py-3.5 font-mono text-xs tracking-[0.1em] text-cloud uppercase"
         >
-          Got it. The desk will send the guide.
+          Got it. The guide is already at /salary-guide.
         </p>
       ) : (
         <div className={`grid gap-3 ${rise} ${hidden}`}>
