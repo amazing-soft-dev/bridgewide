@@ -24,12 +24,12 @@ describe("approved content", () => {
 
   it("uses the approved country lines and close date", () => {
     expect(people.map((person) => person.focus)).toEqual([
-      "United States (USA)",
+      "United States",
       "United Kingdom (Europe)",
       "Mexico (LATAM)",
-      "Canada (Canada)",
+      "Canada",
       "Singapore (Asia)",
-      "United States (USA)",
+      "United States",
     ]);
   });
 
