@@ -52,3 +52,35 @@ describe("isRoleOpen", () => {
     expect(isRoleOpen({ closesOn: "2027-01-16" }, new Date("2026-11-12T16:00:00Z"))).toBe(true);
   });
 });
+
+describe("the 18:00 Pacific close", () => {
+  it("falls at the right UTC instant in winter, summer, and on both DST change days", () => {
+    // PST is UTC-8, PDT is UTC-7.
+    expect(pacificClose("2027-01-16")?.toISOString()).toBe("2027-01-17T02:00:00.000Z");
+    expect(pacificClose("2026-07-15")?.toISOString()).toBe("2026-07-16T01:00:00.000Z");
+    // Clocks went back on 1 November 2026: 18:00 that day is PST.
+    expect(pacificClose("2026-11-01")?.toISOString()).toBe("2026-11-02T02:00:00.000Z");
+    // Clocks go forward on 14 March 2027: 18:00 that day is PDT.
+    expect(pacificClose("2027-03-14")?.toISOString()).toBe("2027-03-15T01:00:00.000Z");
+  });
+
+  it.each(["2027-01-16", "2026-11-01", "2027-03-14", "2026-07-15"])(
+    "is open at 17:59 and closed at 18:00 and 18:01 on %s",
+    (date) => {
+      const close = pacificClose(date)!.getTime();
+      expect(isRoleOpen({ closesOn: date }, new Date(close - 60_000))).toBe(true);
+      expect(isRoleOpen({ closesOn: date }, new Date(close))).toBe(false);
+      expect(isRoleOpen({ closesOn: date }, new Date(close + 60_000))).toBe(false);
+    },
+  );
+
+  it("is open all morning on the close date, whatever the visitor's zone", () => {
+    // 09:00 Pacific on 16 January 2027 is 17:00 UTC; 09:00 in Tokyo is 00:00 UTC that day.
+    expect(isRoleOpen({ closesOn: "2027-01-16" }, new Date("2027-01-16T17:00:00Z"))).toBe(true);
+    expect(isRoleOpen({ closesOn: "2027-01-16" }, new Date("2027-01-16T00:00:00Z"))).toBe(true);
+  });
+
+  it("treats an unreadable close date as open instead of closing the role", () => {
+    expect(isRoleOpen({ closesOn: "16 January 2027" }, new Date("2030-01-01T00:00:00Z"))).toBe(true);
+  });
+});
