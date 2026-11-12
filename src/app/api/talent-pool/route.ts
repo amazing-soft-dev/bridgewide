@@ -9,6 +9,7 @@ import {
   textField,
 } from "@/lib/form";
 import { clientIp, deliverIntake } from "@/lib/intake";
+import { tokenFromForm } from "@/lib/turnstile";
 import { jsonResult } from "@/lib/mail";
 
 export const runtime = "nodejs";
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
     email: email.value,
     subject: `Talent pool · ${regionName(region.value)} from ${name.value}`,
     ip: clientIp(request),
+    humanToken: tokenFromForm(form),
     visitorSla: sla.role,
     filename: checked.filename,
     fileBase64: bytes.toString("base64"),

@@ -8,6 +8,7 @@ import {
   textField,
 } from "@/lib/form";
 import { clientIp, deliverIntake } from "@/lib/intake";
+import { tokenFromJson } from "@/lib/turnstile";
 import { jsonResult } from "@/lib/mail";
 
 export const runtime = "nodejs";
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
     email: email.value,
     subject: `AI training partner inquiry from ${company.value}`,
     ip: clientIp(request),
+    humanToken: tokenFromJson(payload),
     visitorSla: sla.training,
     text: [
       `Name: ${name.value}`,
