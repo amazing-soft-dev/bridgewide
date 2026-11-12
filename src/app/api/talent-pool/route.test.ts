@@ -52,6 +52,6 @@ function poolRequest(values: Record<string, string>, filename = "cv.pdf"): Reque
   for (const [key, value] of Object.entries(values)) {
     if (value) form.set(key, value);
   }
-  form.set("file", new File([new Uint8Array(24)], filename, { type: filename.endsWith(".pdf") ? "application/pdf" : "text/plain" }));
+  form.set("file", new File([new TextEncoder().encode("%PDF-1.4 %%EOF")], filename, { type: filename.endsWith(".pdf") ? "application/pdf" : "text/plain" }));
   return new Request("https://www.bridgewide.org/api/talent-pool", { method: "POST", body: form });
 }

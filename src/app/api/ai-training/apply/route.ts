@@ -1,5 +1,5 @@
 import { AI_CONSENT_VERSION, sla } from "@/content/sla";
-import { inspectCv, MAX_CV_BYTES } from "@/lib/cv-file";
+import { inspectCv, inspectCvContent, MAX_CV_BYTES } from "@/lib/cv-file";
 import {
   availabilityField,
   consentField,
@@ -88,6 +88,8 @@ export async function POST(request: Request) {
   if (bytes.byteLength > MAX_CV_BYTES) {
     return jsonResult({ ok: false, error: "CV must be 5 MB or smaller.", status: 400 });
   }
+  const content = inspectCvContent(checked.filename, bytes);
+  if (!content.ok) return jsonResult({ ok: false, error: content.error, status: 400 });
 
   const roleValue = form.get("role");
   const role =
