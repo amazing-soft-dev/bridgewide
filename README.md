@@ -58,14 +58,12 @@ Copy `.env.example` to `.env.local`. Never commit real keys (`.env` and `.env*.l
 
 If any of the three is missing, the form APIs return a 500 that names the missing variable.
 
-Desk records and crons:
+Crons and the scoping call:
 
 | Variable | Purpose |
 | --- | --- |
-| `DATABASE_URL` | Neon Postgres connection string for the desk records. Set it in production. With none, records go to a JSON file, which is not durable on Vercel |
-| `DESK_DATA_DIR` | Folder for that JSON file (default `.data/desk`). Local development and tests only |
-| `CRON_SECRET` | Bearer token for `/api/cron/*` and `/api/desk/record`. Required in production; with none the routes refuse every request. Vercel sends it to its cron jobs automatically |
-| `DESK_ALLOW_UNAUTHENTICATED` | Set to `1` to run those routes locally with no `CRON_SECRET`. Ignored when `NODE_ENV` is `production` |
+| `CRON_SECRET` | Bearer token for `/api/cron/*`. Required in production; with none the routes refuse every request. Vercel sends it to its cron jobs automatically |
+| `DESK_ALLOW_UNAUTHENTICATED` | Set to `1` to run the cron routes locally with no `CRON_SECRET`. Ignored when `NODE_ENV` is `production` |
 | `NEXT_PUBLIC_SCOPING_CALL_URL` | Optional. A scoping-call link shown after a complete hire brief |
 
 Site, build, and test:
@@ -80,16 +78,21 @@ Site, build, and test:
 | `ROLE_CLOCK`, `ROLE_CLOSE_DATES` | Test only. Pin the desk clock and close roles by slug or region. `ROLE_CLOSE_DATES` is ignored unless `ROLE_CLOCK` is set |
 | `NODE_ENV`, `CI`, `LOCALAPPDATA` | Set by Node, CI, and Windows. `LOCALAPPDATA` only places the Next.js cache on the system drive for `npm run dev` and `npm run build` (see `scripts/link-next-dist.mjs`) |
 
-## The desk store
+## How a submission is handled
 
-Every form is emailed to the desk and also saved as a record with an id, so the desk can answer, mark status, and keep the 12-month and guarantee clocks.
+Nothing is stored. There is no database and no record. Every form becomes two emails through Resend:
 
-- **Where it lives.** With `DATABASE_URL` set, records go to Postgres (`src/lib/desk-store-postgres.ts`; the tables are created on first use). With none, they go to a JSON file under `DESK_DATA_DIR`, which is for local work and tests. See `docs/decisions/desk-store.md` for the schema and why.
-- **What a record holds.** Every field and the full message text that was emailed, plus status, consent, right to work, and the guarantee dates. It never holds a CV: the CV is only an attachment on the desk email.
-- **Deletion.** A deletion request, or a talent-pool profile past 12 months, keeps only the id, kind, time, and status. The email, message, and other personal fields are cleared. The CV email stays in the desk mailbox until the desk deletes it.
-- **Duplicates.** One live record per email, kind, and role. A second post gets the first record's id.
+- **To the desk:** every field and the full message, under a reference such as `BW-lq3x-a8f2k1`, with `replyTo` set to the visitor. A CV, if there is one, is an attachment on this email and nowhere else.
+- **To the visitor:** a short confirmation that quotes the same reference and the reply time for that audience.
+
+What follows from that:
+
+- **Status and follow-up** happen in the desk inbox. There is no status page, no candidate login, and no guarantee clock in the code: the desk tracks those in its mailbox (labels, folders, or a shared inbox tool).
+- **Retention and deletion** are mailbox policies, not code. The 12-month talent-pool promise is met by a retention rule on the desk mailbox, and a deletion request is answered by deleting the messages. The privacy notice says so.
+- **Spam and floods:** a hidden honeypot field, a per-instance request limit (it only slows one warm server, since there is no shared store), and the Cloudflare Turnstile check added in its own change.
+- **Duplicates** are not detected. Two posts make two emails with two references.
 - **Open and closed roles.** A role closes at 18:00 Pacific on its `closesOn` date, and a role with no date stays open. Pages, `/llms.txt`, and `sitemap.xml` regenerate every five minutes in the server build, so no redeploy is needed. The static export is frozen at build time.
-- **Crons** (`vercel.json`): the weekday role digest (`0 16 * * 1-5`, UTC) and the Monday retention job (`0 17 * * 1`). A failed digest returns a non-2xx status and logs `role-digest-failed`.
+- **Cron** (`vercel.json`): the weekday role digest (`0 16 * * 1-5`, UTC). It emails the desk the open and closed titles. A failed digest returns a non-2xx status and logs `role-digest-failed`.
 
 ## Pages
 
@@ -136,8 +139,6 @@ All routes run on the Node.js runtime and return `{ ok: true }` or `{ ok: false,
 | `POST /api/ai-training/apply` | `multipart/form-data` | candidate fields, `rightToWork`, `consent`, and a CV |
 | `POST /api/ai-training/partner` | JSON | partner fields plus `volume`, `taskType`, `rate`, and `countries` |
 | `GET /api/cron/role-digest` | — | Weekday open-versus-closed report. Requires `Authorization: Bearer CRON_SECRET` in production. |
-| `GET /api/cron/talent-retention` | — | Anonymizes talent-pool records older than 12 months (email, message, and other personal fields). Requires `Authorization: Bearer CRON_SECRET`. |
-| `POST /api/desk/record` | JSON | Desk-only status change. Same bearer secret. |
 
 The server validates every field (`src/lib/form.ts`, `src/lib/cv-file.ts`). Each form includes a hidden `companyWebsite` honeypot: if it is filled, the API returns success without sending anything.
 
@@ -146,7 +147,7 @@ The server validates every field (`src/lib/form.ts`, `src/lib/cv-file.ts`). Each
 ```
 src/
   app/                  Routes, layout, globals.css, sitemap/robots/OG
-    api/{hire,cv,contact,salary-guide,talent-pool,desk,cron}/route.ts
+    api/{hire,cv,contact,salary-guide,talent-pool,ai-training,cron}/route.ts
   components/
     brand/              Logo and bridge mark paths
     forms/              HireForm, CvForm, ContactForm, Field

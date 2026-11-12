@@ -1,6 +1,3 @@
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resetRateLimit } from "@/lib/rate-limit";
 
@@ -27,7 +24,6 @@ describe("POST /api/talent-pool", () => {
   beforeEach(() => {
     sendFormEmail.mockClear();
     resetRateLimit();
-    process.env.DESK_DATA_DIR = mkdtempSync(path.join(tmpdir(), "desk-"));
   });
 
   it("rejects a bad file and missing consent", async () => {
