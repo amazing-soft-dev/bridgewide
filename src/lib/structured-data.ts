@@ -245,7 +245,7 @@ export function jobPosting(role: Role) {
       value: roleRef(role.slug),
     },
     datePosted: role.postedOn,
-    validThrough: role.closesOn,
+    ...(role.closesOn ? { validThrough: role.closesOn } : {}),
     employmentType: role.engagement === "Permanent" ? "FULL_TIME" : "CONTRACTOR",
     directApply: true,
     hiringOrganization: { "@type": "Organization", "@id": orgId, name: organization.name },

@@ -140,8 +140,11 @@ export type Role = {
   consultantName: string;
   /** ISO date the role was posted. */
   postedOn: string;
-  /** ISO date the role closes. Open through 18:00 Pacific that day. */
-  closesOn: string;
+  /**
+   * ISO date the role closes. Open through 18:00 Pacific that day. Leave it
+   * out until the desk has a real date: a role with no date stays open.
+   */
+  closesOn?: string;
   tags?: readonly RoleTag[];
   /** Three lines for “What you would do”, drawn from the summary. */
   duties: readonly [string, string, string];
@@ -255,9 +258,6 @@ export type SiteImages = {
 
 /** Day the current open roles were listed. */
 export const rolesListedOn = "2026-10-18";
-
-/** Every current staffing role closes at the end of this desk day. */
-export const rolesCloseOn = "2027-01-16";
 
 /**
  * ISO date of the last content edit in this file. Feeds the sitemap's
@@ -558,7 +558,7 @@ export const people: readonly Person[] = [
   },
 ];
 
-const roleRecords: readonly Omit<Role, "postedOn" | "closesOn">[] = [
+const roleRecords: readonly Omit<Role, "postedOn">[] = [
   {
     slug: "senior-backend-engineer-singapore",
     title: "Senior Backend Engineer",
@@ -1070,7 +1070,6 @@ const roleRecords: readonly Omit<Role, "postedOn" | "closesOn">[] = [
 export const roles: readonly Role[] = roleRecords.map((role) => ({
   ...role,
   postedOn: rolesListedOn,
-  closesOn: rolesCloseOn,
 }));
 
 const regionSeed: readonly Omit<Region, "openRoleCount">[] = [
