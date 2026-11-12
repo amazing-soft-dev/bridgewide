@@ -58,3 +58,23 @@ describe("a CV submission", () => {
     expect(visitorMail.attachments).toBeUndefined();
   });
 });
+
+describe("two posts from one person at the same moment", () => {
+  it("both get the same reference and only one record is saved", async () => {
+    const { getDeskStore } = await import("@/lib/desk-store");
+    // Let both calls pass the duplicate check, as two simultaneous requests would.
+    vi.spyOn(getDeskStore(), "findDuplicate")
+      .mockResolvedValueOnce(undefined) // first request: nothing yet
+      .mockResolvedValueOnce(undefined); // second request: check ran before the first was saved
+
+    const first = await deliverIntake({ ...cv, kind: "contact", roleKey: "Press", fileBase64: undefined, filename: undefined });
+    const second = await deliverIntake({ ...cv, kind: "contact", roleKey: "Press", fileBase64: undefined, filename: undefined });
+
+    expect(first.ok && second.ok).toBe(true);
+    if (first.ok && second.ok) {
+      expect(second.id).toBe(first.id);
+      expect(second.duplicate).toBe(true);
+    }
+    expect(await listSubmissions()).toHaveLength(1);
+  });
+});
