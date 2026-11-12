@@ -8,7 +8,7 @@ export default function RecordSection() {
       watermark="PLACED"
       eyebrow="The record"
       title="Numbers we would put on a departures board."
-      accentWords={2}
+      accentWords={1}
       stats={stats}
       seam="right"
       note={statsBasis}
