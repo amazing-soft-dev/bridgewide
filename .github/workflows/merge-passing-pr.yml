@@ -1,12 +1,18 @@
 # After CI succeeds on a pull request, merge that pull request with a
 # merge commit. --match-head-commit refuses if the branch moved after CI
-# started. Only feature-prefix branches into dev, and dev into main, merge.
+# started. Only feature-prefix branches into dev merge on their own.
+#
+# dev into main is held. It merges only while the pull request carries the
+# `release` label. With the label already set, it merges when CI succeeds.
+# Adding the label later merges it right away if CI already succeeded.
 name: Merge passing pull request
 
 on:
   workflow_run:
     workflows: ["CI"]
     types: [completed]
+  pull_request:
+    types: [labeled]
 
 permissions:
   contents: read
@@ -14,7 +20,7 @@ permissions:
 jobs:
   merge:
     name: Merge the validated pull request
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -25,15 +31,18 @@ jobs:
         run: |
           set -euo pipefail
           prs=$(gh api --paginate "repos/$GITHUB_REPOSITORY/commits/$SHA/pulls" \
-            --jq '.[] | select(.state=="open") | [.number, .head.ref, .base.ref] | @tsv')
+            --jq '.[] | select(.state=="open") | [.number, .head.ref, .base.ref, ([.labels[].name] | join(","))] | @tsv')
           if [ -z "$prs" ]; then
             echo "No open pull request for $SHA."
             exit 0
           fi
-          while IFS=$'\t' read -r number head base; do
+          while IFS=$'\t' read -r number head base labels; do
             eligible=0
             if [ "$head" = "dev" ] && [ "$base" = "main" ]; then
-              eligible=1
+              case ",$labels," in
+                *,release,*) eligible=1 ;;
+                *) echo "Pull request #$number (dev -> main) is held: add the release label to merge it." ;;
+              esac
             elif [ "$base" = "dev" ]; then
               prefix="${head%%/*}"
               case "$prefix" in
@@ -46,3 +55,24 @@ jobs:
               echo "Pull request #$number ($head -> $base) is not eligible."
             fi
           done <<< "$prs"
+
+  release:
+    name: Merge dev into main once labelled release
+    if: github.event_name == 'pull_request' && github.event.label.name == 'release' && github.base_ref == 'main' && github.head_ref == 'dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Merge if CI already passed
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          conclusion=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/check-runs" \
+            --jq '[.check_runs[] | select(.name=="CI passed")] | last | .conclusion // empty')
+          if [ "$conclusion" = "success" ]; then
+            gh pr merge "$NUMBER" --repo "$GITHUB_REPOSITORY" --merge --match-head-commit "$SHA"
+          else
+            echo "CI passed is '${conclusion:-not finished}' for $SHA. The CI workflow will merge it when it succeeds."
+          fi

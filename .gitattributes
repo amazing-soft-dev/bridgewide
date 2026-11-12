@@ -1,0 +1,15 @@
+# Keep every text file LF in the repository and in the working copy, so
+# Windows checkouts do not add CRLF and exact-match patches apply.
+* text=auto eol=lf
+
+# Binary files are never converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
