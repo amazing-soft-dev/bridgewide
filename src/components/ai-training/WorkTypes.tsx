@@ -18,10 +18,14 @@ const tabLabel: Record<WorkTypeSlug, string> = {
 
 function factsFor(slug: WorkTypeSlug) {
   const matched = trainingRoles.filter((role) => role.workType === slug);
-  const payMin = Math.min(...matched.map((role) => role.payMin));
+  const payMin = Math.min(...matched.map((role) => role.payMin ?? role.payMax));
   const payMax = Math.max(...matched.map((role) => role.payMax));
   const places = [
-    ...new Set(matched.map((role) => trainingRegion(role.region)?.name).filter((name): name is string => Boolean(name))),
+    ...new Set(
+      matched
+        .map((role) => (role.region ? trainingRegion(role.region)?.name : role.place))
+        .filter((name): name is string => Boolean(name)),
+    ),
   ];
   return [
     { label: "Pay", value: formatHourly(payMin, payMax) },
