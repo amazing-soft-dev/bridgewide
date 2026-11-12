@@ -88,6 +88,25 @@ export function writeDigestDate(date: string): Promise<void> {
   return getDeskStore().writeDigestDate(date);
 }
 
+/**
+ * What a record keeps after a deletion request or after the 12-month limit:
+ * its id, kind, time, and status, so counts still add up. Everything that
+ * could identify the person is cleared, including the full message text.
+ */
+export function erasePatch(): Partial<Submission> {
+  return {
+    status: "deleted",
+    email: "",
+    body: "",
+    roleKey: undefined,
+    rightToWork: undefined,
+    consent: undefined,
+    feeAcknowledged: undefined,
+    startDate: undefined,
+    guaranteeEnd: undefined,
+  };
+}
+
 export function canIntroduce(entry: Pick<Submission, "status" | "rightToWork">): boolean {
   if (entry.status === "paused" || entry.status === "deleted" || entry.status === "closed") return false;
   return Boolean(entry.rightToWork);
