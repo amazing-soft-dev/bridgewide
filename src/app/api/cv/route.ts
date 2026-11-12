@@ -89,16 +89,10 @@ export async function POST(request: Request) {
   const result = await deliverIntake({
     kind: "cv",
     email: email.value,
-    roleKey: seat.value || region.value,
     subject: seatLine ? `CV from ${name.value} — ${seatLine}` : `CV from ${name.value} — ${trackLine}`,
     text: lines.join("\n"),
     ip: clientIp(request),
     visitorSla: track.value === "ai-training" ? sla.training : sla.role,
-    rightToWork: work.value,
-    consent:
-      track.value === "ai-training"
-        ? { version: AI_CONSENT_VERSION, at: new Date().toISOString() }
-        : undefined,
     filename: checked.filename,
     contentType: checked.contentType,
     fileBase64: bytes.toString("base64"),

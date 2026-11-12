@@ -61,7 +61,6 @@ export async function POST(request: Request) {
   const result = await deliverIntake({
     kind: "partner",
     email: email.value,
-    roleKey: company.value,
     subject: `AI training partner inquiry from ${company.value}`,
     ip: clientIp(request),
     visitorSla: sla.training,

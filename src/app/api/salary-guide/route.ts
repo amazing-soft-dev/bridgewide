@@ -33,7 +33,6 @@ export async function POST(request: Request) {
   const result = await deliverIntake({
     kind: "salary-guide",
     email: email.value,
-    roleKey: "salary-guide",
     subject: "Salary guide request",
     text,
     ip: clientIp(request),
