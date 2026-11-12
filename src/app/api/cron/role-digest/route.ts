@@ -1,19 +1,14 @@
 import { roles } from "@/content/site";
 import { pacificDate } from "@/lib/desk-clock";
 import { readDigestDate, writeDigestDate } from "@/lib/desk-store";
+import { isAuthorized } from "@/lib/cron-auth";
 import { jsonResult, sendFormEmail } from "@/lib/mail";
 import { digestText, shouldSendDigest } from "@/lib/role-digest";
 
 export const runtime = "nodejs";
 
-function authorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}`;
-}
-
 export async function GET(request: Request) {
-  if (!authorized(request)) {
+  if (!isAuthorized(request)) {
     return jsonResult({ ok: false, error: "Unauthorized.", status: 401 });
   }
   const now = new Date();

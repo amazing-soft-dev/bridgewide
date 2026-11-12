@@ -6,6 +6,7 @@ import {
   updateSubmission,
   type SubmissionStatus,
 } from "@/lib/desk-store";
+import { isAuthorized } from "@/lib/cron-auth";
 import { jsonResult, sendFormEmail } from "@/lib/mail";
 import { statusBody, statusSubjects } from "@/lib/status-mail";
 
@@ -20,14 +21,8 @@ const statuses: readonly SubmissionStatus[] = [
   "deleted",
 ];
 
-function authorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}`;
-}
-
 export async function POST(request: Request) {
-  if (!authorized(request)) {
+  if (!isAuthorized(request)) {
     return jsonResult({ ok: false, error: "Unauthorized.", status: 401 });
   }
 
