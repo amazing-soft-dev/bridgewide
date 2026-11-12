@@ -4,7 +4,7 @@ import { Honeypot } from "@/components/forms/Field";
 import { FloatingField } from "@/components/forms/FloatingField";
 import { FormStatus, SubmitButton } from "@/components/forms/FormFeedback";
 import { submitJson } from "@/components/forms/read-submission";
-import { honeypotValue, useFormSubmit } from "@/hooks/use-form-submit";
+import { honeypotValue, humanToken, useFormSubmit } from "@/hooks/use-form-submit";
 import { contactTopics } from "@/content/site";
 import { allOk, emailField, fieldErrors, limits, textField, topicField } from "@/lib/form";
 import { formsLive } from "@/lib/forms-live";
@@ -47,6 +47,7 @@ export function ContactForm() {
           topic: fields.topic.value,
           message: fields.message.value,
           companyWebsite: honeypotValue(data),
+          turnstileToken: humanToken(data),
         }),
     };
   });

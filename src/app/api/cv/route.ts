@@ -13,6 +13,7 @@ import {
   textField,
 } from "@/lib/form";
 import { clientIp, deliverIntake } from "@/lib/intake";
+import { tokenFromForm } from "@/lib/turnstile";
 import { jsonResult } from "@/lib/mail";
 
 export const runtime = "nodejs";
@@ -92,6 +93,7 @@ export async function POST(request: Request) {
     subject: seatLine ? `CV from ${name.value} — ${seatLine}` : `CV from ${name.value} — ${trackLine}`,
     text: lines.join("\n"),
     ip: clientIp(request),
+    humanToken: tokenFromForm(form),
     visitorSla: track.value === "ai-training" ? sla.training : sla.role,
     filename: checked.filename,
     contentType: checked.contentType,

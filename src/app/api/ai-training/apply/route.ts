@@ -14,6 +14,7 @@ import {
 } from "@/lib/ai-training-form";
 import { rightToWorkField } from "@/lib/form";
 import { clientIp, deliverIntake } from "@/lib/intake";
+import { tokenFromForm } from "@/lib/turnstile";
 import { jsonResult } from "@/lib/mail";
 import {
   availabilities,
@@ -99,6 +100,7 @@ export async function POST(request: Request) {
     email: email.value,
     subject: `AI training application from ${name.value}`,
     ip: clientIp(request),
+    humanToken: tokenFromForm(form),
     visitorSla: sla.training,
     filename: checked.filename,
     contentType: checked.contentType,

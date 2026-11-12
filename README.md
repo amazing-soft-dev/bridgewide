@@ -66,6 +66,13 @@ Crons and the scoping call:
 | `DESK_ALLOW_UNAUTHENTICATED` | Set to `1` to run the cron routes locally with no `CRON_SECRET`. Ignored when `NODE_ENV` is `production` |
 | `NEXT_PUBLIC_SCOPING_CALL_URL` | Optional. A scoping-call link shown after a complete hire brief |
 
+Spam check (Cloudflare Turnstile):
+
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public site key. When set, every form shows the Turnstile widget (interaction-only, so most visitors see nothing) |
+| `TURNSTILE_SECRET_KEY` | Secret key. When set, the server verifies the token before any email is sent. A missing or rejected token is a 400; if Cloudflare cannot be reached the post is refused with a 503. With no secret the check is skipped |
+
 Site, build, and test:
 
 | Variable | Purpose |
@@ -89,7 +96,7 @@ What follows from that:
 
 - **Status and follow-up** happen in the desk inbox. There is no status page, no candidate login, and no guarantee clock in the code: the desk tracks those in its mailbox (labels, folders, or a shared inbox tool).
 - **Retention and deletion** are mailbox policies, not code. The 12-month talent-pool promise is met by a retention rule on the desk mailbox, and a deletion request is answered by deleting the messages. The privacy notice says so.
-- **Spam and floods:** a hidden honeypot field, a per-instance request limit (it only slows one warm server, since there is no shared store), and the Cloudflare Turnstile check added in its own change.
+- **Spam and floods:** a hidden honeypot field, a per-instance request limit (it only slows one warm server, since there is no shared store), and a Cloudflare Turnstile check on every form (see the spam-check variables above).
 - **Duplicates** are not detected. Two posts make two emails with two references.
 - **Open and closed roles.** A role closes at 18:00 Pacific on its `closesOn` date, and a role with no date stays open. Pages, `/llms.txt`, and `sitemap.xml` regenerate every five minutes in the server build, so no redeploy is needed. The static export is frozen at build time.
 - **Cron** (`vercel.json`): the weekday role digest (`0 16 * * 1-5`, UTC). It emails the desk the open and closed titles. A failed digest returns a non-2xx status and logs `role-digest-failed`.

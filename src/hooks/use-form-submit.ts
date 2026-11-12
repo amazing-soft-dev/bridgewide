@@ -12,6 +12,12 @@ export function honeypotValue(data: FormData) {
   return value ? "filled" : "";
 }
 
+/** The Turnstile token the widget put in the form, for forms that post JSON. */
+export function humanToken(data: FormData) {
+  const value = data.get("cf-turnstile-response");
+  return typeof value === "string" ? value : "";
+}
+
 export type FormCheck<Errors> =
   | { ok: true; send: () => Promise<Submission> }
   | { ok: false; errors: Errors };

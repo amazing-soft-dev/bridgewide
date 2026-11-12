@@ -1,6 +1,7 @@
 import { sla } from "@/content/sla";
 import { sendFormEmail, type MailResult } from "@/lib/mail";
 import { allowRequest } from "@/lib/rate-limit";
+import { verifyHuman } from "@/lib/turnstile";
 
 /** Which form a submission came from. */
 export type IntakeKind = "hire" | "cv" | "contact" | "salary-guide" | "talent-pool" | "ai-apply" | "partner";
@@ -13,6 +14,8 @@ export type IntakeInput = {
   text: string;
   ip: string;
   visitorSla: string;
+  /** The Turnstile token from the form. Ignored when TURNSTILE_SECRET_KEY is not set. */
+  humanToken?: string;
   filename?: string;
   contentType?: string;
   fileBase64?: string;
@@ -38,6 +41,9 @@ export async function deliverIntake(input: IntakeInput): Promise<IntakeResult> {
   if (!allowRequest(`${input.ip}:${input.kind}`)) {
     return { ok: false, error: "Too many requests. Try again shortly.", status: 429 };
   }
+
+  const human = await verifyHuman(input.humanToken, input.ip);
+  if (!human.ok) return human;
 
   const id = newReference();
 

@@ -6,7 +6,7 @@ import { SubmitButton } from "@/components/forms/FormFeedback";
 import { submitJson } from "@/components/forms/read-submission";
 import { useFooterShown } from "@/components/site/FooterCurtain";
 import { SplitWords } from "@/components/ui/SplitWords";
-import { honeypotValue, useFormSubmit } from "@/hooks/use-form-submit";
+import { honeypotValue, humanToken, useFormSubmit } from "@/hooks/use-form-submit";
 import { salaryBands } from "@/content/site";
 import { emailField } from "@/lib/form";
 import { formsLive } from "@/lib/forms-live";
@@ -27,6 +27,7 @@ export function FooterSignup() {
           submitJson("/api/salary-guide", {
             email: address.value,
             companyWebsite: honeypotValue(data),
+          turnstileToken: humanToken(data),
           }),
       };
     },
