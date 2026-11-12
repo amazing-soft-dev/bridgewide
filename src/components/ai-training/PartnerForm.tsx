@@ -3,7 +3,7 @@
 import { Field, Honeypot } from "@/components/forms/Field";
 import { FormStatus, SubmitButton } from "@/components/forms/FormFeedback";
 import { submitJson } from "@/components/forms/read-submission";
-import { honeypotValue, useFormSubmit } from "@/hooks/use-form-submit";
+import { honeypotValue, humanToken, useFormSubmit } from "@/hooks/use-form-submit";
 import { regions } from "@/content/site";
 import { allOk, emailField, fieldErrors, limits, regionListField, textField } from "@/lib/form";
 import { formsLive } from "@/lib/forms-live";
@@ -42,6 +42,7 @@ export function PartnerForm() {
           rate: fields.rate.value,
           countries: fields.countries.value.split(", ").filter(Boolean),
           companyWebsite: honeypotValue(data),
+          turnstileToken: humanToken(data),
         }),
     };
   });

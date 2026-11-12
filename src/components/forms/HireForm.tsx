@@ -3,7 +3,7 @@
 import { Field, Honeypot } from "@/components/forms/Field";
 import { FormStatus, SubmitButton } from "@/components/forms/FormFeedback";
 import { submitJson } from "@/components/forms/read-submission";
-import { honeypotValue, useFormSubmit } from "@/hooks/use-form-submit";
+import { honeypotValue, humanToken, useFormSubmit } from "@/hooks/use-form-submit";
 import { regions } from "@/content/site";
 import { sla } from "@/content/sla";
 import {
@@ -78,6 +78,7 @@ export function HireForm() {
           fee: fields.fee.value,
           message: fields.message.value,
           companyWebsite: honeypotValue(data),
+          turnstileToken: humanToken(data),
         }),
     };
   });
