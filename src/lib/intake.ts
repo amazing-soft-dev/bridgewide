@@ -15,6 +15,7 @@ export type IntakeInput = {
   kind: SubmissionKind;
   email: string;
   roleKey?: string;
+  engagement?: "Permanent" | "Contract";
   subject: string;
   text: string;
   ip: string;
@@ -49,6 +50,7 @@ export async function deliverIntake(input: IntakeInput): Promise<IntakeResult> {
     status: "received",
     email: input.email,
     roleKey: input.roleKey,
+    engagement: input.engagement,
     rightToWork: input.rightToWork,
     consent: input.consent,
     feeAcknowledged: input.feeAcknowledged,
