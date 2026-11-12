@@ -28,7 +28,7 @@ export default function SalaryGuidePage() {
         title="Bands by region"
         lede="Use a band to set an offer conversation. A figure under the median should be said early, before a shortlist goes out."
       >
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" role="region" aria-label="Salary bands by discipline and region (scrolls sideways on a narrow screen)" tabIndex={0}>
           <table className="w-full min-w-[44rem] border-collapse text-left">
             <caption className="sr-only">
               {salaryBands.edition}. {salaryBands.basis}. Low, high, and median
