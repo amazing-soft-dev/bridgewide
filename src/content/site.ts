@@ -2,8 +2,6 @@
  * Marketing content for BridgeWide.
  */
 
-import { isRoleOpen } from "@/lib/desk-clock";
-
 export type RegionSlug = "usa" | "canada" | "latam" | "europe" | "asia";
 
 export type RegionCode = "USA" | "CAN" | "LATAM" | "EUR" | "ASIA";
@@ -415,10 +413,6 @@ export const stats: readonly Stat[] = [
   { value: "11", label: "Median days to fill a contract seat" },
 ];
 
-/** Why the consultant counts do not add up to 186. */
-export const statsBasis =
-  "186 is the desk total, including placements by people who are not on this page. The six consultants above account for 157.";
-
 export const placements: readonly Placement[] = [
   {
     title: "Staff Backend Engineer",
@@ -500,9 +494,7 @@ export const people: readonly Person[] = [
     id: "lena-cho",
     name: "Lena Cho",
     role: "Partner, former staff backend engineer",
-    focus: "United States (USA)",
-    country: "United States",
-    regionLabel: "USA",
+    focus: "USA",
     placementCount: 42,
     image: "/images/person-lena.webp",
   },
@@ -510,9 +502,7 @@ export const people: readonly Person[] = [
     id: "henrik-dahl",
     name: "Henrik Dahl",
     role: "Principal, former platform engineer",
-    focus: "United Kingdom (Europe)",
-    country: "United Kingdom",
-    regionLabel: "Europe",
+    focus: "Europe · Cloud",
     placementCount: 31,
     image: "/images/person-henrik.webp",
   },
@@ -520,9 +510,7 @@ export const people: readonly Person[] = [
     id: "sofia-navarro",
     name: "Sofia Navarro",
     role: "Consultant, former iOS engineer",
-    focus: "Mexico (LATAM)",
-    country: "Mexico",
-    regionLabel: "LATAM",
+    focus: "LATAM · Mobile",
     placementCount: 27,
     image: "/images/person-sofia.webp",
   },
@@ -530,9 +518,7 @@ export const people: readonly Person[] = [
     id: "marcus-adeyemi",
     name: "Marcus Adeyemi",
     role: "Consultant, former data engineer",
-    focus: "Canada (Canada)",
-    country: "Canada",
-    regionLabel: "Canada",
+    focus: "Canada · Data",
     placementCount: 24,
     image: "/images/person-marcus.webp",
   },
@@ -540,25 +526,23 @@ export const people: readonly Person[] = [
     id: "mei-tan",
     name: "Mei Tan",
     role: "Consultant, former backend engineer",
-    focus: "Singapore (Asia)",
-    country: "Singapore",
-    regionLabel: "Asia",
+    focus: "Asia · Backend",
     placementCount: 14,
+    // Placeholder portrait until the Asia consultant's own photo is in.
     image: "/images/person-mei.webp",
   },
   {
     id: "priya-raman",
     name: "Priya Raman",
     role: "Director, former engineering manager",
-    focus: "United States (USA)",
-    country: "United States",
-    regionLabel: "USA",
+    focus: "Leadership",
     placementCount: 19,
     image: "/images/person-priya.webp",
   },
 ];
 
-const roleRecords: readonly Omit<Role, "postedOn" | "closesOn">[] = [
+export const roles: readonly Role[] = [
+  // Placeholder Asia listings until the desk has real openings there.
   {
     slug: "senior-backend-engineer-singapore",
     title: "Senior Backend Engineer",
@@ -1067,12 +1051,6 @@ const roleRecords: readonly Omit<Role, "postedOn" | "closesOn">[] = [
   },
 ];
 
-export const roles: readonly Role[] = roleRecords.map((role) => ({
-  ...role,
-  postedOn: rolesListedOn,
-  closesOn: rolesCloseOn,
-}));
-
 const regionSeed: readonly Omit<Region, "openRoleCount">[] = [
   {
     slug: "usa",
@@ -1118,11 +1096,11 @@ const regionSeed: readonly Omit<Region, "openRoleCount">[] = [
 
 export const regions: readonly Region[] = regionSeed.map((region) => ({
   ...region,
-  openRoleCount: roles.filter((role) => role.region === region.slug && isRoleOpen(role)).length,
+  openRoleCount: roles.filter((role) => role.region === region.slug).length,
 }));
 
 export const announcement: Announcement = {
-  liveRoleCount: `${roles.filter((role) => isRoleOpen(role)).length} roles live`,
+  liveRoleCount: `${roles.length} roles live`,
   salaryGuideHref: "/salary-guide",
   salaryGuideLabel: "Salary guide",
 };
@@ -1201,6 +1179,7 @@ export const salaryBands: SalaryBands = {
 };
 
 export const stories: readonly Story[] = [
+  // Placeholder Asia story until the desk has one of its own.
   {
     slug: "lumen-pay-settlements",
     company: "Lumen Pay",
@@ -1279,22 +1258,6 @@ export const stories: readonly Story[] = [
       "Keel’s product engineers were waiting on internal tooling. The CTO wanted a staff platform engineer in London who would set the paved path, and he wanted the search kept inside a small group until offer stage.",
       "We ran it as a confidential search, with the company name shared only after a first conversation. The shortlist was three staff engineers who had built CI and environment standards for a multi-team org.",
       "The hire started in nineteen days. A month in, the team had a single way to ship, and Keel opened a director search on the same desk.",
-    ],
-  },
-  {
-    slug: "anon-canada-contract",
-    company: "Anonymized client",
-    region: "canada",
-    quote: "The contract data seat was filled before the sprint date moved.",
-    attribution:
-      "Client not named. 11 days is the published median to fill a contract seat, not a new claim.",
-    result: "Contract data engineer, client not named",
-    metric: "11 days",
-    image: "/images/story-anon-canada.webp",
-    body: [
-      "A product company in Canada needed a contract data engineer before a sprint date. The client is not named.",
-      "The desk ran the search the same way it runs every contract seat: a brief, a short list, and a start. The seat was filled in 11 days.",
-      "Eleven days is the published median to fill a contract seat. This example illustrates that median. It is not a separate measurement and it is not a named client.",
     ],
   },
 ];

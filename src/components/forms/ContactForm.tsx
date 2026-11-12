@@ -7,7 +7,6 @@ import { submitJson } from "@/components/forms/read-submission";
 import { honeypotValue, useFormSubmit } from "@/hooks/use-form-submit";
 import { contactTopics } from "@/content/site";
 import { allOk, emailField, fieldErrors, limits, textField, topicField } from "@/lib/form";
-import { formsLive } from "@/lib/forms-live";
 
 type ContactErrors = Partial<Record<"name" | "email" | "topic" | "message", string>>;
 
@@ -31,10 +30,7 @@ export function ContactForm() {
     const fields = {
       name: textField(data.get("name"), limits.name, "Name"),
       email: emailField(data.get("email")),
-      topic:
-        typeof data.get("topic") === "string" && data.get("topic") !== ""
-          ? topicField(data.get("topic"))
-          : { ok: false as const, error: "Choose a topic from the list." },
+      topic: topicField(data.get("topic")),
       message: textField(data.get("message"), limits.message, "Message"),
     };
     if (!allOk(fields)) return { ok: false, errors: fieldErrors(fields) };
@@ -60,9 +56,6 @@ export function ContactForm() {
       onSubmit={onSubmit}
     >
       <Honeypot />
-      {!formsLive() ? (
-        <p className="text-sm text-stone min-[900px]:col-span-2">This copy of the site cannot send forms.</p>
-      ) : null}
       <FloatingField label="Your name" name="name" autoComplete="name" required error={errors.name} />
       <FloatingField
         label="Email"

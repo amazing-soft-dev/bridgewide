@@ -1,5 +1,5 @@
 import { StatsBand } from "@/components/ui/StatsBand";
-import { stats, statsBasis } from "@/content/site";
+import { stats } from "@/content/site";
 
 export default function RecordSection() {
   return (
@@ -11,7 +11,6 @@ export default function RecordSection() {
       accentWords={2}
       stats={stats}
       seam="right"
-      note={statsBasis}
     />
   );
 }

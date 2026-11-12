@@ -6,9 +6,9 @@ It follows the layout, motion, and page set of the Staffora reference
 ([forceful-variations-474566.framer.app](https://forceful-variations-474566.framer.app/)),
 rewritten as original code with BridgeWide's own copy and an original wordmark.
 
-> Status: the site is built and deployed. This file is the original plan.
-> The live desk covers five regions (USA, Canada, Latin America, Europe, and
-> Asia), the accent is red `brand`, and the inbox is `michael.allen@bridgewide.org`.
+> Status: plan locked, ready to build. Scaffolding has been created and
+> verified in a workspace; the production build happens in the repo at
+> `E:\1.workspace\1Mine\Bridgewide`.
 
 ---
 
@@ -17,7 +17,7 @@ rewritten as original code with BridgeWide's own copy and an original wordmark.
 | Question | Choice |
 | --- | --- |
 | Motion fidelity | **Full** — Motion (ex-Framer Motion): scroll reveals, stagger, parallax |
-| Forms | **Real submission** via Resend to `michael.allen@bridgewide.org` |
+| Forms | **Real submission** via Resend to `hello@bridgewide.com` |
 | Images | **Self-hosted** curated Unsplash photos in `public/` |
 | Build location | **In place** in `E:\1.workspace\1Mine\Bridgewide` |
 | Email provider | **Resend** (key supplied by you in `.env.local`) |
@@ -110,7 +110,7 @@ prerender.
 ## Homepage section order
 
 Announcement strip → header → hero (live role list + stats) → two doors
-(employer / engineer) → "placed this month" marquee → five regions → the week
+(employer / engineer) → "placed this month" marquee → four regions → the week
 (Mon–Fri) → open roles → the record (stats) → the desk (team) → salary guide →
 employer stories → insights → FAQ → closing band → footer.
 
@@ -120,7 +120,7 @@ employer stories → insights → FAQ → closing band → footer.
 
 Everything lives in `src/content/site.ts` so it can be swapped later:
 regions, roles, people, stories, insights, FAQ, salary bands, nav, and contact
-details (`michael.allen@bridgewide.org`, phone, location).
+details (`hello@bridgewide.com`, phone, location).
 
 ---
 
@@ -142,7 +142,7 @@ src/app/api/contact/route.ts
 ```
 # .env.example
 RESEND_API_KEY=            # from resend.com
-CONTACT_TO_EMAIL=michael.allen@bridgewide.org
+CONTACT_TO_EMAIL=hello@bridgewide.com
 CONTACT_FROM_EMAIL=onboarding@resend.dev   # swap for a verified domain sender
 ```
 

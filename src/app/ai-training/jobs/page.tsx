@@ -18,8 +18,8 @@ export default function TrainingJobsPage() {
       <JsonLd data={breadcrumbs([{ name: "AI training", path: "/ai-training" }, { name: "Roles", path: "/ai-training/jobs" }])} />
       <PageHero
         eyebrow="Jobs"
-        title="Live openings, paid by the platform."
-        lede="Each card names the platform, the published range, and the date of the source. Filter by the kind of work and the region."
+        title="Roles, until a live opening replaces them."
+        lede="Filter by the kind of work and the region."
       />
       <PageSection id="board" label="Board" title="Filter the roles.">
         <JobBoard roles={trainingRoles} />

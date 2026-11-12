@@ -1,6 +1,6 @@
 # BridgeWide
 
-Marketing website for **BridgeWide**, a firm that places software engineers with companies across five regions: the **USA, Canada, Latin America, Europe, and Asia**.
+Marketing website for **BridgeWide**, a firm that places software engineers with companies across four regions: the **USA, Canada, LATAM, and Europe**.
 
 The site serves two audiences. Employers can browse regions, salary bands, and client stories, then send a hiring brief. Engineers can browse open roles and submit a CV. All three forms (hire brief, CV, contact) send real email through [Resend](https://resend.com) when the app runs on Vercel or another Node host.
 
@@ -41,8 +41,6 @@ Open <http://localhost:3000>.
 | `npm run start` | Serve the production build |
 | `npm run lint` | Run ESLint (fails on any warning) |
 | `npm run typecheck` | Generate route types and run `tsc --noEmit` |
-| `npm test` | Run the Vitest suite. A failure exits non-zero, so CI fails. |
-| `npm run test:e2e` | Build with `ROLE_CLOCK` and run the contact and closed-role browser checks |
 | `npm run images` | Build the responsive WebP variants in `public/_img` (needed for the static export) |
 | `npm run check:images` | Fail if two photos in `public/images` are the same file or one photo is wired into more than one slot |
 
@@ -66,20 +64,13 @@ If any of the three is missing, the form APIs return a 500 that names the missin
 | `/employers` | How hiring works, the five-day process, fees, hire-brief form |
 | `/engineers` | Candidate path (free, confidential), CV upload form |
 | `/roles`, `/roles/[slug]` | Open engineering roles and role details |
-| `/regions`, `/regions/[region]` | Five regions: `usa`, `canada`, `latam`, `europe`, `asia` |
+| `/regions`, `/regions/[region]` | The four regions: `usa`, `canada`, `latam`, `europe` |
 | `/salary-guide` | Salary bands by region for backend, frontend, data, cloud, mobile, and leadership |
 | `/stories`, `/stories/[slug]` | Employer stories |
 | `/insights`, `/insights/[slug]` | Short articles |
 | `/about` | The desk and consultants |
-| `/contact` | Contact form and the talent-pool profile at `#keep-profile` |
-| `/ai-training` | Candidate offer, live platform openings, and how an introduction works |
-| `/ai-training/for-candidates`, `/ai-training/for-partners` | Candidate application and partner inquiry |
-| `/ai-training/jobs`, `/ai-training/jobs/[slug]` | The 32 platform openings |
-| `/ai-training/platforms`, `/ai-training/platforms/[slug]` | Platform directory |
-| `/ai-training/[region]` | Training regions |
-| `/ai-training/how-it-works`, `/ai-training/about`, `/ai-training/faq` | Process, desk, and questions |
-| `/ai-training/contact` | The same contact form as `/contact` |
-| `/privacy`, `/terms` | Privacy notice and terms. They are `noindex` and are not in the sitemap. |
+| `/contact` | Contact form |
+| `/privacy`, `/terms` | Placeholder legal pages. They are `noindex` and are not in the sitemap. |
 
 Dynamic routes prerender with `generateStaticParams`. The app also generates `sitemap.xml`, `robots.txt`, and an Open Graph image (`src/app/sitemap.ts`, `robots.ts`, `opengraph-image.tsx`). Tab, Apple, and home-screen icons are the uploaded files in `public/`, linked from the root metadata.
 
@@ -91,20 +82,14 @@ Everything below the two-doors section loads through `next/dynamic` to keep firs
 
 ## Form API
 
-All routes run on the Node.js runtime and return `{ ok: true }` or `{ ok: false, error }`. A successful post also returns an `id`. The static export has no `/api`, and those forms say they cannot send.
+All routes run on the Node.js runtime and return `{ ok: true }` or `{ ok: false, error }`.
 
 | Endpoint | Body | Fields |
 | --- | --- | --- |
-| `POST /api/hire` | JSON | `name`, `email`, `company`, `roleTitle`, `regions`, `engagement` (`Permanent` / `Contract`), `manager`, `stack`, `band`, `ninety`, `fee`, `message`, optional `duration` and `confidential` |
-| `POST /api/cv` | `multipart/form-data` | `name`, `email`, `region`, `rightToWork`, `file` (PDF, DOC, or DOCX, 5 MB). An `ai-training` track also requires `consent`. |
-| `POST /api/contact` | JSON | `name`, `email`, `topic`, `message` |
+| `POST /api/hire` | JSON | `name`, `email`, `company`, `roleTitle`, `region`, `engagement` (`Permanent` / `Contract`), `message` |
+| `POST /api/cv` | `multipart/form-data` | `name`, `email`, `region`, `file` (PDF, DOC, or DOCX, 5 MB max; sent as an email attachment) |
+| `POST /api/contact` | JSON | `name`, `email`, `message` |
 | `POST /api/salary-guide` | JSON | `email` |
-| `POST /api/talent-pool` | `multipart/form-data` | `name`, `email`, `region`, `country`, `discipline`, `years`, `workMode`, `profile`, `consent`, `file` |
-| `POST /api/ai-training/apply` | `multipart/form-data` | candidate fields, `rightToWork`, `consent`, and a CV |
-| `POST /api/ai-training/partner` | JSON | partner fields plus `volume`, `taskType`, `rate`, and `countries` |
-| `GET /api/cron/role-digest` | — | Weekday open-versus-closed report. Requires `Authorization: Bearer CRON_SECRET` in production. |
-| `GET /api/cron/talent-retention` | — | Deletes talent-pool files older than 12 months. |
-| `POST /api/desk/record` | JSON | Desk-only status change. Same bearer secret. |
 
 The server validates every field (`src/lib/form.ts`, `src/lib/cv-file.ts`). Each form includes a hidden `companyWebsite` honeypot: if it is filled, the API returns success without sending anything.
 
@@ -113,7 +98,7 @@ The server validates every field (`src/lib/form.ts`, `src/lib/cv-file.ts`). Each
 ```
 src/
   app/                  Routes, layout, globals.css, sitemap/robots/OG
-    api/{hire,cv,contact,salary-guide,talent-pool,desk,cron}/route.ts
+    api/{hire,cv,contact,salary-guide}/route.ts
   components/
     brand/              Logo and bridge mark paths
     forms/              HireForm, CvForm, ContactForm, Field
@@ -158,7 +143,7 @@ A merge to `main` only re-runs CI. Vercel deploys https://www.bridgewide.org fro
 | Workflow | Runs on | What it does |
 | --- | --- | --- |
 | `open-pull-request.yml` | Push to `feat/**`, `fix/**`, `docs/**`, `ci/**`, `build/**`, or `dev` | Opens the branch into `dev`, or `dev` into `main` when `dev` is ahead. The pull request into `main` lists `Closes #N` from numbered branches and commit keywords, and an open one is updated |
-| `ci.yml` | Pull requests, pushes to `dev` and `main` | Lint, type check, unit tests, server and static builds, and a browser pass. **CI passed** is the required check |
+| `ci.yml` | Pull requests, pushes to `dev` and `main` | Lint, type check, server and static builds. **CI passed** is the required check |
 | `merge-passing-pr.yml` | CI succeeds on a pull request | Merge-commits eligible pull requests if the head commit is still the one CI validated |
 
 Dependabot pull requests are not opened or merged by these workflows.

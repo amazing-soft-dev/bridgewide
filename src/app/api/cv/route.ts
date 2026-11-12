@@ -1,4 +1,3 @@
-import { AI_CONSENT_VERSION, sla } from "@/content/sla";
 import { inspectCv, MAX_CV_BYTES } from "@/lib/cv-file";
 import {
   cvTrackField,
@@ -9,11 +8,9 @@ import {
   optionalText,
   regionField,
   regionName,
-  rightToWorkField,
   textField,
 } from "@/lib/form";
-import { clientIp, deliverIntake } from "@/lib/intake";
-import { jsonResult } from "@/lib/mail";
+import { jsonResult, sendFormEmail } from "@/lib/mail";
 
 export const runtime = "nodejs";
 
@@ -37,12 +34,6 @@ export async function POST(request: Request) {
 
   const track = cvTrackField(form.get("track"));
   if (!track.ok) return jsonResult({ ok: false, error: track.error, status: 400 });
-  if (track.value === "ai-training" && form.get("consent") !== "yes") {
-    return jsonResult({ ok: false, error: "Consent is required before an AI-training introduction.", status: 400 });
-  }
-
-  const work = rightToWorkField(form.get("rightToWork"));
-  if (!work.ok) return jsonResult({ ok: false, error: work.error, status: 400 });
 
   const region = regionField(form.get("region"));
   if (!region.ok) return jsonResult({ ok: false, error: region.error, status: 400 });
@@ -81,28 +72,22 @@ export async function POST(request: Request) {
     `Region: ${regionName(region.value)} (${region.value})`,
     phone.value ? `Phone: ${phone.value}` : "",
     seatLine ? `Role: ${seatLine}` : "",
-    `Right to work: ${work.value}`,
-    track.value === "ai-training" ? `Consent: ${AI_CONSENT_VERSION}` : "",
     `File: ${checked.filename}`,
   ].filter(Boolean);
 
-  const result = await deliverIntake({
-    kind: "cv",
-    email: email.value,
-    roleKey: seat.value || region.value,
-    subject: seatLine ? `CV from ${name.value} — ${seatLine}` : `CV from ${name.value} — ${trackLine}`,
-    text: lines.join("\n"),
-    ip: clientIp(request),
-    visitorSla: track.value === "ai-training" ? sla.training : sla.role,
-    rightToWork: work.value,
-    consent:
-      track.value === "ai-training"
-        ? { version: AI_CONSENT_VERSION, at: new Date().toISOString() }
-        : undefined,
-    filename: checked.filename,
-    contentType: checked.contentType,
-    fileBase64: bytes.toString("base64"),
-  });
-  if (result.ok) return Response.json({ ok: true, id: result.id });
-  return jsonResult(result);
+  return jsonResult(
+    await sendFormEmail({
+      subject: seatLine ? `CV from ${name.value} — ${seatLine}` : `CV from ${name.value} — ${trackLine}`,
+      replyTo: email.value,
+      text: lines.join("\n"),
+      attachments: [
+        {
+          filename: checked.filename,
+          // This Resend SDK JSON-encodes the payload, so the in-memory buffer is sent as base64.
+          content: bytes.toString("base64"),
+          contentType: checked.contentType,
+        },
+      ],
+    }),
+  );
 }

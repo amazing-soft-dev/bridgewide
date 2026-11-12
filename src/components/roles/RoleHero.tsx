@@ -18,13 +18,11 @@ export function RoleHero({
   regionName,
   image,
   refCode,
-  closed = false,
 }: {
   role: Role;
   regionName: string;
   image: string;
   refCode: string;
-  closed?: boolean;
 }) {
   const on = useEntered();
   const reduced = usePrefersReducedMotion();
@@ -106,10 +104,7 @@ export function RoleHero({
           </li>
           <li className="rounded border border-white/15 bg-white/10 px-3 py-2">{placeLine(role)}</li>
           <li className="rounded border border-white/15 bg-white/10 px-3 py-2">{role.engagement}</li>
-          <li className="rounded border border-white/15 bg-white/10 px-3 py-2">Posted {postedLabel(role.postedOn)}</li>
-          {closed ? (
-            <li className="rounded border border-brand bg-brand px-3 py-2">Closed</li>
-          ) : null}
+          <li className="rounded border border-white/15 bg-white/10 px-3 py-2">Posted {postedLabel()}</li>
           {tag ? (
             <li className={`rounded border px-3 py-2 ${isNewTag(tag) ? "border-brand bg-brand" : "border-white/15 bg-white/10"}`}>
               {tag}
@@ -122,19 +117,15 @@ export function RoleHero({
             on ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
           }`}
         >
-          {closed ? (
-            <Button href={`/contact?region=${role.region}#keep-profile`}>Keep your profile</Button>
-          ) : (
-            <Button
-              href="#apply"
-              onClick={(event) => {
-                event.preventDefault();
-                document.getElementById("apply")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-            >
-              Apply now
-            </Button>
-          )}
+          <Button
+            href="#apply"
+            onClick={(event) => {
+              event.preventDefault();
+              document.getElementById("apply")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          >
+            Apply now
+          </Button>
           <button
             type="button"
             onClick={() => {

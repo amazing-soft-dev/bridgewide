@@ -5,7 +5,6 @@ import { FormStatus, SubmitButton } from "@/components/forms/FormFeedback";
 import { submitForm } from "@/components/forms/read-submission";
 import { useFormSubmit } from "@/hooks/use-form-submit";
 import { regions } from "@/content/site";
-import { AI_CONSENT_WORDING } from "@/content/sla";
 import { CV_ACCEPT, CV_HINT, inspectCv } from "@/lib/cv-file";
 import {
   allOk,
@@ -15,13 +14,10 @@ import {
   fieldErrors,
   limits,
   regionField,
-  rightToWorkChoices,
-  rightToWorkField,
   textField,
 } from "@/lib/form";
-import { formsLive } from "@/lib/forms-live";
 
-type CvErrors = Partial<Record<"name" | "email" | "track" | "region" | "file" | "consent" | "rightToWork", string>>;
+type CvErrors = Partial<Record<"name" | "email" | "track" | "region" | "file", string>>;
 
 /** Field error for the CV upload, or undefined when the file passes. */
 export function cvFileError(uploaded: FormDataEntryValue | null) {
@@ -37,16 +33,9 @@ export function CvForm() {
       email: emailField(data.get("email")),
       track: cvTrackField(data.get("track")),
       region: regionField(data.get("region")),
-      rightToWork: rightToWorkField(data.get("rightToWork")),
     };
     const file = cvFileError(data.get("file"));
-    const consent =
-      fields.track.ok && fields.track.value === "ai-training" && data.get("consent") !== "yes"
-        ? "Consent is required before an AI-training introduction."
-        : undefined;
-    if (!allOk(fields) || file || consent) {
-      return { ok: false, errors: { ...fieldErrors(fields), file, consent } };
-    }
+    if (!allOk(fields) || file) return { ok: false, errors: { ...fieldErrors(fields), file } };
     return { ok: true, send: () => submitForm("/api/cv", new FormData(form)) };
   });
 
@@ -59,7 +48,6 @@ export function CvForm() {
       onSubmit={onSubmit}
     >
       <Honeypot />
-      {!formsLive() ? <p className="text-sm text-stone">This copy of the site cannot send forms.</p> : null}
       <Field label="Name" name="name" autoComplete="name" required error={errors.name} />
       <Field
         label="Email"
@@ -92,19 +80,6 @@ export function CvForm() {
           </option>
         ))}
       </Field>
-      <Field as="select" label="Right to work in this region" name="rightToWork" required defaultValue="" error={errors.rightToWork}>
-        <option value="">Choose one</option>
-        {rightToWorkChoices.map((choice) => (
-          <option key={choice} value={choice}>
-            {choice}
-          </option>
-        ))}
-      </Field>
-      <label className="flex items-start gap-2 text-sm">
-        <input type="checkbox" name="consent" value="yes" />
-        {AI_CONSENT_WORDING}
-      </label>
-      {errors.consent ? <p className="text-sm font-medium text-ink">{errors.consent}</p> : null}
       <Field
         label="CV"
         name="file"
