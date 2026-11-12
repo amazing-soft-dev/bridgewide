@@ -78,6 +78,7 @@ export function inspectCvContent(filename: string, bytes: Uint8Array): { ok: tru
     return buffer.subarray(0, 4).equals(ZIP_HEADER) && buffer.includes("word/") ? { ok: true } : wrong;
   }
   return wrong;
+}
 
 /** Room for the other form fields and the multipart framing around a CV. */
 const FORM_OVERHEAD_BYTES = 256 * 1024;
