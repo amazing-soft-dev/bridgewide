@@ -6,6 +6,7 @@ const storyAlt: Record<string, string> = {
   "harbor-metrics-warehouse": "A quiet modern office interior",
   "campo-health-release": "A laptop open on a desk",
   "keel-systems-paved-path": "A team working side by side",
+  "anon-canada-contract": "An abstract mark for an anonymized client story",
 };
 
 const pad = (value: number) => String(value).padStart(2, "0");

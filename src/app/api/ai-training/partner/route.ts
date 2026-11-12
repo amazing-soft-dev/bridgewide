@@ -1,11 +1,14 @@
+import { sla } from "@/content/sla";
 import {
   emailField,
   honeypotTripped,
   isRecord,
   limits,
+  regionListField,
   textField,
 } from "@/lib/form";
-import { jsonResult, sendFormEmail } from "@/lib/mail";
+import { clientIp, deliverIntake } from "@/lib/intake";
+import { jsonResult } from "@/lib/mail";
 
 export const runtime = "nodejs";
 
@@ -43,19 +46,39 @@ export async function POST(request: Request) {
   const message = textField(payload.message, limits.message, "Message");
   if (!message.ok) return jsonResult({ ok: false, error: message.error, status: 400 });
 
-  return jsonResult(
-    await sendFormEmail({
-      subject: `AI training partner inquiry from ${company.value}`,
-      replyTo: email.value,
-      text: [
-        `Name: ${name.value}`,
-        `Email: ${email.value}`,
-        `Company: ${company.value}`,
-        `Roles or cohorts: ${need.value}`,
-        `Region or time zone: ${coverage.value}`,
-        "",
-        message.value,
-      ].join("\n"),
-    }),
-  );
+  const volume = textField(payload.volume, 40, "Volume");
+  if (!volume.ok) return jsonResult({ ok: false, error: volume.error, status: 400 });
+
+  const taskType = textField(payload.taskType, limits.roleTitle, "Task type");
+  if (!taskType.ok) return jsonResult({ ok: false, error: taskType.error, status: 400 });
+
+  const rate = textField(payload.rate, 40, "Rate");
+  if (!rate.ok) return jsonResult({ ok: false, error: rate.error, status: 400 });
+
+  const countries = regionListField(payload.countries);
+  if (!countries.ok) return jsonResult({ ok: false, error: countries.error, status: 400 });
+
+  const result = await deliverIntake({
+    kind: "partner",
+    email: email.value,
+    roleKey: company.value,
+    subject: `AI training partner inquiry from ${company.value}`,
+    ip: clientIp(request),
+    visitorSla: sla.training,
+    text: [
+      `Name: ${name.value}`,
+      `Email: ${email.value}`,
+      `Company: ${company.value}`,
+      `Roles or cohorts: ${need.value}`,
+      `Region or time zone: ${coverage.value}`,
+      `Volume: ${volume.value}`,
+      `Task type: ${taskType.value}`,
+      `Rate: ${rate.value}`,
+      `Countries: ${countries.value}`,
+      "",
+      message.value,
+    ].join("\n"),
+  });
+  if (result.ok) return Response.json({ ok: true, id: result.id });
+  return jsonResult(result);
 }

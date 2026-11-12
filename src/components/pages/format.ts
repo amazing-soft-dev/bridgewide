@@ -1,4 +1,5 @@
 import { regions, roles, type Region, type RegionSlug, type Role } from "@/content/site";
+import { isRoleOpen } from "@/lib/desk-clock";
 
 export function regionFor(slug: RegionSlug): Region {
   const region = regions.find((item) => item.slug === slug);
@@ -9,7 +10,7 @@ export function regionFor(slug: RegionSlug): Region {
 }
 
 export function rolesIn(slug: RegionSlug): readonly Role[] {
-  return roles.filter((role) => role.region === slug);
+  return roles.filter((role) => role.region === slug && isRoleOpen(role));
 }
 
 export function formatUsd(amount: number): string {

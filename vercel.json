@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/cron/role-digest", "schedule": "0 16 * * 1-5" },
+    { "path": "/api/cron/talent-retention", "schedule": "0 17 * * 1" }
+  ]
+}

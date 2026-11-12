@@ -44,6 +44,7 @@ export function StatsBand({
   stats,
   seam,
   className = "",
+  note,
 }: {
   id?: string;
   headingId: string;
@@ -55,6 +56,7 @@ export function StatsBand({
   stats: readonly BandStat[];
   seam: "left" | "right";
   className?: string;
+  note?: string;
 }) {
   const ref = useRef<HTMLElement>(null);
   const on = useInView(ref, { threshold: 0.22, rootMargin: "0px 0px -6% 0px", once: true });
@@ -110,6 +112,9 @@ export function StatsBand({
           ))}
         </ul>
       </div>
+      {note ? (
+        <p className="wrap relative mt-8 max-w-3xl font-mono text-xs leading-5 tracking-[0.04em] text-white/80">{note}</p>
+      ) : null}
     </section>
   );
 }
