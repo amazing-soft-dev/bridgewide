@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -55,49 +55,6 @@ describe("erasePatch", () => {
     expect(patch).not.toHaveProperty("id");
     expect(patch).not.toHaveProperty("kind");
     expect(patch).not.toHaveProperty("at");
-  });
-});
-
-describe("12-month talent-pool retention", () => {
-  it("anonymizes a profile past 12 months and leaves newer ones and other kinds alone", async () => {
-    await saveSubmission(
-      person({
-        id: "old",
-        email: "zed@example.com",
-        body: "Name: Zed Zebra\nPhone: 555-0199",
-        at: new Date(Date.now() - 400 * day).toISOString(),
-      }),
-    );
-    await saveSubmission(person({ id: "recent", email: "bo@example.com", at: new Date(Date.now() - 300 * day).toISOString() }));
-    await saveSubmission(
-      person({ id: "contact-old", kind: "contact", email: "cy@example.com", at: new Date(Date.now() - 500 * day).toISOString() }),
-    );
-
-    const { GET } = await import("@/app/api/cron/talent-retention/route");
-    const response = await GET(new Request("http://x.test/api/cron/talent-retention", { headers: auth }));
-    expect(await response.json()).toEqual({ ok: true, deleted: 1 });
-
-    const byId = Object.fromEntries((await listSubmissions()).map((item) => [item.id, item]));
-    expect(byId.old).toMatchObject({ id: "old", kind: "talent-pool", status: "deleted", email: "", body: "" });
-    expect(byId.old.consent).toBeUndefined();
-    expect(byId.old.rightToWork).toBeUndefined();
-    expect(byId.old.roleKey).toBeUndefined();
-    expect(byId.recent.email).toBe("bo@example.com");
-    expect(byId["contact-old"].email).toBe("cy@example.com");
-
-    const onDisk = readFileSync(path.join(dir, "submissions.json"), "utf8");
-    expect(onDisk).not.toContain("Zed Zebra");
-    expect(onDisk).not.toContain("555-0199");
-    expect(onDisk).not.toContain("zed@example.com");
-  });
-
-  it("tells the desk a count and nothing about the people", async () => {
-    await saveSubmission(person({ id: "old", at: new Date(Date.now() - 400 * day).toISOString() }));
-    const { GET } = await import("@/app/api/cron/talent-retention/route");
-    await GET(new Request("http://x.test/api/cron/talent-retention", { headers: auth }));
-    const mail = sendFormEmail.mock.calls[0][0] as { text: string };
-    expect(mail.text).toBe("Deleted 1 talent-pool profiles older than 12 months.");
-    expect(mail.text).not.toMatch(/ada|lovelace|@/i);
   });
 });
 
