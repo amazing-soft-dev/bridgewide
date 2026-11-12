@@ -1,4 +1,4 @@
-import { listSubmissions, updateSubmission } from "@/lib/desk-store";
+import { erasePatch, listSubmissions, updateSubmission } from "@/lib/desk-store";
 import { isAuthorized } from "@/lib/cron-auth";
 import { jsonResult, sendFormEmail } from "@/lib/mail";
 import { expiredTalent } from "@/lib/talent-retention";
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     (item) => item.kind === "talent-pool" && item.status !== "deleted" && expiredTalent(item.at),
   );
   for (const item of due) {
-    await updateSubmission(item.id, { status: "deleted" });
+    await updateSubmission(item.id, erasePatch());
   }
   const sent = await sendFormEmail({
     subject: "Talent pool retention",
