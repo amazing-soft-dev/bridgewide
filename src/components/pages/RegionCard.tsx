@@ -1,7 +1,8 @@
 import { RegionTile } from "@/components/ui/RegionTile";
-import type { Region } from "@/content/site";
+import { openRoleCount, type Region } from "@/content/site";
 
 export function RegionCard({ region }: { region: Region }) {
+  const open = openRoleCount(region.slug);
   return (
     <RegionTile
       variant="card"
@@ -11,7 +12,7 @@ export function RegionCard({ region }: { region: Region }) {
       image={region.image}
       alt={`Photograph for the ${region.name} desk`}
       code={region.code}
-      meta={`${region.openRoleCount} open ${region.openRoleCount === 1 ? "role" : "roles"}`}
+      meta={`${open} open ${open === 1 ? "role" : "roles"}`}
       sizes="(min-width: 768px) 50vw, 100vw"
     />
   );

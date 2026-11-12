@@ -1,5 +1,7 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { neon } from "@neondatabase/serverless";
 import path from "node:path";
+import { createFileStore } from "@/lib/desk-store-file";
+import { createPostgresStore, type SqlClient } from "@/lib/desk-store-postgres";
 
 export type SubmissionKind =
   | "hire"
@@ -19,88 +21,120 @@ export type Submission = {
   status: SubmissionStatus;
   email: string;
   roleKey?: string;
+  /** What a hire brief asked for. The 12-week guarantee follows this, not anything sent later. */
+  engagement?: "Permanent" | "Contract";
   rightToWork?: string;
   consent?: { version: string; at: string };
   feeAcknowledged?: string;
   startDate?: string;
   guaranteeEnd?: string;
   reopenUsed?: boolean;
+  /** Every field the visitor sent, as the desk email shows it. A CV is never part of it. */
   body: string;
-  filename?: string;
-  fileBase64?: string;
 };
 
-type Database = {
-  submissions: Submission[];
-  digestDate?: string;
-};
+/**
+ * Everything the desk keeps. Callers use the functions below, which go to
+ * whichever adapter is configured, so they never know where the data lives.
+ */
+export interface DeskStore {
+  list(): Promise<Submission[]>;
+  /** Throws DuplicateSubmissionError when a live record for the same person, kind, and role exists. */
+  save(entry: Submission): Promise<void>;
+  /** A live (not deleted) record with the same email (any case), kind, and role key. */
+  findDuplicate(email: string, kind: SubmissionKind, roleKey?: string): Promise<Submission | undefined>;
+  /** Merge a patch into a record and return it, or undefined when there is no such id. */
+  update(id: string, patch: Partial<Submission>): Promise<Submission | undefined>;
+  readDigestDate(): Promise<string | undefined>;
+  writeDigestDate(date: string): Promise<void>;
+}
 
 function directory(): string {
   return process.env.DESK_DATA_DIR?.trim() || path.join(process.cwd(), ".data", "desk");
 }
 
-function filePath(): string {
-  return path.join(directory(), "submissions.json");
-}
-
-async function readDb(): Promise<Database> {
-  try {
-    const raw = await readFile(filePath(), "utf8");
-    const parsed = JSON.parse(raw) as Database;
-    return { submissions: parsed.submissions ?? [], digestDate: parsed.digestDate };
-  } catch {
-    return { submissions: [] };
+/** Thrown by save() when the unique rule refuses a second live record. */
+export class DuplicateSubmissionError extends Error {
+  constructor(
+    readonly email: string,
+    readonly kind: SubmissionKind,
+    readonly roleKey?: string,
+  ) {
+    super("A live record already exists for this person, kind, and role.");
+    this.name = "DuplicateSubmissionError";
   }
 }
 
-async function writeDb(db: Database): Promise<void> {
-  await mkdir(directory(), { recursive: true });
-  await writeFile(filePath(), JSON.stringify(db), "utf8");
+function neonClient(url: string): SqlClient {
+  const sql = neon(url);
+  return async (query, params = []) => (await sql.query(query, params)) as Record<string, unknown>[];
+}
+
+let current: { key: string; store: DeskStore } | undefined;
+
+/**
+ * The store in use. With DATABASE_URL set it is Postgres; otherwise it is the
+ * JSON file under DESK_DATA_DIR, which is for local development and tests and
+ * is not durable on Vercel.
+ */
+export function getDeskStore(): DeskStore {
+  const url = process.env.DATABASE_URL?.trim();
+  const key = url ? `postgres:${url}` : "file";
+  if (!current || current.key !== key) {
+    current = { key, store: url ? createPostgresStore(neonClient(url)) : createFileStore(directory) };
+  }
+  return current.store;
 }
 
 export function newSubmissionId(): string {
   return `BW-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export async function listSubmissions(): Promise<Submission[]> {
-  const db = await readDb();
-  return db.submissions;
+export function listSubmissions(): Promise<Submission[]> {
+  return getDeskStore().list();
 }
 
-export async function saveSubmission(entry: Submission): Promise<void> {
-  const db = await readDb();
-  db.submissions.push(entry);
-  await writeDb(db);
+export function saveSubmission(entry: Submission): Promise<void> {
+  return getDeskStore().save(entry);
 }
 
-export async function findDuplicate(email: string, kind: SubmissionKind, roleKey?: string): Promise<Submission | undefined> {
-  const db = await readDb();
-  return db.submissions.find(
-    (item) =>
-      item.email.toLowerCase() === email.toLowerCase() &&
-      item.kind === kind &&
-      item.roleKey === roleKey &&
-      item.status !== "deleted",
-  );
+export function findDuplicate(
+  email: string,
+  kind: SubmissionKind,
+  roleKey?: string,
+): Promise<Submission | undefined> {
+  return getDeskStore().findDuplicate(email, kind, roleKey);
 }
 
-export async function updateSubmission(id: string, patch: Partial<Submission>): Promise<Submission | undefined> {
-  const db = await readDb();
-  const current = db.submissions.find((item) => item.id === id);
-  if (!current) return undefined;
-  Object.assign(current, patch);
-  await writeDb(db);
-  return current;
+export function updateSubmission(id: string, patch: Partial<Submission>): Promise<Submission | undefined> {
+  return getDeskStore().update(id, patch);
 }
 
-export async function readDigestDate(): Promise<string | undefined> {
-  return (await readDb()).digestDate;
+export function readDigestDate(): Promise<string | undefined> {
+  return getDeskStore().readDigestDate();
 }
 
-export async function writeDigestDate(date: string): Promise<void> {
-  const db = await readDb();
-  db.digestDate = date;
-  await writeDb(db);
+export function writeDigestDate(date: string): Promise<void> {
+  return getDeskStore().writeDigestDate(date);
+}
+
+/**
+ * What a record keeps after a deletion request or after the 12-month limit:
+ * its id, kind, time, and status, so counts still add up. Everything that
+ * could identify the person is cleared, including the full message text.
+ */
+export function erasePatch(): Partial<Submission> {
+  return {
+    status: "deleted",
+    email: "",
+    body: "",
+    roleKey: undefined,
+    rightToWork: undefined,
+    consent: undefined,
+    feeAcknowledged: undefined,
+    startDate: undefined,
+    guaranteeEnd: undefined,
+  };
 }
 
 export function canIntroduce(entry: Pick<Submission, "status" | "rightToWork">): boolean {

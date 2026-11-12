@@ -27,6 +27,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${role.title} · ${region.name}`,
     description: role.summary,
     path: `/roles/${role.slug}`,
+    // A closed role stays reachable at the same URL but leaves search results.
+    robots: isRoleOpen(role) ? undefined : { index: false, follow: true },
   });
 }
 

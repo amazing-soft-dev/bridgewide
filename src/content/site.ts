@@ -2,7 +2,7 @@
  * Marketing content for BridgeWide.
  */
 
-import { isRoleOpen } from "@/lib/desk-clock";
+import { deskNow, isRoleOpen } from "@/lib/desk-clock";
 
 export type RegionSlug = "usa" | "canada" | "latam" | "europe" | "asia";
 
@@ -110,7 +110,6 @@ export type Region = {
   name: string;
   code: RegionCode;
   summary: string;
-  openRoleCount: number;
   image: string;
 };
 
@@ -140,8 +139,11 @@ export type Role = {
   consultantName: string;
   /** ISO date the role was posted. */
   postedOn: string;
-  /** ISO date the role closes. Open through 18:00 Pacific that day. */
-  closesOn: string;
+  /**
+   * ISO date the role closes. Open through 18:00 Pacific that day. Leave it
+   * out until the desk has a real date: a role with no date stays open.
+   */
+  closesOn?: string;
   tags?: readonly RoleTag[];
   /** Three lines for “What you would do”, drawn from the summary. */
   duties: readonly [string, string, string];
@@ -255,9 +257,6 @@ export type SiteImages = {
 
 /** Day the current open roles were listed. */
 export const rolesListedOn = "2026-10-18";
-
-/** Every current staffing role closes at the end of this desk day. */
-export const rolesCloseOn = "2027-01-16";
 
 /**
  * ISO date of the last content edit in this file. Feeds the sitemap's
@@ -558,7 +557,7 @@ export const people: readonly Person[] = [
   },
 ];
 
-const roleRecords: readonly Omit<Role, "postedOn" | "closesOn">[] = [
+const roleRecords: readonly Omit<Role, "postedOn">[] = [
   {
     slug: "senior-backend-engineer-singapore",
     title: "Senior Backend Engineer",
@@ -1070,10 +1069,9 @@ const roleRecords: readonly Omit<Role, "postedOn" | "closesOn">[] = [
 export const roles: readonly Role[] = roleRecords.map((role) => ({
   ...role,
   postedOn: rolesListedOn,
-  closesOn: rolesCloseOn,
 }));
 
-const regionSeed: readonly Omit<Region, "openRoleCount">[] = [
+const regionSeed: readonly Region[] = [
   {
     slug: "usa",
     name: "United States",
@@ -1116,16 +1114,25 @@ const regionSeed: readonly Omit<Region, "openRoleCount">[] = [
   },
 ];
 
-export const regions: readonly Region[] = regionSeed.map((region) => ({
-  ...region,
-  openRoleCount: roles.filter((role) => role.region === region.slug && isRoleOpen(role)).length,
-}));
+export const regions: readonly Region[] = regionSeed;
 
-export const announcement: Announcement = {
-  liveRoleCount: `${roles.filter((role) => isRoleOpen(role)).length} roles live`,
-  salaryGuideHref: "/salary-guide",
-  salaryGuideLabel: "Salary guide",
-};
+/**
+ * Open roles in a region right now. Call it while rendering, never at module
+ * level: a role closes at 18:00 Pacific, and a value computed at import would
+ * stay frozen for the life of the server instance.
+ */
+export function openRoleCount(slug: RegionSlug, now: Date = deskNow()): number {
+  return roles.filter((role) => role.region === slug && isRoleOpen(role, now)).length;
+}
+
+/** The announcement strip, with the live count worked out when called. */
+export function getAnnouncement(now: Date = deskNow()): Announcement {
+  return {
+    liveRoleCount: `${roles.filter((role) => isRoleOpen(role, now)).length} roles live`,
+    salaryGuideHref: "/salary-guide",
+    salaryGuideLabel: "Salary guide",
+  };
+}
 
 export const salaryBands: SalaryBands = {
   edition: "Autumn 2026 edition",

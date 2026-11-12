@@ -9,10 +9,14 @@ import {
   rolesListedOn,
   stories,
 } from "@/content/site";
+import { isRoleOpen } from "@/lib/desk-clock";
 import { isoDate } from "@/lib/structured-data";
 
 // Prerender at build time so this also works in the static export.
 export const dynamic = "force-static";
+// A role closes at 18:00 Pacific. Next.js reads this value statically, so it must be a number literal:
+// regenerate at most every five minutes in the server build. The static export ignores it.
+export const revalidate = 300;
 
 type Frequency = NonNullable<MetadataRoute.Sitemap[number]["changeFrequency"]>;
 
@@ -56,6 +60,8 @@ function entries(): Entry[] {
     list.push({ path: `/regions/${region.slug}`, lastModified: content, changeFrequency: "weekly", priority: 0.7 });
   }
   for (const role of roles) {
+    // A closed role keeps its page for people who follow an old link, but search engines should not list it.
+    if (!isRoleOpen(role)) continue;
     list.push({ path: `/roles/${role.slug}`, lastModified: rolesListedOn, changeFrequency: "weekly", priority: 0.7 });
   }
   for (const story of stories) {

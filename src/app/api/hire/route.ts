@@ -88,6 +88,7 @@ export async function POST(request: Request) {
     kind: "hire",
     email: email.value,
     roleKey: roleTitle.value,
+    engagement: engagement.value === "Contract" ? "Contract" : "Permanent",
     subject: `Hire brief: ${roleTitle.value} at ${company.value}`,
     ip: clientIp(request),
     visitorSla: sla.employer,

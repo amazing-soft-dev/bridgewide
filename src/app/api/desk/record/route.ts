@@ -1,11 +1,13 @@
 import { isRecord } from "@/lib/form";
 import {
   canIntroduce,
+  erasePatch,
   guaranteeEnd,
   listSubmissions,
   updateSubmission,
   type SubmissionStatus,
 } from "@/lib/desk-store";
+import { isAuthorized } from "@/lib/cron-auth";
 import { jsonResult, sendFormEmail } from "@/lib/mail";
 import { statusBody, statusSubjects } from "@/lib/status-mail";
 
@@ -20,14 +22,8 @@ const statuses: readonly SubmissionStatus[] = [
   "deleted",
 ];
 
-function authorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}`;
-}
-
 export async function POST(request: Request) {
-  if (!authorized(request)) {
+  if (!isAuthorized(request)) {
     return jsonResult({ ok: false, error: "Unauthorized.", status: 401 });
   }
 
@@ -50,7 +46,8 @@ export async function POST(request: Request) {
 
   const rightToWork = typeof payload.rightToWork === "string" ? payload.rightToWork : current.rightToWork;
   const startDate = typeof payload.startDate === "string" ? payload.startDate : current.startDate;
-  const engagement = payload.engagement === "Contract" ? "Contract" : "Permanent";
+  // The record decides. A body value is used only for an older record saved before engagement was stored.
+  const engagement = current.engagement ?? (payload.engagement === "Contract" ? "Contract" : "Permanent");
   if (status === "introduced" && !canIntroduce({ status, rightToWork })) {
     return jsonResult({ ok: false, error: "Right to work is required before an introduction.", status: 400 });
   }
@@ -58,14 +55,20 @@ export async function POST(request: Request) {
     return jsonResult({ ok: false, error: "This record was already reopened once.", status: 400 });
   }
 
-  const updated = await updateSubmission(current.id, {
-    status,
-    rightToWork,
-    startDate,
-    guaranteeEnd: startDate ? guaranteeEnd(startDate, engagement) : undefined,
-    reopenUsed: current.status === "closed" && status !== "closed" ? true : current.reopenUsed,
-    ...(status === "deleted" ? { fileBase64: undefined, filename: undefined } : {}),
-  });
+  // A deletion clears everything that identifies the person. The notice below
+  // still goes to the address read before the clearing.
+  const updated = await updateSubmission(
+    current.id,
+    status === "deleted"
+      ? erasePatch()
+      : {
+          status,
+          rightToWork,
+          startDate,
+          guaranteeEnd: startDate ? guaranteeEnd(startDate, engagement) : undefined,
+          reopenUsed: current.status === "closed" && status !== "closed" ? true : current.reopenUsed,
+        },
+  );
 
   const candidate = await sendFormEmail({
     to: current.email,

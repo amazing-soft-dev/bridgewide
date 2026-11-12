@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { trainingRoles } from "@/content/ai-training";
-import { people, regions, roles, rolesCloseOn, stories } from "@/content/site";
+import { people, regions, roles, stories } from "@/content/site";
+import { isRoleOpen } from "@/lib/desk-clock";
 import { jobPosting, trainingJobPosting } from "@/lib/structured-data";
 
 describe("approved content", () => {
@@ -30,7 +31,23 @@ describe("approved content", () => {
       "Singapore (Asia)",
       "United States (USA)",
     ]);
-    expect(roles.every((role) => role.closesOn === rolesCloseOn)).toBe(true);
+  });
+
+  it("keeps every role open until it has its own close date", () => {
+    const soon = new Date("2026-11-12T16:00:00Z");
+    for (const role of roles) {
+      if (role.closesOn) expect(role.closesOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      else expect(isRoleOpen(role, new Date("2099-01-01T00:00:00Z"))).toBe(true);
+    }
+    expect(roles.every((role) => isRoleOpen(role, soon))).toBe(true);
+  });
+
+  it("does not put a validThrough on a role with no close date", () => {
+    const singapore = roles.find((role) => role.slug === "senior-backend-engineer-singapore");
+    const open = jobPosting({ ...singapore!, closesOn: undefined });
+    expect(open).not.toBeNull();
+    expect(open).not.toHaveProperty("validThrough");
+    expect(jobPosting({ ...singapore!, closesOn: "2027-01-16" })).toHaveProperty("validThrough", "2027-01-16");
   });
 
   it("publishes 32 training cards and does not invent a floor for a ceiling", () => {

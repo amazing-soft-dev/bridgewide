@@ -1,7 +1,7 @@
 import { RegionTile } from "@/components/ui/RegionTile";
 import { RevealItem, RevealGroup } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { regions, type RegionSlug } from "@/content/site";
+import { openRoleCount, regions, type RegionSlug } from "@/content/site";
 
 const regionAlt: Record<RegionSlug, string> = {
   usa: "Manhattan skyline and the Brooklyn Bridge over the East River",
@@ -51,7 +51,7 @@ export default function RegionsSection() {
                   image={region.image}
                   alt={regionAlt[slug]}
                   code={region.code}
-                  meta={`${region.openRoleCount} open roles`}
+                  meta={`${openRoleCount(slug)} open roles`}
                   sizes={sizes}
                   aspectClassName={aspect}
                 />

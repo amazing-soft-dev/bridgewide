@@ -18,6 +18,8 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       ROLE_CLOCK: "2027-01-17T04:00:00.000Z",
+      // No role has a close date of its own yet, so close every USA role for the browser checks.
+      ROLE_CLOSE_DATES: "region:usa=2027-01-16",
       NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3456",
     },
   },

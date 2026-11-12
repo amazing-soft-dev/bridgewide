@@ -70,7 +70,6 @@ describe("desk records", () => {
       status: "received",
       email: "ada@example.com",
       body: "cv",
-      fileBase64: "abc",
     });
     expect(canIntroduce({ status: "paused", rightToWork: "Yes, I can work there" })).toBe(false);
   });

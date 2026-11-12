@@ -1,17 +1,12 @@
-import { listSubmissions, updateSubmission } from "@/lib/desk-store";
+import { erasePatch, listSubmissions, updateSubmission } from "@/lib/desk-store";
+import { isAuthorized } from "@/lib/cron-auth";
 import { jsonResult, sendFormEmail } from "@/lib/mail";
 import { expiredTalent } from "@/lib/talent-retention";
 
 export const runtime = "nodejs";
 
-function authorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}`;
-}
-
 export async function GET(request: Request) {
-  if (!authorized(request)) {
+  if (!isAuthorized(request)) {
     return jsonResult({ ok: false, error: "Unauthorized.", status: 401 });
   }
   const all = await listSubmissions();
@@ -19,7 +14,7 @@ export async function GET(request: Request) {
     (item) => item.kind === "talent-pool" && item.status !== "deleted" && expiredTalent(item.at),
   );
   for (const item of due) {
-    await updateSubmission(item.id, { status: "deleted", fileBase64: undefined, filename: undefined });
+    await updateSubmission(item.id, erasePatch());
   }
   const sent = await sendFormEmail({
     subject: "Talent pool retention",

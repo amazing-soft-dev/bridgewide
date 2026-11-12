@@ -31,6 +31,10 @@ const mono = IBM_Plex_Mono({
   weight: "400",
 });
 
+// A role closes at 18:00 Pacific. Next.js reads this value statically, so it must be a number literal:
+// regenerate at most every five minutes in the server build. The static export ignores it.
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: { default: "BridgeWide", template: "%s · BridgeWide" },

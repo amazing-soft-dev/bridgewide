@@ -1,5 +1,6 @@
 import { sla } from "@/content/sla";
 import {
+  DuplicateSubmissionError,
   findDuplicate,
   newSubmissionId,
   saveSubmission,
@@ -14,6 +15,7 @@ export type IntakeInput = {
   kind: SubmissionKind;
   email: string;
   roleKey?: string;
+  engagement?: "Permanent" | "Contract";
   subject: string;
   text: string;
   ip: string;
@@ -48,14 +50,24 @@ export async function deliverIntake(input: IntakeInput): Promise<IntakeResult> {
     status: "received",
     email: input.email,
     roleKey: input.roleKey,
+    engagement: input.engagement,
     rightToWork: input.rightToWork,
     consent: input.consent,
     feeAcknowledged: input.feeAcknowledged,
+    // The CV goes to the desk email only. A record keeps no file data.
     body: input.text,
-    filename: input.filename,
-    fileBase64: input.fileBase64,
   };
-  await saveSubmission(entry);
+  try {
+    await saveSubmission(entry);
+  } catch (error) {
+    // Two posts from one person can pass the check above together. The store's
+    // unique rule lets only one in; the other gets that record's id.
+    if (error instanceof DuplicateSubmissionError) {
+      const winner = await findDuplicate(input.email, input.kind, input.roleKey);
+      if (winner) return { ok: true, id: winner.id, duplicate: true };
+    }
+    throw error;
+  }
 
   const desk = await sendFormEmail({
     subject: input.subject,
