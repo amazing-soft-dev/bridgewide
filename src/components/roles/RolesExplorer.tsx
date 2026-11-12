@@ -5,6 +5,7 @@ import { deskWrap } from "@/components/roles/desk";
 import { Button } from "@/components/ui/Button";
 import { RoleTicketRow } from "@/components/roles/RoleTicketRow";
 import { regions, roles, rolesListedOn, type Role } from "@/content/site";
+import { isRoleOpen } from "@/lib/desk-clock";
 import { formatCompactSalary } from "@/components/pages/format";
 import {
   filterRoles,
@@ -139,7 +140,7 @@ export function RolesExplorer() {
             <Pill
               key={item.slug}
               on={query.region === item.slug}
-              count={roles.filter((role) => role.region === item.slug).length}
+              count={roles.filter((role) => role.region === item.slug && isRoleOpen(role)).length}
               onClick={() => update({ region: item.slug })}
             >
               {item.name === "United States" ? "USA" : item.name === "Latin America" ? "LATAM" : item.name}

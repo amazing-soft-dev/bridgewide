@@ -1,3 +1,4 @@
+import { AI_CONSENT_VERSION, sla } from "@/content/sla";
 import { inspectCv, MAX_CV_BYTES } from "@/lib/cv-file";
 import {
   availabilityField,
@@ -11,7 +12,9 @@ import {
   workTypeField,
   limits,
 } from "@/lib/ai-training-form";
-import { jsonResult, sendFormEmail } from "@/lib/mail";
+import { rightToWorkField } from "@/lib/form";
+import { clientIp, deliverIntake } from "@/lib/intake";
+import { jsonResult } from "@/lib/mail";
 import {
   availabilities,
   englishLevels,
@@ -66,6 +69,9 @@ export async function POST(request: Request) {
   const consent = consentField(form.get("consent"));
   if (!consent.ok) return jsonResult({ ok: false, error: consent.error, status: 400 });
 
+  const work = rightToWorkField(form.get("rightToWork"));
+  if (!work.ok) return jsonResult({ ok: false, error: work.error, status: 400 });
+
   const uploaded = form.get("file");
   if (!(uploaded instanceof File)) {
     return jsonResult({ ok: false, error: "Attach a CV.", status: 400 });
@@ -88,29 +94,32 @@ export async function POST(request: Request) {
       ? trainingRole(roleValue.trim())
       : undefined;
 
-  return jsonResult(
-    await sendFormEmail({
-      subject: `AI training application from ${name.value}`,
-      replyTo: email.value,
-      text: [
-        `Name: ${name.value}`,
-        `Email: ${email.value}`,
-        `Experience: ${labelFor(experience.value, experienceBands)}`,
-        `Kind of work: ${workTypeLabel(workType.value)}`,
-        `Region: ${formRegionName(region.value)} (${region.value})`,
-        `English: ${labelFor(english.value, englishLevels)}`,
-        `Availability: ${labelFor(availability.value, availabilities)}`,
-        role ? `Role: ${role.title} (${role.slug})` : "Role: none",
-        "Consent: profile is shared only after the candidate agrees.",
-        `File: ${checked.filename}`,
-      ].join("\n"),
-      attachments: [
-        {
-          filename: checked.filename,
-          content: bytes.toString("base64"),
-          contentType: checked.contentType,
-        },
-      ],
-    }),
-  );
+  const result = await deliverIntake({
+    kind: "ai-apply",
+    email: email.value,
+    roleKey: role?.slug ?? region.value,
+    subject: `AI training application from ${name.value}`,
+    ip: clientIp(request),
+    visitorSla: sla.training,
+    rightToWork: work.value,
+    consent: { version: AI_CONSENT_VERSION, at: new Date().toISOString() },
+    filename: checked.filename,
+    contentType: checked.contentType,
+    fileBase64: bytes.toString("base64"),
+    text: [
+      `Name: ${name.value}`,
+      `Email: ${email.value}`,
+      `Experience: ${labelFor(experience.value, experienceBands)}`,
+      `Kind of work: ${workTypeLabel(workType.value)}`,
+      `Region: ${formRegionName(region.value)} (${region.value})`,
+      `English: ${labelFor(english.value, englishLevels)}`,
+      `Availability: ${labelFor(availability.value, availabilities)}`,
+      role ? `Role: ${role.title} (${role.slug})` : "Role: none",
+      `Right to work: ${work.value}`,
+      `Consent: ${AI_CONSENT_VERSION}`,
+      `File: ${checked.filename}`,
+    ].join("\n"),
+  });
+  if (result.ok) return Response.json({ ok: true, id: result.id });
+  return jsonResult(result);
 }

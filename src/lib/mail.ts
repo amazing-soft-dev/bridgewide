@@ -11,6 +11,7 @@ export async function sendFormEmail(input: {
   subject: string;
   text: string;
   replyTo?: string;
+  to?: string;
   attachments?: Attachment[];
 }): Promise<MailResult> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
@@ -31,7 +32,7 @@ export async function sendFormEmail(input: {
   try {
     const { data, error } = await resend.emails.send({
       from,
-      to,
+      to: input.to?.trim() || to,
       subject: input.subject.replace(/[\r\n]+/g, " ").slice(0, 200),
       text: input.text,
       replyTo: input.replyTo,

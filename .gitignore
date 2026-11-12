@@ -39,6 +39,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# desk records written at runtime
+.data
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

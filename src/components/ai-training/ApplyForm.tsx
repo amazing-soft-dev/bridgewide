@@ -27,7 +27,8 @@ import {
   workTypeField,
 } from "@/lib/ai-training-form";
 import { CV_ACCEPT, CV_HINT } from "@/lib/cv-file";
-import { allOk } from "@/lib/form";
+import { allOk, rightToWorkChoices, rightToWorkField } from "@/lib/form";
+import { formsLive } from "@/lib/forms-live";
 
 type ApplyErrors = Partial<
   Record<
@@ -39,7 +40,8 @@ type ApplyErrors = Partial<
     | "english"
     | "availability"
     | "file"
-    | "consent",
+    | "consent"
+    | "rightToWork",
     string
   >
 >;
@@ -61,6 +63,7 @@ export function ApplyForm({
       english: englishField(data.get("english")),
       availability: availabilityField(data.get("availability")),
       consent: consentField(data.get("consent")),
+      rightToWork: rightToWorkField(data.get("rightToWork")),
     };
     const file = cvFileError(data.get("file"));
     if (!allOk(fields) || file) return { ok: false, errors: { ...fieldErrors(fields), file } };
@@ -76,6 +79,7 @@ export function ApplyForm({
       onSubmit={onSubmit}
     >
       <Honeypot />
+      {!formsLive() ? <p className="text-sm text-stone">This copy of the site cannot send forms.</p> : null}
       {roleSlug ? <input type="hidden" name="role" value={roleSlug} /> : null}
       {roleTitle ? (
         <p className="text-sm text-ink-soft">
@@ -156,6 +160,14 @@ export function ApplyForm({
         {availabilities.map((item) => (
           <option key={item.value} value={item.value}>
             {item.label}
+          </option>
+        ))}
+      </Field>
+      <Field as="select" label="Right to work in this region" name="rightToWork" required defaultValue="" error={errors.rightToWork}>
+        <option value="">Choose one</option>
+        {rightToWorkChoices.map((choice) => (
+          <option key={choice} value={choice}>
+            {choice}
           </option>
         ))}
       </Field>
