@@ -9,6 +9,7 @@ import {
   rolesListedOn,
   stories,
 } from "@/content/site";
+import { isRoleOpen } from "@/lib/desk-clock";
 import { isoDate } from "@/lib/structured-data";
 
 // Prerender at build time so this also works in the static export.
@@ -56,6 +57,8 @@ function entries(): Entry[] {
     list.push({ path: `/regions/${region.slug}`, lastModified: content, changeFrequency: "weekly", priority: 0.7 });
   }
   for (const role of roles) {
+    // A closed role keeps its page for people who follow an old link, but search engines should not list it.
+    if (!isRoleOpen(role)) continue;
     list.push({ path: `/roles/${role.slug}`, lastModified: rolesListedOn, changeFrequency: "weekly", priority: 0.7 });
   }
   for (const story of stories) {
