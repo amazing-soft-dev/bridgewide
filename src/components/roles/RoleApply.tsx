@@ -8,12 +8,22 @@ import { cutLg } from "@/components/roles/desk";
 import { Button } from "@/components/ui/Button";
 import { contact, type Role } from "@/content/site";
 import { CV_ACCEPT, CV_HINT, inspectCv } from "@/lib/cv-file";
-import { emailField, fieldErrors, limits, optionalText, textField } from "@/lib/form";
+import { emailField, fieldErrors, limits, optionalText, rightToWorkChoices, rightToWorkField, textField } from "@/lib/form";
+import { sla } from "@/content/sla";
 import { consultantFor } from "@/lib/role-desk";
+import { formsLive } from "@/lib/forms-live";
 
-type Errors = Partial<Record<"name" | "email" | "phone" | "file", string>>;
+type Errors = Partial<Record<"name" | "email" | "phone" | "file" | "rightToWork", string>>;
 
-export function RoleApply({ role, refCode }: { role: Role; refCode: string }) {
+export function RoleApply({
+  role,
+  refCode,
+  closed = false,
+}: {
+  role: Role;
+  refCode: string;
+  closed?: boolean;
+}) {
   const person = consultantFor(role.consultantName);
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
@@ -31,6 +41,7 @@ export function RoleApply({ role, refCode }: { role: Role; refCode: string }) {
       name: textField(data.get("name"), limits.name, "Full name"),
       email: emailField(data.get("email")),
       phone: optionalText(data.get("phone"), limits.phone, "Phone"),
+      rightToWork: rightToWorkField(data.get("rightToWork")),
     };
     const nextErrors: Errors = fieldErrors(fields);
     const uploaded = data.get("file");
@@ -40,7 +51,7 @@ export function RoleApply({ role, refCode }: { role: Role; refCode: string }) {
       const checked = inspectCv(uploaded);
       if (!checked.ok) nextErrors.file = checked.error;
     }
-    if (!fields.name.ok || !fields.email.ok || !fields.phone.ok || nextErrors.file) {
+    if (!fields.name.ok || !fields.email.ok || !fields.phone.ok || !fields.rightToWork.ok || nextErrors.file) {
       setErrors(nextErrors);
       setServerError("");
       setStatus("idle");
@@ -92,7 +103,19 @@ export function RoleApply({ role, refCode }: { role: Role; refCode: string }) {
         >
           {contact.email}
         </a>
-        {status === "success" ? (
+        {closed ? (
+          <div className="grid gap-2">
+            <h3 className="font-display m-0 text-[22px] tracking-[-0.03em]">This role is closed.</h3>
+            <p className="m-0 text-sm text-stone">
+              The close date has passed. Leave a CV and a short profile, and the desk will write if a matching seat opens.
+            </p>
+            <a className="font-semibold text-ink underline decoration-brand underline-offset-4" href={`/contact?region=${role.region}#keep-profile`}>
+              Keep your profile
+            </a>
+          </div>
+        ) : !formsLive() ? (
+          <p className="m-0 text-sm text-stone">This copy of the site cannot send forms.</p>
+        ) : status === "success" ? (
           <div role="status" className="grid justify-items-start gap-2.5 py-2">
             <span
               data-motion="reveal"
@@ -101,9 +124,7 @@ export function RoleApply({ role, refCode }: { role: Role; refCode: string }) {
               Applied
             </span>
             <h3 className="font-display m-0 text-[26px] tracking-[-0.03em]">Thanks, {firstName}.</h3>
-            <p className="m-0 text-stone">
-              {(person?.name ?? role.consultantName).split(" ")[0]} will call you within one working day.
-            </p>
+            <p className="m-0 text-stone">{sla.role}</p>
           </div>
         ) : (
           <form className="relative grid gap-3" noValidate aria-label="Apply in two minutes" onSubmit={onSubmit}>
@@ -115,6 +136,18 @@ export function RoleApply({ role, refCode }: { role: Role; refCode: string }) {
             <FloatField label="Full name" name="name" autoComplete="name" required error={errors.name} />
             <FloatField label="Email" name="email" type="email" autoComplete="email" required error={errors.email} />
             <FloatField label="Phone" name="phone" type="tel" autoComplete="tel" error={errors.phone} />
+            <label className="grid gap-1 text-sm">
+              <span className="font-mono text-xs tracking-[0.12em] text-stone uppercase">Right to work</span>
+              <select name="rightToWork" defaultValue="" className="min-h-12 rounded-md border border-cloud-soft bg-cloud px-3">
+                <option value="">Choose one</option>
+                {rightToWorkChoices.map((choice) => (
+                  <option key={choice} value={choice}>
+                    {choice}
+                  </option>
+                ))}
+              </select>
+              {errors.rightToWork ? <em className="text-xs text-brand not-italic">{errors.rightToWork}</em> : null}
+            </label>
             <FileField error={errors.file} />
             {status === "error" ? (
               <p role="alert" className="m-0 text-xs text-brand">

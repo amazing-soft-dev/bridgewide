@@ -114,6 +114,31 @@ export function emailField(value: unknown): FieldResult {
   return text;
 }
 
+export const rightToWorkChoices = ["Yes, I can work there", "Needs sponsorship"] as const;
+
+export function rightToWorkField(value: unknown): FieldResult<(typeof rightToWorkChoices)[number]> {
+  const text = textField(value, 40, "Right to work");
+  if (!text.ok) return text;
+  if (text.value !== "Yes, I can work there" && text.value !== "Needs sponsorship") {
+    return { ok: false, error: "Say whether you can work in this region." };
+  }
+  return { ok: true, value: text.value };
+}
+
+export function regionListField(value: unknown): FieldResult<string> {
+  const raw = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(",")
+      : [];
+  const slugs = raw.map((item) => String(item).trim()).filter(Boolean);
+  if (slugs.length === 0) return { ok: false, error: "Choose at least one region." };
+  if (!slugs.every((slug) => isRegionSlug(slug))) {
+    return { ok: false, error: "Choose a region from the list." };
+  }
+  return { ok: true, value: slugs.join(", ") };
+}
+
 export function regionField(value: unknown): FieldResult<RegionSlug> {
   if (typeof value !== "string" || !isRegionSlug(value.trim())) {
     return { ok: false, error: "Choose a region." };

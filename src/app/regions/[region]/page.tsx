@@ -67,7 +67,17 @@ export default async function RegionPage({
         label="Seats"
         title="Open roles"
       >
-        <RoleList items={rolesIn(region.slug)} />
+        {region.openRoleCount === 0 ? (
+          <p className="max-w-xl leading-8">
+            This desk is open and there is no role on the board right now.{" "}
+            <Link href={`/contact?region=${region.slug}#keep-profile`} className={textLink}>
+              Leave a CV and a profile
+            </Link>{" "}
+            and the desk will keep them for 12 months.
+          </p>
+        ) : (
+          <RoleList items={rolesIn(region.slug)} />
+        )}
         <p className="mt-8">
           <Link href="/regions" className={textLink}>
             All regions

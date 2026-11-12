@@ -46,15 +46,10 @@ export type Platform = {
   relationship: PlatformRelationship;
 };
 
-export type TrainingRole = {
-  slug: string;
-  title: string;
-  workType: WorkTypeSlug;
-  region: TrainingRegionSlug;
-  payMin: number;
-  payMax: number;
-  summary: string;
-};
+import { trainingRoles, type TrainingRole } from "@/content/training-openings";
+
+export type { TrainingRole };
+export { trainingRoles };
 
 export type Portrait = {
   id: string;
@@ -320,64 +315,12 @@ export const platforms: readonly Platform[] = [
   },
 ];
 
-export const trainingRoles: readonly TrainingRole[] = [
-  {
-    slug: "python-code-evaluation",
-    title: "Python code evaluation",
-    workType: "code",
-    region: "latam",
-    payMin: 30,
-    payMax: 60,
-    summary:
-      "Compare model-written Python, find the bugs, and write a rationale for the stronger answer.",
-  },
-  {
-    slug: "senior-fullstack-agentic",
-    title: "Senior full-stack agentic tasks",
-    workType: "code",
-    region: "usa",
-    payMin: 50,
-    payMax: 90,
-    summary:
-      "Design realistic multi-file engineering tasks and grade how a coding agent works through them.",
-  },
-  {
-    slug: "java-backend-rlhf",
-    title: "Java and backend RLHF",
-    workType: "rlhf",
-    region: "europe",
-    payMin: 40,
-    payMax: 70,
-    summary:
-      "Score backend answers on correctness and usefulness, then rewrite the ones that miss.",
-  },
-  {
-    slug: "ml-benchmark",
-    title: "ML benchmark work",
-    workType: "specialist",
-    region: "canada",
-    payMin: 60,
-    payMax: 120,
-    summary:
-      "Build and grade hard machine-learning tasks that show where a model still fails.",
-  },
-  {
-    slug: "multilingual-writing",
-    title: "Multilingual writing and rating",
-    workType: "specialist",
-    region: "asia",
-    payMin: 25,
-    payMax: 45,
-    summary:
-      "Rate answers for accuracy and tone in more than one language, and rewrite the weak ones.",
-  },
-];
 
 export const portraits: readonly Portrait[] = [
   {
     id: "mateo",
     name: "Mateo",
-    place: "Bogotá",
+    place: "Bogotá, Colombia (LATAM)",
     region: "latam",
     focus: "Code evaluation",
     image: "/images/portraits/mateo.webp",
@@ -385,7 +328,7 @@ export const portraits: readonly Portrait[] = [
   {
     id: "hanae",
     name: "Hanae",
-    place: "Manila",
+    place: "Manila, Philippines (Asia)",
     region: "asia",
     focus: "Multilingual rating",
     image: "/images/portraits/hanae.webp",
@@ -393,7 +336,7 @@ export const portraits: readonly Portrait[] = [
   {
     id: "elise",
     name: "Elise",
-    place: "Kraków",
+    place: "Kraków, Poland (Europe)",
     region: "europe",
     focus: "RLHF and writing",
     image: "/images/portraits/elise.webp",
@@ -401,7 +344,7 @@ export const portraits: readonly Portrait[] = [
   {
     id: "amara",
     name: "Amara",
-    place: "Chicago",
+    place: "Chicago, United States (USA)",
     region: "usa",
     focus: "Data and benchmarks",
     image: "/images/portraits/amara.webp",
@@ -463,7 +406,7 @@ export const trainingBenefits: readonly TrainingBenefit[] = [
     copy: "Applying puts you on the desk's list, not on every platform's. Each introduction is proposed to you first, with the platform named.",
     figure: "100%",
     unit: "Transparent partner controls",
-    note: "Ask the desk to pause or delete your profile at any time.",
+    note: "Email michael.allen@bridgewide.org to pause or delete a profile. There is no account.",
     image: "/images/training-benefit-4.webp",
     alt: "A woman taking a call at her desk",
   },
@@ -497,7 +440,7 @@ export const trainingFaq: readonly TrainingFaq[] = [
   {
     question: "Are the jobs on this site live openings?",
     answer:
-      "These roles show the kind of work and the kind of pay range. A real opening replaces one when the desk has one.",
+      "Yes. Each card names the platform that was advertising that work, the published range, and the date of the source. The platform pays you. BridgeWide introduces you and does not take a cut. A ceiling such as “up to $35” is a ceiling. The platform shows the rate before the work starts.",
   },
   {
     question: "Do you have a partnership with every platform listed?",
@@ -528,7 +471,7 @@ export const trainingStats: readonly TrainingStat[] = [
   { value: String(platforms.length), label: "Platforms in the directory" },
   { value: "Worldwide", label: "Remote, including the United States" },
   { value: "$0", label: "Cost to candidates" },
-  { value: "72", label: "Hours to review response" },
+  { value: "3", label: "Business days to review" },
 ];
 
 export function trainingRegion(slug: string): TrainingRegion | undefined {
@@ -554,12 +497,16 @@ export function workTypeShort(slug: WorkTypeSlug): string {
   return shortLabels[slug];
 }
 
-export function formatHourly(min: number, max: number): string {
+export function formatHourly(min: number | null, max: number): string {
+  if (min == null) return `up to USD ${max}/hour`;
+  if (min === max) return `USD ${min}/hour`;
   return `USD ${min}–${max}/hour`;
 }
 
 /** Hourly pay for tight ticket columns: "$30–60/hr". */
-export function formatCompactHourly(min: number, max: number): string {
+export function formatCompactHourly(min: number | null, max: number): string {
+  if (min == null) return `up to $${max}/hr`;
+  if (min === max) return `$${min}/hr`;
   return `$${min}–${max}/hr`;
 }
 

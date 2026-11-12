@@ -21,7 +21,7 @@ export function TrainingRoleTicket({ role, heading }: { role: TrainingRole; head
       code={code[role.workType]}
       title={role.title}
       summary={role.summary}
-      place={trainingRegion(role.region)?.name ?? role.region}
+      place={role.region ? (trainingRegion(role.region)?.name ?? role.place) : role.place}
       kind={workTypeShort(role.workType)}
       pay={formatCompactHourly(role.payMin, role.payMax)}
       heading={heading}

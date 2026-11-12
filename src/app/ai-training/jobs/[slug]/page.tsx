@@ -45,7 +45,7 @@ export default async function TrainingJobPage({
   const { slug } = await params;
   const role = trainingRole(slug);
   if (!role) notFound();
-  const region = trainingRegion(role.region);
+  const region = role.region ? trainingRegion(role.region) : undefined;
 
   return (
     <>
@@ -57,7 +57,7 @@ export default async function TrainingJobPage({
         lede={role.summary}
         meta={
           <span className="font-mono text-xs tracking-[0.16em] text-stone uppercase">
-            {region?.name} · {workTypeLabel(role.workType)} · {formatHourly(role.payMin, role.payMax)}
+            {role.platform} · {region?.name ?? role.place} · {workTypeLabel(role.workType)} · {formatHourly(role.payMin, role.payMax)}
           </span>
         }
       >
@@ -68,13 +68,15 @@ export default async function TrainingJobPage({
       </PageHero>
       <PageSection id="about" label="This listing" title="How this work pays.">
         <p className="max-w-2xl leading-8 text-ink-soft">
-          The pay range is what this work carries. The platform pays the person, in USD. BridgeWide does not take a cut, and a profile is shared only after the candidate agrees.
+          {role.platform} pays the person, in USD. {formatHourly(role.payMin, role.payMax)}. Source: {role.source} ({role.sourceDate}). BridgeWide introduces you and does not take a cut. A profile is shared only after you agree.
         </p>
-        <p className="mt-8">
-          <Link href={`/ai-training/${role.region}`} className={textLink}>
-            {region?.name} page
-          </Link>
-        </p>
+        {role.region && region ? (
+          <p className="mt-8">
+            <Link href={`/ai-training/${role.region}`} className={textLink}>
+              {region.name} page
+            </Link>
+          </p>
+        ) : null}
       </PageSection>
     </>
   );
