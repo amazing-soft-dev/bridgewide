@@ -9,6 +9,8 @@
 // Linux and a repo that is already on the LOCALAPPDATA drive are left alone.
 // The hash keeps two clones from sharing one cache.
 //
+// It also links node_modules next to the cache so PostCSS can find its plugins.
+//
 // Run: npm automatically, as predev and prebuild.
 
 import { createHash } from "node:crypto";
@@ -44,6 +46,25 @@ function junctionTarget(linkPath) {
 }
 
 mkdirSync(target, { recursive: true });
+
+// Turbopack runs the PostCSS config from a chunk under `target`, and Node looks
+// for `@tailwindcss/postcss` in the folders above that chunk. They are outside
+// the repo, so without this the dev server answers 500 with "Cannot find
+// module '@tailwindcss/postcss'". A node_modules junction beside the cache
+// points those lookups back at the repo's packages.
+const modulesLink = path.join(target, "node_modules");
+const modulesTarget = path.join(root, "node_modules");
+let modulesCurrent = null;
+try {
+  modulesCurrent = lstatSync(modulesLink);
+} catch (error) {
+  if (error?.code !== "ENOENT") throw error;
+}
+if (!modulesCurrent || !modulesCurrent.isSymbolicLink() || !samePath(junctionTarget(modulesLink), modulesTarget)) {
+  if (modulesCurrent) rmdirSync(modulesLink);
+  symlinkSync(modulesTarget, modulesLink, "junction");
+  console.log(`Linked ${modulesLink} to ${modulesTarget}.`);
+}
 
 let current = null;
 try {
