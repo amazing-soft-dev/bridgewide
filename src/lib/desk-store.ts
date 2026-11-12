@@ -21,6 +21,8 @@ export type Submission = {
   status: SubmissionStatus;
   email: string;
   roleKey?: string;
+  /** What a hire brief asked for. The 12-week guarantee follows this, not anything sent later. */
+  engagement?: "Permanent" | "Contract";
   rightToWork?: string;
   consent?: { version: string; at: string };
   feeAcknowledged?: string;

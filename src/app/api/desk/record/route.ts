@@ -46,7 +46,8 @@ export async function POST(request: Request) {
 
   const rightToWork = typeof payload.rightToWork === "string" ? payload.rightToWork : current.rightToWork;
   const startDate = typeof payload.startDate === "string" ? payload.startDate : current.startDate;
-  const engagement = payload.engagement === "Contract" ? "Contract" : "Permanent";
+  // The record decides. A body value is used only for an older record saved before engagement was stored.
+  const engagement = current.engagement ?? (payload.engagement === "Contract" ? "Contract" : "Permanent");
   if (status === "introduced" && !canIntroduce({ status, rightToWork })) {
     return jsonResult({ ok: false, error: "Right to work is required before an introduction.", status: 400 });
   }

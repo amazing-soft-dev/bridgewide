@@ -52,6 +52,15 @@ describe("POST /api/hire", () => {
     expect(desk?.text).toContain("Regions:");
   });
 
+  it("saves the engagement on the record, for the guarantee clock", async () => {
+    const { POST } = await import("./route");
+    const { listSubmissions } = await import("@/lib/desk-store");
+    expect((await POST(jsonRequest(brief))).status).toBe(200);
+    expect((await POST(jsonRequest({ ...brief, email: "bo@example.com", engagement: "Contract", duration: "6 months" }))).status).toBe(200);
+    const records = await listSubmissions();
+    expect(records.map((record) => record.engagement)).toEqual(["Permanent", "Contract"]);
+  });
+
   it("does not send when the honeypot is filled", async () => {
     const { POST } = await import("./route");
     const response = await POST(jsonRequest({ ...brief, companyWebsite: "https://spam.test" }));
