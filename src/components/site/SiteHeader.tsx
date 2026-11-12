@@ -5,7 +5,7 @@ import { SearchButton, SearchDrawer, type SearchRole } from "@/components/site/H
 import { MobileNav } from "@/components/site/MobileNav";
 import { Button } from "@/components/ui/Button";
 import { trainingRoles } from "@/content/ai-training";
-import { announcement, contact, nav, roles } from "@/content/site";
+import { contact, getAnnouncement, nav, roles } from "@/content/site";
 import { isRoleOpen } from "@/lib/desk-clock";
 import "./header.css";
 
@@ -34,6 +34,7 @@ const searchRoles: readonly SearchRole[] = [
 ];
 
 export function SiteHeader() {
+  const announcement = getAnnouncement();
   return (
     <HeaderShell>
       <div className="sthd-strip">

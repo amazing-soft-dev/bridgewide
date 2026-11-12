@@ -6,7 +6,7 @@ import { RoleList } from "@/components/pages/RoleList";
 import { rolesIn, textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { getRegion, regions } from "@/content/site";
+import { getRegion, openRoleCount, regions } from "@/content/site";
 import { breadcrumbs } from "@/lib/structured-data";
 
 export const dynamicParams = false;
@@ -39,6 +39,7 @@ export default async function RegionPage({
   const { region: slug } = await params;
   const region = getRegion(slug);
   if (!region) notFound();
+  const openCount = openRoleCount(region.slug);
 
   return (
     <>
@@ -58,7 +59,7 @@ export default async function RegionPage({
         }}
         meta={
           <span className="eyebrow-muted">
-            {region.openRoleCount} open {region.openRoleCount === 1 ? "role" : "roles"}
+            {openCount} open {openCount === 1 ? "role" : "roles"}
           </span>
         }
       />
@@ -67,7 +68,7 @@ export default async function RegionPage({
         label="Seats"
         title="Open roles"
       >
-        {region.openRoleCount === 0 ? (
+        {openCount === 0 ? (
           <p className="max-w-xl leading-8">
             This desk is open and there is no role on the board right now.{" "}
             <Link href={`/contact?region=${region.slug}#keep-profile`} className={textLink}>
