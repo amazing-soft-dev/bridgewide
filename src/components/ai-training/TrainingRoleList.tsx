@@ -25,7 +25,7 @@ const code: Record<WorkTypeSlug, string> = {
 const TICK = 30;
 const top = Math.ceil(Math.max(...trainingRoles.map((role) => role.payMax)) / TICK) * TICK;
 const ticks = Array.from({ length: top / TICK + 1 }, (_, index) => index * TICK);
-const lowest = Math.min(...trainingRoles.map((role) => role.payMin ?? role.payMax));
+const lowest = Math.min(...trainingRoles.map((role) => role.payMin));
 
 const pct = (value: number) => `${(value / top) * 100}%`;
 
@@ -111,9 +111,7 @@ export function TrainingRoleList() {
 
           <ol className="m-0 list-none border-t border-cloud/15 p-0">
             {visible.map((role, index) => {
-              const region = role.region ? (trainingRegion(role.region)?.name ?? role.place) : role.place;
-              const barStart = role.payMin ?? role.payMax;
-              const barWidth = role.payMin == null ? "4px" : pct(Math.max(role.payMax - role.payMin, 0));
+              const region = trainingRegion(role.region)?.name ?? role.region;
               return (
                 <li key={role.slug} className="border-b border-cloud/15">
                   <Link
@@ -142,7 +140,7 @@ export function TrainingRoleList() {
                       ))}
                       <m.span
                         className="absolute top-1/2 h-3 -translate-y-1/2 rounded-[2px] bg-brand transition-[background-color,box-shadow] duration-300 group-hover:bg-[#ff3b3a] group-hover:shadow-[0_0_24px_rgb(243_1_0/0.5)]"
-                        style={{ left: pct(barStart), width: barWidth, originX: 0 }}
+                        style={{ left: pct(role.payMin), width: pct(role.payMax - role.payMin), originX: 0 }}
                         data-motion="bar"
                         initial={{ scaleX: 0 }}
                         whileInView={{ scaleX: 1 }}
@@ -151,9 +149,9 @@ export function TrainingRoleList() {
                       />
                       <span
                         className="absolute top-0 font-mono text-xs tracking-[0.04em] text-cloud/80"
-                        style={{ left: pct(barStart) }}
+                        style={{ left: pct(role.payMin) }}
                       >
-                        {role.payMin == null ? "up to" : `$${role.payMin}`}
+                        ${role.payMin}
                       </span>
                       <span
                         className="absolute bottom-0 -translate-x-full font-mono text-xs tracking-[0.04em] font-semibold text-cloud"

@@ -376,7 +376,7 @@ export const trainingRoles: readonly TrainingRole[] = [
     payMin: 15,
     payMax: 20,
     summary: `Healthcare QA in Central American Spanish. ${reviewed}`,
-    source: "Parailabs board snapshot",
+    source: "Alignerr board sample, via Parailabs",
     sourceDate: "2026-09-29",
   }),
   role({

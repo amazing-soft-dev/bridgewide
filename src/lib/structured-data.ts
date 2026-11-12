@@ -6,13 +6,12 @@ import {
   organization,
   people,
   regions,
+  rolesListedOn,
   salaryBands,
   type Insight,
   type Role,
 } from "@/content/site";
-import { type TrainingRole } from "@/content/ai-training";
-import { isRoleOpen } from "@/lib/desk-clock";
-import { roleRef } from "@/lib/role-desk";
+import { trainingRegion, type TrainingRole } from "@/content/ai-training";
 
 /**
  * schema.org builders. Only facts the site already states go in here.
@@ -208,9 +207,13 @@ const cityCountry: Record<string, { code: string; name: string }> = {
   Berlin: { code: "DE", name: "Germany" },
   Amsterdam: { code: "NL", name: "Netherlands" },
   Dublin: { code: "IE", name: "Ireland" },
-  Singapore: { code: "SG", name: "Singapore" },
-  Bangalore: { code: "IN", name: "India" },
 };
+
+function plusDays(iso: string, days: number) {
+  const date = new Date(`${iso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
 
 /** "$210,000–$245,000" or "$850–$980 / day" when both ends are present. */
 function baseSalary(salary: string) {
@@ -229,78 +232,74 @@ function baseSalary(salary: string) {
 }
 
 export function jobPosting(role: Role) {
-  if (!isRoleOpen(role)) return null;
   const country = cityCountry[role.city];
   const salary = baseSalary(role.salary);
-  const duties = role.duties.join(" ");
   return {
     "@context": "https://schema.org",
     "@type": "JobPosting",
     title: role.title,
-    description: `${role.summary} ${duties}`,
+    description: `${role.summary} ${role.engagement}, ${role.workMode}, ${role.city}. Salary: ${role.salary}.`,
     url: abs(`/roles/${role.slug}`),
-    identifier: {
-      "@type": "PropertyValue",
-      name: organization.name,
-      value: roleRef(role.slug),
-    },
-    datePosted: role.postedOn,
-    validThrough: role.closesOn,
+    datePosted: rolesListedOn,
+    validThrough: plusDays(rolesListedOn, 90),
     employmentType: role.engagement === "Permanent" ? "FULL_TIME" : "CONTRACTOR",
-    directApply: true,
-    hiringOrganization: { "@type": "Organization", "@id": orgId, name: organization.name },
+    directApply: false,
+    hiringOrganization: { "@id": orgId },
     jobLocation: {
       "@type": "Place",
       address: {
         "@type": "PostalAddress",
         addressLocality: role.city,
-        addressCountry: country?.code ?? role.countryCode,
+        ...(country ? { addressCountry: country.code } : {}),
       },
     },
-    ...(role.workMode === "Remote"
+    ...(role.workMode === "Remote" && country
       ? {
           jobLocationType: "TELECOMMUTE",
-          applicantLocationRequirements: {
-            "@type": "Country",
-            name: country?.name ?? role.country,
-          },
+          applicantLocationRequirements: { "@type": "Country", name: country.name },
         }
       : {}),
     ...(salary ? { baseSalary: salary } : {}),
   };
 }
 
+const trainingCountry: Partial<Record<TrainingRole["region"], string>> = {
+  usa: "United States",
+  canada: "Canada",
+};
+
 /**
- * A live directory opening. The platform is the employer and pays the person.
- * A ceiling carries maxValue only, so a missing floor is not invented.
+ * An AI-training listing as a remote, hourly JobPosting. The platform pays
+ * the person; BridgeWide is the hiring organization only in the sense that
+ * it makes the introduction, so `directApply` stays false.
  */
 export function trainingJobPosting(role: TrainingRole) {
-  const salaryValue =
-    role.payMin == null
-      ? { "@type": "QuantitativeValue", maxValue: role.payMax, unitText: "HOUR" }
-      : {
-          "@type": "QuantitativeValue",
-          minValue: role.payMin,
-          maxValue: role.payMax,
-          unitText: "HOUR",
-        };
+  const region = trainingRegion(role.region);
+  const country = trainingCountry[role.region];
   return {
     "@context": "https://schema.org",
     "@type": "JobPosting",
     title: role.title,
-    description: `${role.summary} Paid by ${role.platform}. Source: ${role.source} (${role.sourceDate}).`,
+    description: `${role.summary} Remote, paid in USD by the platform. Region: ${region?.name ?? role.region}.`,
     url: abs(`/ai-training/jobs/${role.slug}`),
-    datePosted: role.sourceDate,
-    validThrough: "2027-01-16",
+    datePosted: contentUpdatedOn,
+    validThrough: plusDays(contentUpdatedOn, 90),
     employmentType: "CONTRACTOR",
     directApply: false,
-    hiringOrganization: { "@type": "Organization", name: role.platform },
+    hiringOrganization: { "@id": orgId },
     jobLocationType: "TELECOMMUTE",
-    applicantLocationRequirements: { "@type": "Country", name: role.place },
+    ...(country
+      ? { applicantLocationRequirements: { "@type": "Country", name: country } }
+      : {}),
     baseSalary: {
       "@type": "MonetaryAmount",
       currency: "USD",
-      value: salaryValue,
+      value: {
+        "@type": "QuantitativeValue",
+        minValue: role.payMin,
+        maxValue: role.payMax,
+        unitText: "HOUR",
+      },
     },
   };
 }

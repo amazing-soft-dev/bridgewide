@@ -15,7 +15,6 @@ export type SearchRole = {
   discipline: string;
   engagement: string;
   workMode: string;
-  href?: string;
 };
 
 const SEARCH_BUTTON_ID = "header-search-button";
@@ -63,7 +62,7 @@ export function SearchResults({
         hits.slice(0, MAX_HITS).map((role) => (
           <Link
             key={role.slug}
-            href={role.href ?? `/roles/${role.slug}`}
+            href={`/roles/${role.slug}`}
             className="sthd-hit"
             onClick={onNavigate}
           >

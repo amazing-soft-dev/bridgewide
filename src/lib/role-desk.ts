@@ -1,7 +1,4 @@
 import { people, roles, rolesListedOn, type Person, type Role, type RoleTag } from "@/content/site";
-import { isRecentlyPosted, isRoleOpen } from "@/lib/desk-clock";
-
-const scarcityTags = new Set<RoleTag>(["2 Left", "6 Seats", "12 Seats"]);
 
 const DAY = 86_400_000;
 
@@ -44,7 +41,7 @@ export function consultantFor(name: string): Person | undefined {
 }
 
 export function relatedRoles(role: Role, limit = 3): Role[] {
-  const rest = roles.filter((item) => item.slug !== role.slug && isRoleOpen(item));
+  const rest = roles.filter((item) => item.slug !== role.slug);
   return [
     ...rest.filter((item) => item.region === role.region),
     ...rest.filter((item) => item.region !== role.region),
@@ -59,16 +56,8 @@ export function isNewTag(tag: string | undefined): boolean {
   return !!tag && /new/i.test(tag);
 }
 
-export function visibleTags(role: Role): RoleTag[] {
-  return (role.tags ?? []).filter((tag) => {
-    if (scarcityTags.has(tag)) return false;
-    if (tag === "New") return isRecentlyPosted(role.postedOn);
-    return true;
-  });
-}
-
 export function firstTag(role: Role): RoleTag | undefined {
-  return visibleTags(role)[0];
+  return role.tags?.[0];
 }
 
 export type RoleQuery = {
@@ -84,7 +73,6 @@ export function filterRoles(list: readonly Role[], query: RoleQuery): Role[] {
     if (query.region && role.region !== query.region) return false;
     if (query.engagement && role.engagement !== query.engagement) return false;
     if (query.city && role.city !== query.city) return false;
-    if (!isRoleOpen(role)) return false;
     if (!words) return true;
     const haystack = [
       role.title,
@@ -94,12 +82,10 @@ export function filterRoles(list: readonly Role[], query: RoleQuery): Role[] {
       role.workMode,
       role.discipline,
       role.summary,
-      ...role.duties,
-      ...role.requirements,
     ]
       .join(" ")
       .toLowerCase();
-    return words.split(/\s+/).filter(Boolean).every((token) => haystack.includes(token));
+    return haystack.includes(words);
   });
 }
 
