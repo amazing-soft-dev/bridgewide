@@ -14,6 +14,9 @@ import { isoDate } from "@/lib/structured-data";
 
 // Prerender at build time so this also works in the static export.
 export const dynamic = "force-static";
+// A role closes at 18:00 Pacific. Next.js reads this value statically, so it must be a number literal:
+// regenerate at most every five minutes in the server build. The static export ignores it.
+export const revalidate = 300;
 
 type Frequency = NonNullable<MetadataRoute.Sitemap[number]["changeFrequency"]>;
 

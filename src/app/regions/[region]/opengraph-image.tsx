@@ -3,6 +3,9 @@ import { ogCard, ogContentType, ogSize } from "@/components/seo/OgCard";
 import { getRegion, openRoleCount, regions } from "@/content/site";
 
 export const dynamic = "force-static";
+// A role closes at 18:00 Pacific. Next.js reads this value statically, so it must be a number literal:
+// regenerate at most every five minutes in the server build. The static export ignores it.
+export const revalidate = 300;
 export const dynamicParams = false;
 export const alt = "BridgeWide hiring region";
 export const size = ogSize;
