@@ -46,6 +46,19 @@ describe("POST /api/cv", () => {
     expect(sendFormEmail).not.toHaveBeenCalled();
   });
 
+  it("answers 413 for a declared 50 MB body without reading it", async () => {
+    const { POST } = await import("./route");
+    const response = await POST(
+      new Request("https://www.bridgewide.org/api/cv", {
+        method: "POST",
+        headers: { "content-length": String(50 * 1024 * 1024), "content-type": "multipart/form-data; boundary=x" },
+        body: "not even a form",
+      }),
+    );
+    expect(response.status).toBe(413);
+    expect(sendFormEmail).not.toHaveBeenCalled();
+  });
+
   it("rejects an oversize file", async () => {
     const { POST } = await import("./route");
     const response = await POST(

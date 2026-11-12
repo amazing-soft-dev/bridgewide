@@ -79,3 +79,17 @@ export function inspectCvContent(filename: string, bytes: Uint8Array): { ok: tru
   }
   return wrong;
 }
+
+/** Room for the other form fields and the multipart framing around a CV. */
+const FORM_OVERHEAD_BYTES = 256 * 1024;
+
+/**
+ * True when the request says, in Content-Length, that its body is bigger than
+ * a CV plus the other fields. Check it before request.formData(), which reads
+ * the whole body into memory. A sender can leave the header off or lie, so the
+ * size of the file itself is still checked after parsing.
+ */
+export function declaredTooLarge(request: Request): boolean {
+  const declared = Number(request.headers.get("content-length"));
+  return Number.isFinite(declared) && declared > MAX_CV_BYTES + FORM_OVERHEAD_BYTES;
+}

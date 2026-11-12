@@ -1,5 +1,5 @@
 import { TALENT_CONSENT_VERSION, sla } from "@/content/sla";
-import { inspectCv, inspectCvContent, MAX_CV_BYTES } from "@/lib/cv-file";
+import { declaredTooLarge, inspectCv, inspectCvContent, MAX_CV_BYTES } from "@/lib/cv-file";
 import {
   emailField,
   honeypotTripped,
@@ -15,6 +15,10 @@ import { jsonResult } from "@/lib/mail";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  if (declaredTooLarge(request)) {
+    return jsonResult({ ok: false, error: "CV must be 5 MB or smaller.", status: 413 });
+  }
+
   let form: FormData;
   try {
     form = await request.formData();
