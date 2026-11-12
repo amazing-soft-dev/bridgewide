@@ -1,5 +1,7 @@
+import { neon } from "@neondatabase/serverless";
 import path from "node:path";
 import { createFileStore } from "@/lib/desk-store-file";
+import { createPostgresStore, type SqlClient } from "@/lib/desk-store-postgres";
 
 export type SubmissionKind =
   | "hire"
@@ -35,6 +37,7 @@ export type Submission = {
  */
 export interface DeskStore {
   list(): Promise<Submission[]>;
+  /** Throws DuplicateSubmissionError when a live record for the same person, kind, and role exists. */
   save(entry: Submission): Promise<void>;
   /** A live (not deleted) record with the same email (any case), kind, and role key. */
   findDuplicate(email: string, kind: SubmissionKind, roleKey?: string): Promise<Submission | undefined>;
@@ -48,12 +51,37 @@ function directory(): string {
   return process.env.DESK_DATA_DIR?.trim() || path.join(process.cwd(), ".data", "desk");
 }
 
-let fileStore: DeskStore | undefined;
+/** Thrown by save() when the unique rule refuses a second live record. */
+export class DuplicateSubmissionError extends Error {
+  constructor(
+    readonly email: string,
+    readonly kind: SubmissionKind,
+    readonly roleKey?: string,
+  ) {
+    super("A live record already exists for this person, kind, and role.");
+    this.name = "DuplicateSubmissionError";
+  }
+}
 
-/** The store in use. The file adapter is the only one so far. */
+function neonClient(url: string): SqlClient {
+  const sql = neon(url);
+  return async (query, params = []) => (await sql.query(query, params)) as Record<string, unknown>[];
+}
+
+let current: { key: string; store: DeskStore } | undefined;
+
+/**
+ * The store in use. With DATABASE_URL set it is Postgres; otherwise it is the
+ * JSON file under DESK_DATA_DIR, which is for local development and tests and
+ * is not durable on Vercel.
+ */
 export function getDeskStore(): DeskStore {
-  fileStore ??= createFileStore(directory);
-  return fileStore;
+  const url = process.env.DATABASE_URL?.trim();
+  const key = url ? `postgres:${url}` : "file";
+  if (!current || current.key !== key) {
+    current = { key, store: url ? createPostgresStore(neonClient(url)) : createFileStore(directory) };
+  }
+  return current.store;
 }
 
 export function newSubmissionId(): string {
