@@ -18,6 +18,17 @@ export function humanToken(data: FormData) {
   return typeof value === "string" ? value : "";
 }
 
+/**
+ * After a failed check, put focus on the first field that has an error, so a
+ * keyboard or screen-reader user lands on the problem instead of staying on the
+ * Send button. It waits a moment for React to draw the error state first.
+ */
+export function focusFirstInvalid(form: HTMLFormElement) {
+  window.setTimeout(() => {
+    form.querySelector<HTMLElement>("[aria-invalid='true']")?.focus();
+  }, 50);
+}
+
 export type FormCheck<Errors> =
   | { ok: true; send: () => Promise<Submission> }
   | { ok: false; errors: Errors };
@@ -49,6 +60,7 @@ export function useFormSubmit<Errors extends object>(
       setErrors(result.errors);
       setServerError("");
       setStatus("idle");
+      focusFirstInvalid(form);
       return;
     }
 
