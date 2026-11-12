@@ -2,7 +2,7 @@
 
 export const DESK_TIME_ZONE = "America/Los_Angeles";
 
-export type Closeable = { closesOn?: string };
+export type Closeable = { slug?: string; region?: string; closesOn?: string };
 
 /**
  * Override the clock in tests and the Playwright server with ROLE_CLOCK.
@@ -44,10 +44,29 @@ export function pacificClose(iso: string): Date | null {
   return new Date(utc);
 }
 
+/**
+ * The close date that applies to a role. The role's own `closesOn` wins,
+ * except that the browser tests can set ROLE_CLOSE_DATES together with
+ * ROLE_CLOCK, as "slug=2027-01-16,region:usa=2027-01-16". An override is
+ * ignored when ROLE_CLOCK is not set, so production never reads it.
+ */
+export function closeDateFor(role: Closeable): string | undefined {
+  const overrides = process.env.ROLE_CLOSE_DATES;
+  if (overrides && process.env.ROLE_CLOCK) {
+    for (const entry of overrides.split(",")) {
+      const [key, date] = entry.split("=").map((part) => part.trim());
+      if (!key || !/^\d{4}-\d{2}-\d{2}$/.test(date ?? "")) continue;
+      if (key === role.slug || (role.region && key === `region:${role.region}`)) return date;
+    }
+  }
+  return role.closesOn;
+}
+
 /** Open when there is no close date, or until 18:00 Pacific on that date. */
 export function isRoleOpen(role: Closeable, now = deskNow()): boolean {
-  if (!role.closesOn) return true;
-  const close = pacificClose(role.closesOn);
+  const closesOn = closeDateFor(role);
+  if (!closesOn) return true;
+  const close = pacificClose(closesOn);
   if (!close) return true;
   return now.getTime() < close.getTime();
 }
