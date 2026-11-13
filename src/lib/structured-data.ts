@@ -237,7 +237,7 @@ export function jobPosting(role: Role) {
     "@context": "https://schema.org",
     "@type": "JobPosting",
     title: role.title,
-    description: `${role.summary} ${duties}`,
+    description: `${role.summary} ${duties}${role.noticePeriod ? ` Notice period: ${role.noticePeriod}.` : ""}`,
     url: abs(`/roles/${role.slug}`),
     identifier: {
       "@type": "PropertyValue",

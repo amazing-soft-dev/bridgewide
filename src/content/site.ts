@@ -139,6 +139,8 @@ export type Role = {
   discipline: Discipline;
   summary: string;
   consultantName: string;
+  /** What the client accepts for notice, for example "1 to 3 months". Shown only when set. */
+  noticePeriod?: string;
   /** ISO date the role was posted. */
   postedOn: string;
   /**
@@ -595,6 +597,7 @@ export const people: readonly Person[] = [
 const roleRecords: readonly Omit<Role, "postedOn">[] = [
   {
     slug: "senior-backend-engineer-singapore",
+    noticePeriod: "1 to 3 months",
     title: "Senior Backend Engineer",
     boardTitle: "Senior Backend",
     boardCode: "ENG",
@@ -631,6 +634,7 @@ const roleRecords: readonly Omit<Role, "postedOn">[] = [
   },
   {
     slug: "senior-data-engineer-bangalore",
+    noticePeriod: "1 to 3 months",
     title: "Senior Data Engineer",
     boardTitle: "Senior Data",
     boardCode: "DAT",
