@@ -73,6 +73,15 @@ Spam check (Cloudflare Turnstile):
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public site key. When set, every form shows the Turnstile widget (interaction-only, so most visitors see nothing) |
 | `TURNSTILE_SECRET_KEY` | Secret key. When set, the server verifies the token before any email is sent. A missing or rejected token is a 400; if Cloudflare cannot be reached the post is refused with a 503. With no secret the check is skipped |
 
+Error reports (Sentry):
+
+| Variable | Purpose |
+| --- | --- |
+| `SENTRY_DSN` | Server errors go to Sentry when this is set. Off when empty |
+| `NEXT_PUBLIC_SENTRY_DSN` | Browser errors go to Sentry when this is set. It is baked in at build time, so redeploy after changing it |
+
+The reporter sends no request bodies, cookies, headers, query strings, users, or email addresses (`src/lib/sentry-scrub.ts`), no traces, and uploads no source maps.
+
 Site, build, and test:
 
 | Variable | Purpose |
