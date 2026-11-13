@@ -6,6 +6,9 @@ export const sla = {
   training: "The desk aims to review this within three business days.",
 } as const;
 
+/** What the footer email box says after a visitor submits it. The guide is a page, not an attachment, so it points there. */
+export const SALARY_GUIDE_THANKS = "Got it. The guide is already at /salary-guide.";
+
 export const AI_CONSENT_WORDING =
   "I understand my profile is shared with a platform only after I agree to that introduction.";
 
