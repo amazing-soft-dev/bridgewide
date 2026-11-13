@@ -18,7 +18,7 @@ describe("the privacy notice", () => {
 
   it("names every company that handles a message", () => {
     for (const name of ["Resend", "Vercel", "Cloudflare Turnstile", "Sentry"]) expect(all).toContain(name);
-    expect(processors.map((item) => item.name)).toContain("Our email provider");
+    expect(processors.map((item) => item.name)).toContain("Hostinger");
   });
 
   it("covers every form on the site", () => {
