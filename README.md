@@ -95,7 +95,7 @@ Nothing is stored. There is no database and no record. Every form becomes two em
 What follows from that:
 
 - **Status and follow-up** happen in the desk inbox. There is no status page, no candidate login, and no guarantee clock in the code: the desk tracks those in its mailbox (labels, folders, or a shared inbox tool).
-- **Retention and deletion** are mailbox policies, not code. The 12-month talent-pool promise is met by a retention rule on the desk mailbox, and a deletion request is answered by deleting the messages. The privacy notice says so. The steps are in `docs/mailbox-retention.md`.
+- **Retention and deletion** are mailbox policies, not code. The 12-month talent-pool promise is met by a retention rule on the desk mailbox, and a deletion request is answered by deleting the messages. The privacy notice says so. The steps are in `docs/mailbox-retention.md`. DNS records for sending are in `docs/email-authentication.md`.
 - **Spam and floods:** a hidden honeypot field, a per-instance request limit (it only slows one warm server, since there is no shared store), and a Cloudflare Turnstile check on every form (see the spam-check variables above).
 - **Duplicates** are not detected. Two posts make two emails with two references.
 - **Open and closed roles.** A role closes at 18:00 Pacific on its `closesOn` date, and a role with no date stays open. Pages, `/llms.txt`, and `sitemap.xml` regenerate every five minutes in the server build, so no redeploy is needed. The static export is frozen at build time.
