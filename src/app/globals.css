@@ -88,7 +88,7 @@
   --color-cloud: #f4f0e8;
   --color-cloud-soft: #e7e0d2;
   --color-stone: #8a8378;
-  --color-brand: #f30100;
+  --color-brand: #ec0000;
   --color-brand-deep: #c40000;
 
   --animate-flap-fold: flap-fold 0.13s ease-in-out;
@@ -208,4 +208,37 @@
     scale: none !important;
     opacity: 1 !important;
   }
+}
+
+/*
+ * Text contrast (WCAG AA, 4.5:1 for normal text). The brand red and the muted
+ * grey are also used as fills and borders, so their tokens stay as they are and
+ * only text changes. Each background sets which text colours sit well on it,
+ * and the nearest ancestor wins, so a light card inside a dark section gets the
+ * light-background colours. Light backgrounds use a deeper red and a darker grey;
+ * the dark sections use a lighter red and the original grey. These rules are not
+ * in a layer, so they win over the Tailwind utilities.
+ */
+:root,
+.bg-cloud,
+.bg-cloud-soft,
+.bg-white {
+  --text-stone: #675f55;
+  --text-brand: #c40000;
+}
+
+.bg-ink,
+[data-header-tone="dark"] {
+  --text-stone: #8a8378;
+  --text-brand: #ff6b68;
+}
+
+.text-stone,
+.eyebrow-muted {
+  color: var(--text-stone);
+}
+
+.text-brand,
+.eyebrow {
+  color: var(--text-brand);
 }

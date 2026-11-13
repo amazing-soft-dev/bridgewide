@@ -115,7 +115,7 @@ export function StatsBand({
         </ul>
       </div>
       {note ? (
-        <p className="wrap relative mt-8 max-w-3xl font-mono text-xs leading-5 tracking-[0.04em] text-white/80">{note}</p>
+        <p className="wrap relative mt-8 max-w-3xl font-mono text-xs leading-5 tracking-[0.04em] text-white">{note}</p>
       ) : null}
     </section>
   );
