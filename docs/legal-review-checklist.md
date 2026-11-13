@@ -2,13 +2,15 @@
 
 For the law firm that signs off the privacy notice and terms for all six markets. This is not legal advice and it does not say what the law requires. It says what the site does, which laws probably apply, and the question to answer for each market. The firm decides.
 
+No firm is chosen yet. How to choose one, and a brief to send, are in [legal-firm-brief.md](legal-firm-brief.md).
+
 The pages under review: the privacy notice (`/privacy`, text in `src/content/privacy.ts`) and the terms (`/terms`, fees in `src/content/site.ts`, disclosures in `src/content/disclosures.ts`). Both are `noindex` until the firm signs off. Index them only after.
 
 ## What the site does (facts for every market)
 
 - A visitor fills in a form: hire brief, CV or role application, keep-a-profile (talent pool), contact, salary-guide email box, AI-training application, partner inquiry.
 - Each form becomes two emails through Resend: the whole message (and a CV, as an attachment) to one desk mailbox, and a confirmation to the visitor. **Nothing is stored in a database.** There are no accounts, no cookies for advertising, and no tracking pixels.
-- Companies that handle a message: Resend (email), Vercel (hosting; Web Analytics and Speed Insights in production, skipped when the browser sends Do Not Track), Cloudflare Turnstile (spam check; sees IP address and browser signals), Sentry (error reports, with request bodies, cookies, headers, query strings, and email addresses removed before sending; off until a DSN is set), and the desk's mail provider.
+- Companies that handle a message: Resend (email), Vercel (hosting; Web Analytics and Speed Insights in production, skipped when the browser sends Do Not Track), Cloudflare Turnstile (spam check; sees IP address and browser signals), Sentry (error reports, with request bodies, cookies, headers, query strings, and email addresses removed before sending; off until a DSN is set), and Hostinger (the desk mailbox).
 - A CV or profile leaves BridgeWide only after the candidate agrees to an introduction. For AI-training work the platform, not BridgeWide, pays and sets terms.
 - Retention: a talent-pool profile and CV for 12 months, then the desk deletes the email (a mailbox policy, see `docs/mailbox-retention.md`). Other mail is kept while it is needed. A deletion request is answered by deleting the messages.
 - The public contact address is one person's mailbox for every purpose, including data requests.

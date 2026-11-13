@@ -48,4 +48,12 @@ The four portraits on `/ai-training` (Mateo, Hanae, Elise, Amara) show a first n
 
 ## Quotes
 
-A quote on the site needs the speaker's name, title, company, and permission to publish it under that name. The named-client case study (roadmap item F3) will add a row here for its speaker before it goes live.
+A quote on the site needs the speaker's name, title, company, and permission to publish it under that name. The permission to name a client does not cover quoting one of its people: each speaker is listed on his or her own row. A test fails when a story's speaker is not listed.
+
+| Speaker | Title and company | Quote shown on | Permission | Date | Kept at |
+| --- | --- | --- | --- | --- | --- |
+| Amira Shah | VP Engineering, Northline | /stories/northline-ledger-owner and the stories slide | to confirm (client permission does not cover the speaker) | to fill | to fill |
+| Jonah Blake | Head of Data, Harbor Metrics | /stories/harbor-metrics-warehouse and the stories slide | to confirm (client permission does not cover the speaker) | to fill | to fill |
+| Elena Varga | COO, Campo Health | /stories/campo-health-release and the stories slide | to confirm (client permission does not cover the speaker) | to fill | to fill |
+| Wei Lin | CTO, Lumen Pay | /stories/lumen-pay-settlements and the stories slide | to confirm (client permission does not cover the speaker) | to fill | to fill |
+| Thomas Keller | CTO, Keel Systems | /stories/keel-systems-paved-path and the stories slide | to confirm (client permission does not cover the speaker) | to fill | to fill |

@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { envProblems } from "@/lib/env-check";
+import { resolveDsn } from "@/lib/sentry-dsn";
 import { sentryOptions } from "@/lib/sentry-options";
 
 /**
@@ -13,7 +14,7 @@ export function register() {
     else console.warn(line);
   }
 
-  const dsn = process.env.SENTRY_DSN?.trim();
+  const dsn = resolveDsn(process.env.SENTRY_DSN);
   if (dsn) Sentry.init(sentryOptions(dsn));
 }
 

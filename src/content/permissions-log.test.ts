@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { portraits } from "@/content/ai-training";
 import { people, stories } from "@/content/site";
+import { quoteSpeaker } from "@/lib/case-study";
 
 // The log is a document under docs/, so reading it is the point of the test.
 const log = readFileSync(new URL("../../docs/permissions-log.md", import.meta.url), "utf8");
@@ -18,6 +19,13 @@ describe("the permissions log", () => {
 
   it("lists every AI-training portrait", () => {
     for (const portrait of portraits) expect(log, `no row for ${portrait.name}`).toContain(`| ${portrait.name} |`);
+  });
+
+  it("lists every person a story quotes, on a row of their own", () => {
+    for (const story of stories.filter((item) => item.company !== "Anonymized client")) {
+      const speaker = quoteSpeaker(story.attribution);
+      expect(log, `no row for the speaker ${speaker}`).toContain(`| ${speaker} |`);
+    }
   });
 
   it("does not name an anonymized story's client", () => {
