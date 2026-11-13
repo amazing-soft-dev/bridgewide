@@ -50,4 +50,4 @@ next-env.d.ts
 /public/_img/
 
 # vscode
-.vscode/*
+.vscode/*coverage/
