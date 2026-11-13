@@ -29,6 +29,7 @@ export const processors: readonly { name: string; role: string }[] = [
   { name: "Resend", role: "sends the emails: the message to the desk and the confirmation to you" },
   { name: "Vercel", role: "hosts the site and, in production, measures page views and speed" },
   { name: "Cloudflare Turnstile", role: "checks that a form is filled in by a person; it sees your IP address and browser signals" },
+  { name: "Sentry", role: "receives a report when the site hits an error: the page address and technical details, never what you typed, a request body, a cookie, or an email address" },
   { name: "Our email provider", role: "holds the desk mailbox, where every message and CV is kept" },
 ];
 
