@@ -27,3 +27,21 @@ describe("notice period on the Asia roles", () => {
     expect(jobPosting({ ...asia[0], closesOn: "2020-01-01" })).toBeNull();
   });
 });
+
+describe("client descriptor on the Asia roles", () => {
+  it("says 'a large US company' on both and names no company", () => {
+    for (const role of asia) {
+      expect(role.clientDescriptor).toBe("a large US company");
+      const posting = jobPosting(role);
+      expect(posting?.description).toContain("Hiring for a large US company.");
+      expect(JSON.stringify(posting)).not.toMatch(/walmart|google|cognizant/i);
+      expect(posting?.hiringOrganization).toMatchObject({ name: "BridgeWide" });
+    }
+  });
+
+  it("is not added to a role that has none", () => {
+    const other = roles.find((role) => role.region !== "asia")!;
+    expect(other.clientDescriptor).toBeUndefined();
+    expect(jobPosting(other)?.description ?? "").not.toContain("Hiring for");
+  });
+});
