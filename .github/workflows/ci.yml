@@ -41,8 +41,8 @@ jobs:
         run: npm run lint
       - name: Type check
         run: npm run typecheck
-      - name: Test
-        run: npm test
+      - name: Test, with a coverage floor
+        run: npm run test:coverage
       - name: Check photos are used once
         run: npm run check:images
 
