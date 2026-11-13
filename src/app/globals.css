@@ -209,3 +209,30 @@
     opacity: 1 !important;
   }
 }
+
+/*
+ * Text contrast (WCAG AA, 4.5:1 for normal text). The brand red and the muted
+ * grey are also used as fills and borders, so their tokens stay as they are and
+ * only text changes. On light backgrounds, text is a deeper red and a darker
+ * grey. On the dark sections it is a lighter red and the original grey.
+ * These rules are not in a layer, so they win over the Tailwind utilities.
+ */
+.text-stone,
+.eyebrow-muted {
+  color: #675f55;
+}
+
+.text-brand,
+.eyebrow {
+  color: var(--color-brand-deep);
+}
+
+:is(.bg-ink, [data-header-tone="dark"]) :is(.text-stone, .eyebrow-muted),
+:is(.text-stone, .eyebrow-muted):is(.bg-ink, [data-header-tone="dark"]) {
+  color: #8a8378;
+}
+
+:is(.bg-ink, [data-header-tone="dark"]) :is(.text-brand, .eyebrow),
+:is(.text-brand, .eyebrow):is(.bg-ink, [data-header-tone="dark"]) {
+  color: #ff6b68;
+}
