@@ -37,11 +37,15 @@ describe("security headers", () => {
     expect(csp).not.toMatch(/http:\/\//);
   });
 
-  it("allows only the outside hosts the site uses: Turnstile and Vercel", () => {
+  it("allows only the outside hosts the site uses: Turnstile, Vercel, and Sentry", () => {
     const hosts = [...csp.matchAll(/https:\/\/[a-z.-]+/g)].map((match) => match[0]);
     expect(new Set(hosts)).toEqual(
       new Set(["https://challenges.cloudflare.com", "https://va.vercel-scripts.com", "https://vitals.vercel-insights.com"]),
     );
+    // Sentry's ingest hosts are the one wildcard: a subdomain per project, nothing broader.
+    const wildcards = [...csp.matchAll(/https:\/\/\*\.[a-z.-]+/g)].map((match) => match[0]);
+    expect(wildcards.every((host) => /^https:\/\/\*\.ingest(\.[a-z]{2})?\.sentry\.io$/.test(host))).toBe(true);
+    expect(wildcards.length).toBe(3);
   });
 
   it("allows Turnstile to load its script and its frame", () => {
