@@ -103,6 +103,8 @@ export type Hero = {
 export type Stat = {
   value: string;
   label: string;
+  /** The footnote under the figure: the period it covers and what is counted. */
+  basis?: string;
 };
 
 export type Region = {
@@ -407,11 +409,44 @@ export const hero: Hero = {
   secondaryCta: { label: "Find a role", href: "/engineers" },
 };
 
+/** "2026-11-12" as "12 November 2026". */
+function longDate(iso: string): string {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/**
+ * The headline figures cover the trailing 12 months, ending on the last
+ * content update, and a placement counts on the day the engineer starts
+ * work. Update the figures and `contentUpdatedOn` together.
+ */
+export const statsPeriodEnd = longDate(contentUpdatedOn);
+
 export const stats: readonly Stat[] = [
-  { value: "186", label: "Placements in the past year" },
-  { value: "9", label: "Median days to a shortlist" },
-  { value: "94%", label: "Still in role after one year" },
-  { value: "11", label: "Median days to fill a contract seat" },
+  {
+    value: "186",
+    label: "Placements in the past year",
+    basis: `Engineers whose start date fell in the 12 months to ${statsPeriodEnd}.`,
+  },
+  {
+    value: "9",
+    label: "Median days to a shortlist",
+    basis: "Median calendar days from the brief to the shortlist, for the placements counted above.",
+  },
+  {
+    value: "94%",
+    label: "Still in role after one year",
+    basis: `Of engineers who started 12 to 24 months before ${statsPeriodEnd}, the share still in role 12 months after their start date.`,
+  },
+  {
+    value: "11",
+    label: "Median days to fill a contract seat",
+    basis: "Median calendar days from the brief to the start date, for contract seats started in the same 12 months.",
+  },
 ];
 
 /** Why the consultant counts do not add up to 186. */
