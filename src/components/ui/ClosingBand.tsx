@@ -101,7 +101,7 @@ export function ClosingBand({
             </h2>
             <p
               data-motion="reveal"
-              className={`m-0 max-w-[480px] text-[17px] leading-[1.6] text-white/90 transition duration-700 delay-300 ${rise(on)}`}
+              className={`m-0 max-w-[480px] text-[17px] leading-[1.6] text-white transition duration-700 delay-300 ${rise(on)}`}
             >
               {copy}
             </p>
