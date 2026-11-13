@@ -1,7 +1,9 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import * as aiTraining from "@/content/ai-training";
 import { trainingRoles } from "@/content/ai-training";
+import * as site from "@/content/site";
 import { people, regions, roles, stories } from "@/content/site";
+import * as openings from "@/content/training-openings";
 import { isRoleOpen } from "@/lib/desk-clock";
 import { jobPosting, trainingJobPosting } from "@/lib/structured-data";
 
@@ -17,9 +19,12 @@ describe("approved content", () => {
     expect(people.find((person) => person.name === "Mei Tan")?.image.endsWith("person-mei.webp")).toBe(true);
   });
 
-  it("does not call the content a placeholder", () => {
-    const source = readFileSync(new URL("./site.ts", import.meta.url), "utf8");
-    expect(source.toLowerCase()).not.toContain("placeholder");
+  it("does not call any published content a placeholder or a sample", () => {
+    // The words a visitor can read: every string in the exported content data.
+    // Comments in the source are not published, so they are not part of this.
+    const published = JSON.stringify([site, aiTraining, openings]).toLowerCase();
+    expect(published).not.toContain("placeholder");
+    expect(published).not.toMatch(/sample/);
   });
 
   it("uses the approved country lines and close date", () => {
