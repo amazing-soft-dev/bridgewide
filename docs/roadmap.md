@@ -28,6 +28,13 @@ Sources: the repo at `origin/dev` (`a0336d0`, merge of PR #260), the uncommitted
 - **Permissions (F2):** written permission is on file for every named client and consultant. Recorded in `docs/permissions-log.md`, with a test that fails when the site names someone the log does not list. The dates and storage locations are still to fill in.
 - **Case study shape (F3):** a permanent hire made fast (challenge, approach, result, with a metric headline and a named quote). Still needs the client, the quote with the speaker's name and title, the days from brief to start, and the permission row for the speaker.
 
+### Done on 2026-11-13
+
+- **Contrast (#339):** the axe scan now fails on every rule, including color-contrast, and passes on all 11 pages. Muted and red text take their colour from the nearest background, and the brand red fill went from #f30100 to #ec0000 so white text on it passes (4.60:1).
+- **Asia notice period (#375):** "1 to 3 months" on both roles, on the page and in the posting text. Client names are still to come.
+- **Close dates:** roles stay open until filled; there are no dates to set.
+- **Sentry (#380):** wired in and off until `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` are set in Vercel (then redeploy: the browser value is baked in at build time).
+
 ### Removed or replaced by the email-only decision
 
 | Item | Now |
