@@ -73,12 +73,12 @@ Spam check (Cloudflare Turnstile):
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public site key. When set, every form shows the Turnstile widget (interaction-only, so most visitors see nothing) |
 | `TURNSTILE_SECRET_KEY` | Secret key. When set, the server verifies the token before any email is sent. A missing or rejected token is a 400; if Cloudflare cannot be reached the post is refused with a 503. With no secret the check is skipped |
 
-Error reports (Sentry):
+Error reports (Sentry). The project key (DSN) is a constant in `src/lib/sentry-dsn.ts`, so error reporting needs no Vercel variable; empty keeps it off:
 
 | Variable | Purpose |
 | --- | --- |
-| `SENTRY_DSN` | Server errors go to Sentry when this is set. Off when empty |
-| `NEXT_PUBLIC_SENTRY_DSN` | Browser errors go to Sentry when this is set. It is baked in at build time, so redeploy after changing it |
+| `SENTRY_DSN` | Overrides the DSN in `src/lib/sentry-dsn.ts` for the server. Leave empty normally |
+| `NEXT_PUBLIC_SENTRY_DSN` | Overrides it for the browser (baked in at build time). Leave empty normally |
 
 The reporter sends no request bodies, cookies, headers, query strings, users, or email addresses (`src/lib/sentry-scrub.ts`), no traces, and uploads no source maps.
 
