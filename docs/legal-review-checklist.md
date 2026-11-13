@@ -2,6 +2,8 @@
 
 For the law firm that signs off the privacy notice and terms for all six markets. This is not legal advice and it does not say what the law requires. It says what the site does, which laws probably apply, and the question to answer for each market. The firm decides.
 
+No firm is chosen yet. How to choose one, and a brief to send, are in [legal-firm-brief.md](legal-firm-brief.md).
+
 The pages under review: the privacy notice (`/privacy`, text in `src/content/privacy.ts`) and the terms (`/terms`, fees in `src/content/site.ts`, disclosures in `src/content/disclosures.ts`). Both are `noindex` until the firm signs off. Index them only after.
 
 ## What the site does (facts for every market)
