@@ -11,7 +11,7 @@ export const ogContentType = "image/png";
 
 const ink = "#111111";
 const cloud = "#f4f0e8";
-const brand = "#f30100";
+const brand = "#ec0000";
 const stone = "#b9b1a4";
 
 function titleSize(title: string) {

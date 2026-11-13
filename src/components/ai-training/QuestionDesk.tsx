@@ -65,13 +65,13 @@ export function QuestionDesk({
                     : "border-cloud-soft bg-white text-ink hover:bg-cloud"
                 }`}
               >
-                <span className={`font-mono text-xs ${open ? "text-white/90" : "text-stone"}`}>
+                <span className={`font-mono text-xs ${open ? "text-white" : "text-stone"}`}>
                   {number}
                 </span>
                 <span className="font-display text-base leading-snug md:text-lg">{item.question}</span>
                 <span
                   className={`hidden font-mono text-[11px] tracking-[0.12em] uppercase min-[700px]:inline ${
-                    open ? "text-white/90" : "text-stone"
+                    open ? "text-white" : "text-stone"
                   }`}
                 >
                   {item.label ?? label}
