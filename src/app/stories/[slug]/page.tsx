@@ -7,6 +7,7 @@ import { regionFor, textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { contentUpdatedOn, getStory, stories } from "@/content/site";
+import { caseStudySections } from "@/lib/case-study";
 import { breadcrumbs } from "@/lib/structured-data";
 
 export const dynamicParams = false;
@@ -65,12 +66,17 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <cite className="not-italic">{story.attribution}</cite>
           </footer>
         </blockquote>
-        <div className="mt-10">
-          <Prose>
-            {story.body.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </Prose>
+        <div className="mt-10 grid max-w-3xl gap-8">
+          {caseStudySections(story).map((section) => (
+            <section key={section.label} aria-labelledby={`${story.slug}-${section.label}`}>
+              <h3 id={`${story.slug}-${section.label}`} className="eyebrow-muted m-0 mb-3">
+                {section.label}
+              </h3>
+              <Prose>
+                <p>{section.text}</p>
+              </Prose>
+            </section>
+          ))}
         </div>
         <p className="mt-10 flex flex-wrap gap-6">
           <Link href={`/regions/${region.slug}`} className={textLink}>
