@@ -22,6 +22,12 @@ Sources: the repo at `origin/dev` (`a0336d0`, merge of PR #260), the uncommitted
 | Content and legal drafts | #309 country labels; #327 privacy notice; #329 agency, equal-opportunity, accommodation, and AI-training disclosures |
 | Forms | #333 focus the first invalid field |
 
+### Answered on 2026-11-13
+
+- **Stat proof (F1):** trailing 12 months, a placement counts when the engineer has started work, with a footnote under each figure. This is already how the site works (`stats` in `src/content/site.ts`, checked by `src/content/stats.test.ts`). Update the figures and `contentUpdatedOn` together, because the period end follows that date.
+- **Permissions (F2):** written permission is on file for every named client and consultant. Recorded in `docs/permissions-log.md`, with a test that fails when the site names someone the log does not list. The dates and storage locations are still to fill in.
+- **Case study shape (F3):** a permanent hire made fast (challenge, approach, result, with a metric headline and a named quote). Still needs the client, the quote with the speaker's name and title, the days from brief to start, and the permission row for the speaker.
+
 ### Removed or replaced by the email-only decision
 
 | Item | Now |
