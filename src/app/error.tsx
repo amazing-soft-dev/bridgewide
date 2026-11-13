@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 import { PageHero } from "@/components/pages/PageHero";
 import { PageSection } from "@/components/pages/PageSection";
@@ -13,6 +14,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
   useEffect(() => {
     // The digest lets someone match this to the server log line for the same crash.
     console.error("page-error", error.digest ?? error.message);
+    Sentry.captureException(error);
   }, [error]);
 
   return (
