@@ -141,6 +141,8 @@ export type Role = {
   consultantName: string;
   /** What the client accepts for notice, for example "1 to 3 months". Shown only when set. */
   noticePeriod?: string;
+  /** Who the role is for, when the client is not named: "a large US company". Never a company name. */
+  clientDescriptor?: string;
   /** ISO date the role was posted. */
   postedOn: string;
   /**
@@ -598,6 +600,7 @@ const roleRecords: readonly Omit<Role, "postedOn">[] = [
   {
     slug: "senior-backend-engineer-singapore",
     noticePeriod: "1 to 3 months",
+    clientDescriptor: "a large US company",
     title: "Senior Backend Engineer",
     boardTitle: "Senior Backend",
     boardCode: "ENG",
@@ -635,6 +638,7 @@ const roleRecords: readonly Omit<Role, "postedOn">[] = [
   {
     slug: "senior-data-engineer-bangalore",
     noticePeriod: "1 to 3 months",
+    clientDescriptor: "a large US company",
     title: "Senior Data Engineer",
     boardTitle: "Senior Data",
     boardCode: "DAT",

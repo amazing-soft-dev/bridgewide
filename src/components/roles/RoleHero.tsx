@@ -106,6 +106,9 @@ export function RoleHero({
           </li>
           <li className="rounded border border-white/15 bg-white/10 px-3 py-2">{placeLine(role)}</li>
           <li className="rounded border border-white/15 bg-white/10 px-3 py-2">{role.engagement}</li>
+          {role.clientDescriptor ? (
+            <li className="rounded border border-white/15 bg-white/10 px-3 py-2">Client: {role.clientDescriptor}</li>
+          ) : null}
           {role.noticePeriod ? (
             <li className="rounded border border-white/15 bg-white/10 px-3 py-2">Notice {role.noticePeriod}</li>
           ) : null}
