@@ -8,7 +8,8 @@ import { FlapValue } from "@/components/ui/FlapValue";
 import { SplitWords } from "@/components/ui/SplitWords";
 import { useInView } from "@/hooks/use-in-view";
 
-export type BandStat = { value: string; label: string };
+/** `basis` is the footnote under a figure: the period it covers and what counts. */
+export type BandStat = { value: string; label: string; basis?: string };
 
 const rise = [0.2, 0.8, 0.2, 1] as [number, number, number, number];
 
@@ -108,6 +109,7 @@ export function StatsBand({
             >
               <StatFigure value={stat.value} index={index} on={on} />
               <p className="font-mono text-xs tracking-[0.14em] text-white uppercase">{stat.label}</p>
+              {stat.basis ? <p className="m-0 text-[13px] leading-5 text-white">{stat.basis}</p> : null}
             </m.li>
           ))}
         </ul>
