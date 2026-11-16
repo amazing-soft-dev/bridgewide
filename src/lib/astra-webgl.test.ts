@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { canCreateWebgl, type ProbeCanvas } from "@/lib/astra-webgl";
+import {
+  CONTEXT_RESTORE_MS,
+  canCreateWebgl,
+  type ProbeCanvas,
+  type RunState,
+  shouldRun,
+} from "@/lib/astra-webgl";
 
 /** A fake canvas that offers only the listed context kinds. */
 function canvasWith(kinds: Record<string, unknown>): ProbeCanvas {
@@ -70,5 +76,45 @@ describe("canCreateWebgl", () => {
         }),
       ),
     ).toBe(false);
+  });
+});
+
+describe("shouldRun", () => {
+  const all: RunState = { inView: true, tabVisible: true, contextLive: true };
+
+  it("runs only when the section is on screen, the tab is visible and the context is alive", () => {
+    expect(shouldRun(all)).toBe(true);
+  });
+
+  it("stops when the section is off screen", () => {
+    expect(shouldRun({ ...all, inView: false })).toBe(false);
+  });
+
+  it("stops in a hidden tab", () => {
+    expect(shouldRun({ ...all, tabVisible: false })).toBe(false);
+  });
+
+  it("stops while the context is lost", () => {
+    expect(shouldRun({ ...all, contextLive: false })).toBe(false);
+  });
+
+  it("is true for exactly one of the eight combinations", () => {
+    const flags = [true, false];
+    let running = 0;
+    for (const inView of flags) {
+      for (const tabVisible of flags) {
+        for (const contextLive of flags) {
+          if (shouldRun({ inView, tabVisible, contextLive })) running++;
+        }
+      }
+    }
+    expect(running).toBe(1);
+  });
+});
+
+describe("CONTEXT_RESTORE_MS", () => {
+  it("waits long enough for a normal restore, but not forever", () => {
+    expect(CONTEXT_RESTORE_MS).toBeGreaterThanOrEqual(1000);
+    expect(CONTEXT_RESTORE_MS).toBeLessThanOrEqual(10000);
   });
 });

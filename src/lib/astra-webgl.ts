@@ -29,3 +29,28 @@ export function canCreateWebgl(createCanvas: () => ProbeCanvas | null): boolean 
     return false;
   }
 }
+
+/** Everything the render loop depends on. */
+export type RunState = {
+  /** The section is on screen. */
+  inView: boolean;
+  /** The tab is visible (not in the background). */
+  tabVisible: boolean;
+  /** The WebGL context is alive (not lost). */
+  contextLive: boolean;
+};
+
+/**
+ * Whether the render loop should be running. It should only draw while someone
+ * can see it and the GPU can take the work: not off-screen, not in a hidden
+ * tab and not while the context is lost.
+ */
+export function shouldRun(state: RunState): boolean {
+  return state.inView && state.tabVisible && state.contextLive;
+}
+
+/**
+ * How long, in ms, to wait for the browser to restore a lost context before
+ * giving up and showing the still sky. Browsers usually restore it at once.
+ */
+export const CONTEXT_RESTORE_MS = 3000;
