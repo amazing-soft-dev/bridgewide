@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { markPaths } from "@/components/brand/mark";
 import { firstSight, revealClock, revealProgress, revealSize } from "@/lib/astra-reveal";
+import { dustLook, ribbonLook, type Look, type Tier } from "@/lib/astra-star-look";
 
 /** Mark units → world. */
 const SCALE = 0.0368;
@@ -56,24 +57,10 @@ const BAND_Y = 0.95;
 /** NDC distance over which the clear zone around each word fades back in. */
 const WORD_FEATHER = 0.06;
 const WORD_PAD_PX = 32;
-/** Share of fine and ambient stars; the rest are flares. Dust has no flares. */
-const DUST_TIERS = [0.85, 0.15] as const;
 /**
- * Ribbon: 48% fine, 38% ambient, 14% bright; a quarter of the bright ones are
- * large "hero" stars. A wide size range with no invisible specks is what makes
- * the line read as a glowing ribbon instead of a string of equal beads.
+ * How big, bright and coloured each star is (tier shares, skewed size ranges,
+ * the palette) lives in src/lib/astra-star-look.ts, where it is tested.
  */
-const RIBBON_TIERS = [0.48, 0.38] as const;
-const HERO_SHARE = 0.25;
-/** Star palette: cool blue-white majority with warm accents. Weights sum to 1. */
-const PALETTE = [
-  { color: 0xc4dcff, weight: 0.36 }, // blue-white
-  { color: 0xf2f6ff, weight: 0.14 }, // white
-  { color: 0x8fcdff, weight: 0.22 }, // ice
-  { color: 0xffbf8f, weight: 0.16 }, // peach
-  { color: 0xff8a45, weight: 0.12 }, // amber
-] as const;
-const DUST_COLOR = 0xc9dcff;
 /** Pre-tone-mapping sky colour. ACES crushes darks, so this lands at about #08101a on screen. */
 const BACKGROUND = 0x2d3b4a;
 /** Bloom merges neighbouring stars into one glowing ribbon. */
@@ -149,15 +136,6 @@ type Frame = { nx: number; ny: number; radius: number };
  */
 type FlowPath = { name: string; points: Spine; frames: Frame[]; z: Float32Array; length: number };
 type Spray = { nx: number; ny: number; z: number };
-type Tier = "fine" | "ambient" | "flare";
-type Look = {
-  tier: Tier;
-  /** CSS px on the full 600px mark. */
-  size: number;
-  glow: number;
-  color: number;
-  brightness: number;
-};
 type StarBase = Look & {
   z: number;
   spray: Spray;
@@ -415,49 +393,8 @@ function gaussian(sigma: number) {
   return sigma * Math.sqrt(-2 * Math.log(u)) * Math.cos(Math.PI * 2 * Math.random());
 }
 
-function paletteColor() {
-  let roll = Math.random();
-  for (const entry of PALETTE) {
-    roll -= entry.weight;
-    if (roll <= 0) return entry.color;
-  }
-  return PALETTE[0].color;
-}
-
 function starLook(kind: "ribbon" | "dust"): Look {
-  if (kind === "dust") {
-    const [fine] = DUST_TIERS;
-    if (Math.random() < fine) {
-      return {
-        tier: "fine",
-        size: between(0.9, 1.6),
-        glow: 0.15,
-        color: DUST_COLOR,
-        brightness: between(0.3, 0.6),
-      };
-    }
-    return {
-      tier: "ambient",
-      size: between(1.8, 2.6),
-      glow: 0.35,
-      color: Math.random() < 0.2 ? 0xffd2b0 : DUST_COLOR,
-      brightness: between(0.45, 0.7),
-    };
-  }
-  const [fine, ambient] = RIBBON_TIERS;
-  const roll = Math.random();
-  if (roll < fine) {
-    // Small, but bright enough to stay visible next to the big stars.
-    return { tier: "fine", size: between(1.3, 2.1), glow: 0.3, color: paletteColor(), brightness: between(0.65, 0.9) };
-  }
-  if (roll < fine + ambient) {
-    return { tier: "ambient", size: between(2.4, 3.8), glow: 0.55, color: paletteColor(), brightness: between(0.65, 0.9) };
-  }
-  const warm = Math.random() < 0.2;
-  if (Math.random() < HERO_SHARE) {
-    return { tier: "flare", size: between(6.5, 9.5), glow: 1, color: warm ? 0xffc9a0 : 0xcfe4ff, brightness: 1 };
-  }
-  return { tier: "flare", size: between(4, 6), glow: 0.9, color: warm ? 0xffbb8a : 0xbcdcff, brightness: 0.95 };
+  return kind === "dust" ? dustLook() : ribbonLook();
 }
 
 /** Mist stars fade with distance from the centre line, but never below 35%. */
