@@ -147,3 +147,56 @@ describe("revealClock", () => {
     }
   });
 });
+
+describe("the whole entrance", () => {
+  const frameMs = 1000 / 60;
+  const startedAt = 4000;
+
+  it("never dims a star on any frame, and every star is at full strength by the end", () => {
+    for (const seed of seeds) {
+      let lastAlpha = 0;
+      let lastSize = 0;
+      for (let now = startedAt; now <= startedAt + 3000; now += frameMs) {
+        const progress = revealProgress(revealClock(now, startedAt, false), seed);
+        const size = revealSize(progress);
+        expect(progress).toBeGreaterThanOrEqual(lastAlpha);
+        expect(size).toBeGreaterThanOrEqual(lastSize);
+        lastAlpha = progress;
+        lastSize = size;
+      }
+      expect(lastAlpha).toBe(1);
+      expect(lastSize).toBe(1);
+    }
+  });
+
+  it("is complete exactly when the reveal time is up", () => {
+    const end = startedAt + REVEAL_SECONDS * 1000;
+    for (const seed of seeds) {
+      expect(revealProgress(revealClock(end - 1, startedAt, false), seed)).toBeLessThan(1);
+      expect(revealProgress(revealClock(end, startedAt, false), seed)).toBe(1);
+    }
+  });
+
+  it("is staggered in the middle: some stars are in while others are still hidden", () => {
+    const t = revealClock(startedAt + 300, startedAt, false);
+    const values = seeds.map((seed) => revealProgress(t, seed));
+    expect(values.some((value) => value > 0.05)).toBe(true);
+    expect(values.some((value) => value === 0)).toBe(true);
+  });
+
+  it("does not replay when the loop stops and starts again", () => {
+    let start = firstSight(null, startedAt);
+    // The visitor scrolls away (loop stops) and back long after the entrance ended.
+    const laterNow = startedAt + 60000;
+    start = firstSight(start, laterNow);
+    for (const seed of seeds) {
+      expect(revealProgress(revealClock(laterNow, start, false), seed)).toBe(1);
+    }
+  });
+
+  it("shows no entrance at all under reduced motion", () => {
+    for (const seed of seeds) {
+      expect(revealProgress(revealClock(startedAt, startedAt, true), seed)).toBe(1);
+    }
+  });
+});
