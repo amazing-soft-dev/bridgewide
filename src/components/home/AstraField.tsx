@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AstraStaticDust } from "@/components/home/AstraStaticDust";
 import { rayStrength } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
+import { CONTEXT_RESTORE_MS, canCreateWebgl, shouldRun } from "@/lib/astra-webgl";
 import { markPaths } from "@/components/brand/mark";
 import { firstSight, revealClock, revealProgress, revealSize } from "@/lib/astra-reveal";
 import { dustMotion } from "@/lib/astra-dust-motion";
@@ -413,6 +415,8 @@ export function AstraField() {
   const trackRef = useRef<HTMLElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // True when WebGL or three could not start: the stage then shows a still sky.
+  const [fallback, setFallback] = useState(false);
   const pointer = useRef({ x: 0, y: 0, inside: false, moveX: 0, moveY: 0 });
   const orbit = useRef({ yaw: REST_YAW, pitch: REST_PITCH, yawVelocity: 0, pitchVelocity: 0 });
   const drag = useRef({
@@ -450,6 +454,11 @@ export function AstraField() {
       import("three/examples/jsm/postprocessing/OutputPass.js"),
     ]).then(([THREE, { EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }]) => {
       if (!alive) return;
+      // No WebGL (a blocked GPU, a disabled setting, an old device): show the still sky.
+      if (!canCreateWebgl(() => document.createElement("canvas"))) {
+        setFallback(true);
+        return;
+      }
 
       const upperSpine = sampleSpine(upperWing, 880);
       const lowerSpine = sampleSpine(lowerArch, 1040);
@@ -897,15 +906,55 @@ export function AstraField() {
         running = false;
         cancelAnimationFrame(frame);
       };
-      const visibility = new IntersectionObserver((entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) start();
+      // The loop draws only while someone can see it and the GPU can take the work:
+      // the section is on screen, the tab is visible and the WebGL context is alive.
+      const runState = { inView: false, tabVisible: !document.hidden, contextLive: true };
+      const sync = () => {
+        if (shouldRun(runState)) start();
         else stop();
+      };
+      const visibility = new IntersectionObserver((entries) => {
+        runState.inView = entries.some((entry) => entry.isIntersecting);
+        sync();
       });
       visibility.observe(track);
+      const onVisibilityChange = () => {
+        runState.tabVisible = !document.hidden;
+        sync();
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      // A lost WebGL context (a GPU reset, memory pressure): stop drawing, let the
+      // browser restore it (three.js rebuilds its own state), and show the still sky
+      // if it does not come back in time.
+      let restoreTimer = 0;
+      const onContextLost = (event: Event) => {
+        event.preventDefault();
+        runState.contextLive = false;
+        sync();
+        window.clearTimeout(restoreTimer);
+        restoreTimer = window.setTimeout(() => {
+          const release = cleanup;
+          cleanup = () => {};
+          release();
+          setFallback(true);
+        }, CONTEXT_RESTORE_MS);
+      };
+      const onContextRestored = () => {
+        window.clearTimeout(restoreTimer);
+        runState.contextLive = true;
+        sync();
+      };
+      canvas.addEventListener("webglcontextlost", onContextLost);
+      canvas.addEventListener("webglcontextrestored", onContextRestored);
 
       cleanup = () => {
         stop();
         visibility.disconnect();
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+        window.clearTimeout(restoreTimer);
+        canvas.removeEventListener("webglcontextlost", onContextLost);
+        canvas.removeEventListener("webglcontextrestored", onContextRestored);
         observer.disconnect();
         geometry.dispose();
         material.dispose();
@@ -913,6 +962,9 @@ export function AstraField() {
         composer.dispose();
         renderer.dispose();
       };
+    }).catch(() => {
+      // three failed to load, or the renderer could not be made: show the still sky.
+      if (alive) setFallback(true);
     });
 
     return () => {
@@ -925,7 +977,11 @@ export function AstraField() {
     <section
       ref={trackRef}
       className="relative z-10 h-[220vh] bg-[#08101a]"
-      aria-label="BridgeWide mark between the words Bridge and Wide. Drag to turn the mark."
+      aria-label={
+        fallback
+          ? "BridgeWide between the words Bridge and Wide."
+          : "BridgeWide mark between the words Bridge and Wide. Drag to turn the mark."
+      }
     >
       <div
         ref={wrapRef}
@@ -969,7 +1025,11 @@ export function AstraField() {
           pointer.current.moveY = 0;
         }}
       >
-        <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
+        {fallback ? (
+          <AstraStaticDust />
+        ) : (
+          <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
+        )}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgba(0,0,0,0.3)_100%)]"
