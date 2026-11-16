@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AstraStaticDust } from "@/components/home/AstraStaticDust";
-import { addTurn, dragTurn } from "@/lib/astra-pose-input";
+import { addTurn, dragTurn, keyTurn } from "@/lib/astra-pose-input";
 import { rayStrength } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
 import { CONTEXT_RESTORE_MS, canCreateWebgl, shouldRun } from "@/lib/astra-webgl";
@@ -1034,12 +1034,24 @@ export function AstraField() {
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgba(0,0,0,0.3)_100%)]"
         />
         {fallback ? null : (
-          // A real button over the stage, so the mark can be turned by pointer (and, next, by keyboard).
+          // A real button over the stage, so the mark can be turned by pointer or by the arrow keys.
           <button
             ref={surfaceRef}
             type="button"
             aria-label="Drag to turn the BridgeWide mark"
             className="absolute inset-0 z-[1] cursor-grab touch-pan-y appearance-none border-0 bg-transparent p-0 data-[dragging=true]:cursor-grabbing motion-reduce:hidden"
+            onKeyDown={(event) => {
+              // Arrow keys turn the mark; a modified arrow (Alt+Left is Back) keeps its normal job.
+              if (event.altKey || event.ctrlKey || event.metaKey) return;
+              const turn = keyTurn(event.key);
+              if (!turn) return;
+              event.preventDefault();
+              const next = addTurn({ yaw: orbit.current.yaw, pitch: orbit.current.pitch }, turn);
+              orbit.current.yaw = next.yaw;
+              orbit.current.pitch = next.pitch;
+              orbit.current.yawVelocity = 0;
+              orbit.current.pitchVelocity = 0;
+            }}
             onPointerDown={(event) => {
               if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
               if (drag.current.active) return;
