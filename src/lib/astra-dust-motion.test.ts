@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DRIFT_REACH, DRIFT_SPEED, dustDrift } from "@/lib/astra-dust-motion";
+import {
+  DRIFT_REACH,
+  DRIFT_SPEED,
+  dustDrift,
+  dustTwinkle,
+  TWINKLE_DEPTH,
+} from "@/lib/astra-dust-motion";
 
 const seeds = Array.from({ length: 64 }, (_, index) => (index + 0.5) / 64);
 const times = Array.from({ length: 200 }, (_, index) => index * 0.37);
@@ -65,5 +71,51 @@ describe("dustDrift", () => {
     expect(dustDrift(2, 0.2, 5)).toEqual(dustDrift(2, 0.2, 1));
     expect(dustDrift(2, 0.2, -3)).toEqual(dustDrift(2, 0.2, 0));
     expect(dustDrift(2, 0.2, 1, 9)).toEqual(dustDrift(2, 0.2, 1, 1));
+  });
+});
+
+describe("dustTwinkle", () => {
+  const sweep = Array.from({ length: 2000 }, (_, index) => index * 0.01);
+
+  it("stays between 1 - depth and 1", () => {
+    for (const time of sweep) {
+      const value = dustTwinkle(time, 1.1, 0.9);
+      expect(value).toBeGreaterThanOrEqual(1 - TWINKLE_DEPTH - 1e-12);
+      expect(value).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("uses the whole range over time", () => {
+    const values = sweep.map((time) => dustTwinkle(time, 0.3, 1.2));
+    expect(Math.min(...values)).toBeLessThan(1 - TWINKLE_DEPTH + 0.01);
+    expect(Math.max(...values)).toBeGreaterThan(0.99);
+  });
+
+  it("is a steady 1 at strength 0", () => {
+    for (const time of sweep) expect(dustTwinkle(time, 2, 1.5, 0)).toBe(1);
+  });
+
+  it("twinkles faster with a higher rate", () => {
+    const dips = (rate: number) => {
+      let count = 0;
+      for (let index = 1; index < sweep.length - 1; index++) {
+        const before = dustTwinkle(sweep[index - 1] ?? 0, 0, rate);
+        const here = dustTwinkle(sweep[index] ?? 0, 0, rate);
+        const after = dustTwinkle(sweep[index + 1] ?? 0, 0, rate);
+        if (here < before && here < after) count++;
+      }
+      return count;
+    };
+    expect(dips(2)).toBeGreaterThan(dips(1));
+  });
+
+  it("is deterministic and offset by phase", () => {
+    expect(dustTwinkle(4.2, 0.5, 1)).toBe(dustTwinkle(4.2, 0.5, 1));
+    expect(dustTwinkle(4.2, 0.5, 1)).not.toBeCloseTo(dustTwinkle(4.2, 2.5, 1), 6);
+  });
+
+  it("clamps an out-of-range strength", () => {
+    expect(dustTwinkle(1, 0, 1, 9)).toBe(dustTwinkle(1, 0, 1, 1));
+    expect(dustTwinkle(1, 0, 1, -2)).toBe(1);
   });
 });

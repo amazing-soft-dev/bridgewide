@@ -49,3 +49,17 @@ export function dustDrift(time: number, seed: number, depth: number, strength = 
     y: (Math.cos(phaseY + time * speed * 0.73) - Math.cos(phaseY)) * reach,
   };
 }
+
+/** How deep the dust twinkle goes: brightness swings between 1 - depth and 1. */
+export const TWINKLE_DEPTH = 0.2;
+
+/**
+ * A brightness factor for one grain, between 1 - TWINKLE_DEPTH and 1. It is
+ * always on, unlike the ribbon's twinkle that waits for the scroll, so the sky
+ * is alive from the first frame. `phase` and `rate` are per-star; `strength`
+ * is 0 to 1 (0 gives exactly 1, a steady star).
+ */
+export function dustTwinkle(time: number, phase: number, rate: number, strength = 1): number {
+  const wave = 0.5 + 0.5 * Math.sin(time * rate + phase);
+  return 1 - TWINKLE_DEPTH * clamp01(strength) * wave;
+}
