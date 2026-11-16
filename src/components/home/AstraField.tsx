@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AstraStaticDust } from "@/components/home/AstraStaticDust";
-import { canCreateWebgl, shouldRun } from "@/lib/astra-webgl";
+import { CONTEXT_RESTORE_MS, canCreateWebgl, shouldRun } from "@/lib/astra-webgl";
 import { markPaths } from "@/components/brand/mark";
 import { dustMotion } from "@/lib/astra-dust-motion";
 import { dustLook, ribbonLook, type Look, type Tier } from "@/lib/astra-star-look";
@@ -941,8 +941,8 @@ export function AstraField() {
         running = false;
         cancelAnimationFrame(frame);
       };
-      // The loop draws only while someone can see it: the section is on screen and
-      // the tab is visible. (The next commit adds the WebGL context being alive.)
+      // The loop draws only while someone can see it and the GPU can take the work:
+      // the section is on screen, the tab is visible and the WebGL context is alive.
       const runState = { inView: false, tabVisible: !document.hidden, contextLive: true };
       const sync = () => {
         if (shouldRun(runState)) start();
@@ -959,10 +959,37 @@ export function AstraField() {
       };
       document.addEventListener("visibilitychange", onVisibilityChange);
 
+      // A lost WebGL context (a GPU reset, memory pressure): stop drawing, let the
+      // browser restore it (three.js rebuilds its own state), and show the still sky
+      // if it does not come back in time.
+      let restoreTimer = 0;
+      const onContextLost = (event: Event) => {
+        event.preventDefault();
+        runState.contextLive = false;
+        sync();
+        window.clearTimeout(restoreTimer);
+        restoreTimer = window.setTimeout(() => {
+          const release = cleanup;
+          cleanup = () => {};
+          release();
+          setFallback(true);
+        }, CONTEXT_RESTORE_MS);
+      };
+      const onContextRestored = () => {
+        window.clearTimeout(restoreTimer);
+        runState.contextLive = true;
+        sync();
+      };
+      canvas.addEventListener("webglcontextlost", onContextLost);
+      canvas.addEventListener("webglcontextrestored", onContextRestored);
+
       cleanup = () => {
         stop();
         visibility.disconnect();
         document.removeEventListener("visibilitychange", onVisibilityChange);
+        window.clearTimeout(restoreTimer);
+        canvas.removeEventListener("webglcontextlost", onContextLost);
+        canvas.removeEventListener("webglcontextrestored", onContextRestored);
         observer.disconnect();
         geometry.dispose();
         material.dispose();
