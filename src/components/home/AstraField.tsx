@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { rayStrength } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
 import { markPaths } from "@/components/brand/mark";
+import { dustMotion } from "@/lib/astra-dust-motion";
 import { dustLook, ribbonLook, type Look, type Tier } from "@/lib/astra-star-look";
 
 /** Mark units → world. */
@@ -108,6 +109,10 @@ type RibbonStar = StarBase & {
 type DustStar = StarBase & {
   kind: "dust";
   band: { nx: number; ny: number };
+  /** Per-star seed in [0, 1) for the drift loop. */
+  drift: number;
+  /** 0 (far) to 1 (near): how far and fast the grain drifts and how much it slides with scroll. */
+  depth: number;
 };
 type Star = RibbonStar | DustStar;
 type Area = { left: number; right: number; top: number; bottom: number };
@@ -398,6 +403,8 @@ function makeDust(side: -1 | 1): DustStar {
     kind: "dust",
     band: bandPoint(side),
     z: (Math.random() - 0.5) * 0.4,
+    drift: Math.random(),
+    depth: Math.random(),
   };
 }
 
@@ -731,6 +738,7 @@ export function AstraField() {
             ? 1
             : smoothstep((scroll - star.delay * GATHER_STAGGER) / GATHER_SPAN);
 
+          let dustAlpha = 1;
           if (star.kind === "ribbon") {
             const path = paths[star.path];
             if (flow > 0 && path) {
@@ -741,7 +749,21 @@ export function AstraField() {
             const [tx, ty, tz] = restPosition(star);
             settled.set(tx, ty, tz);
           } else {
-            ndcToLocal(star.band.nx, star.band.ny, star.z, settled);
+            // Dust drifts around its place, slides with scroll by depth and twinkles
+            // from the first frame. Reduced motion holds it exactly at rest.
+            const motion = dustMotion(
+              {
+                time,
+                seed: star.drift,
+                depth: star.depth,
+                phase: star.phase,
+                rate: star.rate,
+                scroll,
+              },
+              still,
+            );
+            dustAlpha = motion.alpha;
+            ndcToLocal(star.band.nx + motion.dx, star.band.ny + motion.dy, star.z, settled);
           }
 
           let x = settled.x;
@@ -783,7 +805,9 @@ export function AstraField() {
             y = sprayed.y + (y - sprayed.y) * gather;
             z = sprayed.z + (z - sprayed.z) * gather;
           }
-          if (flow > 0) {
+          if (star.kind === "dust") {
+            alpha *= dustAlpha;
+          } else if (flow > 0) {
             const depth = flare ? FLARE_TWINKLE : fine ? FINE_TWINKLE : TWINKLE;
             alpha *= 1 - depth * flow * (0.5 + 0.5 * Math.sin(time * star.rate + star.phase));
           }
