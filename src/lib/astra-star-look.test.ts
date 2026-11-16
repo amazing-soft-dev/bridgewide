@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { between, dustLook, pickWeighted, powerLaw, type Rand } from "@/lib/astra-star-look";
+import {
+  between,
+  dustLook,
+  paletteColor,
+  pickWeighted,
+  powerLaw,
+  STAR_PALETTE,
+  type Rand,
+} from "@/lib/astra-star-look";
 
 /** Small seeded generator (mulberry32) so every run sees the same stars. */
 function seeded(seed: number): Rand {
@@ -127,8 +135,36 @@ describe("dustLook", () => {
     }
   });
 
+  it("colours dust from the star palette, warm accents included", () => {
+    const palette = new Set<number>(STAR_PALETTE.map((entry) => entry.value));
+    for (const look of looks) expect(palette.has(look.color)).toBe(true);
+    const warm = looks.filter((look) => look.color === 0xffbf8f || look.color === 0xff8a45);
+    // Peach 16% + amber 12%.
+    expect(warm.length / count).toBeGreaterThan(0.26);
+    expect(warm.length / count).toBeLessThan(0.3);
+  });
+
   it("uses the global random source when none is passed", () => {
     const look = dustLook();
     expect(["fine", "ambient", "flare"]).toContain(look.tier);
+  });
+});
+
+describe("paletteColor", () => {
+  it("has weights that sum to 1", () => {
+    const total = STAR_PALETTE.reduce((sum, entry) => sum + entry.weight, 0);
+    expect(total).toBeCloseTo(1, 10);
+  });
+
+  it("keeps a cool majority with about a quarter warm", () => {
+    const rand = seeded(5);
+    const count = 20000;
+    let cool = 0;
+    for (let i = 0; i < count; i++) {
+      const color = paletteColor(rand);
+      if (color !== 0xffbf8f && color !== 0xff8a45) cool++;
+    }
+    expect(cool / count).toBeGreaterThan(0.7);
+    expect(cool / count).toBeLessThan(0.74);
   });
 });

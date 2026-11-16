@@ -56,8 +56,22 @@ export type Look = {
 /** Dust tiers: 85% fine, 12% ambient and the remaining 3% bright. */
 export const DUST_TIER_SHARES = { fine: 0.85, ambient: 0.12 } as const;
 
-const DUST_COLOR = 0xc9dcff;
-const DUST_WARM = 0xffd2b0;
+/**
+ * Star palette: a cool blue-white majority with warm accents. Weights sum to 1.
+ * Shared by the dust and the ribbon stars so the whole field reads as one sky.
+ */
+export const STAR_PALETTE = [
+  { value: 0xc4dcff, weight: 0.36 }, // blue-white
+  { value: 0xf2f6ff, weight: 0.14 }, // white
+  { value: 0x8fcdff, weight: 0.22 }, // ice
+  { value: 0xffbf8f, weight: 0.16 }, // peach
+  { value: 0xff8a45, weight: 0.12 }, // amber
+] as const satisfies readonly [Weighted<number>, ...Weighted<number>[]];
+
+/** A star colour drawn from the palette by weight. */
+export function paletteColor(rand: Rand = Math.random): number {
+  return pickWeighted<number>(rand, STAR_PALETTE);
+}
 
 function lerp(from: number, to: number, t: number): number {
   return from + (to - from) * t;
@@ -76,7 +90,7 @@ export function dustLook(rand: Rand = Math.random): Look {
       tier: "fine",
       size: lerp(0.7, 1.8, t),
       glow: 0.15,
-      color: DUST_COLOR,
+      color: paletteColor(rand),
       brightness: lerp(0.28, 0.62, t),
     };
   }
@@ -86,7 +100,7 @@ export function dustLook(rand: Rand = Math.random): Look {
       tier: "ambient",
       size: lerp(1.6, 2.8, t),
       glow: 0.35,
-      color: rand() < 0.2 ? DUST_WARM : DUST_COLOR,
+      color: paletteColor(rand),
       brightness: lerp(0.45, 0.72, t),
     };
   }
@@ -95,7 +109,7 @@ export function dustLook(rand: Rand = Math.random): Look {
     tier: "flare",
     size: lerp(2.8, 4.4, t),
     glow: 0.6,
-    color: DUST_COLOR,
+    color: paletteColor(rand),
     brightness: lerp(0.85, 1, t),
   };
 }
