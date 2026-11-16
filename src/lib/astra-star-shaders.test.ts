@@ -64,3 +64,30 @@ describe("ray quad", () => {
     expect(STAR_VERTEX).toContain("vHaloQuad = max(vSize * mix(1.6, 3.6, vGlow), 4.0 * uPixelRatio);");
   });
 });
+
+describe("diffraction rays", () => {
+  it("are built from the constants the tested maths uses", () => {
+    expect(STAR_FRAGMENT).toContain("smoothstep(0.6, 5.0, p.x)");
+    expect(STAR_FRAGMENT).toContain("smoothstep(0.6, 5.0, p.y)");
+    expect(STAR_FRAGMENT).toContain("exp(-p.y * 3.0) * alongX");
+    expect(STAR_FRAGMENT).toContain("exp(-p.x * 3.0) * alongY");
+    expect(STAR_FRAGMENT).toContain("float rays = spike * 0.4 * vRay;");
+  });
+
+  it("add nothing for a star without rays, because the term is scaled by vRay", () => {
+    expect(STAR_FRAGMENT).toContain("(halo + rays)");
+    expect(STAR_FRAGMENT.match(/vRay/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("measure the position in star radii on both axes", () => {
+    expect(STAR_FRAGMENT).toContain("abs((gl_PointCoord - 0.5) * vQuad) / max(vSize * 0.5, 0.0001)");
+  });
+
+  it("keep the core and halo terms as they were", () => {
+    expect(STAR_FRAGMENT).toContain("float core = exp(-2.6 * (d / coreRadius) * (d / coreRadius));");
+    expect(STAR_FRAGMENT).toContain(
+      "float halo = mix(0.08, 0.24, heroGlow) * vGlow * exp(-6.5 * r * r) * (1.0 - smoothstep(0.5, 1.0, r));",
+    );
+    expect(STAR_FRAGMENT).toContain("vec3 coreColor = mix(vColor, vec3(1.0), 0.18 * core);");
+  });
+});

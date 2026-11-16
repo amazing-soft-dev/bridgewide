@@ -6,7 +6,12 @@
  * maths cannot drift apart.
  */
 
-import { RAY_REACH } from "@/lib/astra-star-shader-math";
+import {
+  RAY_FADE_FROM,
+  RAY_FALLOFF,
+  RAY_GAIN,
+  RAY_REACH,
+} from "@/lib/astra-star-shader-math";
 
 /** A number as a GLSL float literal (always with a decimal point). */
 function glsl(value: number): string {
@@ -74,6 +79,13 @@ void main() {
   float halo = mix(0.08, 0.24, heroGlow) * vGlow * exp(-6.5 * r * r) * (1.0 - smoothstep(0.5, 1.0, r));
   // Keep the star's colour in the core, warmed toward white at the centre.
   vec3 coreColor = mix(vColor, vec3(1.0), 0.18 * core);
-  gl_FragColor = vec4((coreColor * core + vColor * halo) * vAlpha, 1.0);
+  // Diffraction rays: one thin spike along each axis, measured in star radii so a
+  // bigger star has longer rays. Zero for a star without rays (vRay = 0).
+  vec2 p = abs((gl_PointCoord - 0.5) * vQuad) / max(vSize * 0.5, 0.0001);
+  float alongX = 1.0 - smoothstep(${glsl(RAY_FADE_FROM)}, ${glsl(RAY_REACH)}, p.x);
+  float alongY = 1.0 - smoothstep(${glsl(RAY_FADE_FROM)}, ${glsl(RAY_REACH)}, p.y);
+  float spike = max(exp(-p.y * ${glsl(RAY_FALLOFF)}) * alongX, exp(-p.x * ${glsl(RAY_FALLOFF)}) * alongY);
+  float rays = spike * ${glsl(RAY_GAIN)} * vRay;
+  gl_FragColor = vec4((coreColor * core + vColor * (halo + rays)) * vAlpha, 1.0);
 }
 `;
