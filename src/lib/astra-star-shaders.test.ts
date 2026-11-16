@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RAY_REACH } from "@/lib/astra-star-shader-math";
+import { RAY_REACH, WHITE_CORE_BASE, WHITE_CORE_EXTRA } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
 
 /** Every `varying` declared in a shader, as "type name". */
@@ -88,6 +88,18 @@ describe("diffraction rays", () => {
     expect(STAR_FRAGMENT).toContain(
       "float halo = mix(0.08, 0.24, heroGlow) * vGlow * exp(-6.5 * r * r) * (1.0 - smoothstep(0.5, 1.0, r));",
     );
-    expect(STAR_FRAGMENT).toContain("vec3 coreColor = mix(vColor, vec3(1.0), 0.18 * core);");
+    expect(STAR_FRAGMENT).toContain("vec3 coreColor = mix(vColor, vec3(1.0), (0.18 + 0.4 * vRay) * core);");
+  });
+});
+
+describe("white-hot cores", () => {
+  it("are built from the constants the tested maths uses", () => {
+    expect(STAR_FRAGMENT).toContain(`${WHITE_CORE_BASE} + ${WHITE_CORE_EXTRA} * vRay`);
+  });
+
+  it("keep the old 0.18 whiteness for a star without rays, because the extra is scaled by vRay", () => {
+    expect(WHITE_CORE_BASE).toBe(0.18);
+    expect(STAR_FRAGMENT).not.toContain("vec3(1.0), 0.18 * core)");
+    expect(STAR_FRAGMENT).toMatch(/\(0\.18 \+ 0\.4 \* vRay\) \* core/);
   });
 });

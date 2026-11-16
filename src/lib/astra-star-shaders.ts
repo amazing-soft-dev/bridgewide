@@ -11,6 +11,8 @@ import {
   RAY_FALLOFF,
   RAY_GAIN,
   RAY_REACH,
+  WHITE_CORE_BASE,
+  WHITE_CORE_EXTRA,
 } from "@/lib/astra-star-shader-math";
 
 /** A number as a GLSL float literal (always with a decimal point). */
@@ -77,8 +79,9 @@ void main() {
   // Small and mid stars get a faint halo; only hero stars (glow 1) carry a real glow.
   float heroGlow = smoothstep(0.85, 1.0, vGlow);
   float halo = mix(0.08, 0.24, heroGlow) * vGlow * exp(-6.5 * r * r) * (1.0 - smoothstep(0.5, 1.0, r));
-  // Keep the star's colour in the core, warmed toward white at the centre.
-  vec3 coreColor = mix(vColor, vec3(1.0), 0.18 * core);
+  // Keep the star's colour in the core, warmed toward white at the centre. A star
+  // with rays is whiter there (the extra is scaled by vRay, so 0 without rays).
+  vec3 coreColor = mix(vColor, vec3(1.0), (${glsl(WHITE_CORE_BASE)} + ${glsl(WHITE_CORE_EXTRA)} * vRay) * core);
   // Diffraction rays: one thin spike along each axis, measured in star radii so a
   // bigger star has longer rays. Zero for a star without rays (vRay = 0).
   vec2 p = abs((gl_PointCoord - 0.5) * vQuad) / max(vSize * 0.5, 0.0001);
