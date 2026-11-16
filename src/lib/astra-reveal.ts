@@ -35,3 +35,12 @@ export function revealProgress(t: number, seed: number): number {
   const swell = REVEAL_SWELL_START + (1 - REVEAL_SWELL_START) * smoothstep(t);
   return own * swell;
 }
+
+/**
+ * The size factor for a star at the given reveal progress: the square root, so
+ * a star grows quickly out of a point and then settles, instead of crawling in.
+ * 0 gives 0 and 1 gives exactly 1.
+ */
+export function revealSize(progress: number): number {
+  return Math.sqrt(clamp01(progress));
+}
