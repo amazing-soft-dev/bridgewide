@@ -71,7 +71,7 @@ describe("diffraction rays", () => {
     expect(STAR_FRAGMENT).toContain("smoothstep(0.6, 5.0, p.y)");
     expect(STAR_FRAGMENT).toContain("exp(-p.y * 3.0) * alongX");
     expect(STAR_FRAGMENT).toContain("exp(-p.x * 3.0) * alongY");
-    expect(STAR_FRAGMENT).toContain("float rays = spike * 0.4 * vRay;");
+    expect(STAR_FRAGMENT).toContain("float rays = spike * 0.34 * vRay;");
   });
 
   it("add nothing for a star without rays, because the term is scaled by vRay", () => {

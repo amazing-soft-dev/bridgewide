@@ -15,7 +15,7 @@ export const RAY_FADE_FROM = 0.6;
 /** Distance (star radii) where a ray has faded out. The point quad is sized to hold it. */
 export const RAY_REACH = 5;
 /** Peak ray brightness as a share of the star's colour, before the per-star strength. */
-export const RAY_GAIN = 0.4;
+export const RAY_GAIN = 0.34;
 /** How much the core warms toward white on a star without rays. This is what the shader always did. */
 export const WHITE_CORE_BASE = 0.18;
 /** Extra whiteness a star with full-strength rays gets in its core. */
@@ -36,13 +36,13 @@ function lerp(from: number, to: number, t: number): number {
 
 /**
  * How strong a star's rays are, 0 to 1. Only flares have rays: a hero star
- * (glow 1) gets full strength and an ordinary flare (glow 0.9) about half, so
+ * (glow 1) gets full strength and an ordinary flare (glow 0.9) 30%, so
  * the biggest stars have the longest spikes. Fine and ambient stars get none,
  * which keeps them exactly as they were.
  */
 export function rayStrength(tier: "fine" | "ambient" | "flare", glow: number): number {
   if (tier !== "flare") return 0;
-  return lerp(0.5, 1, smoothstep(0.9, 1, glow));
+  return lerp(0.3, 1, smoothstep(0.9, 1, glow));
 }
 
 /**

@@ -25,15 +25,15 @@ describe("rayStrength", () => {
     expect(rayStrength("flare", 1)).toBe(1);
   });
 
-  it("gives an ordinary flare (glow 0.9) about half", () => {
-    expect(rayStrength("flare", 0.9)).toBeCloseTo(0.5, 12);
+  it("gives an ordinary flare (glow 0.9) a subtle 30%", () => {
+    expect(rayStrength("flare", 0.9)).toBeCloseTo(0.3, 12);
   });
 
-  it("grows with glow and stays between 0.5 and 1 for flares", () => {
+  it("grows with glow and stays between 0.3 and 1 for flares", () => {
     let last = 0;
     for (let glow = 0; glow <= 1; glow += 0.05) {
       const value = rayStrength("flare", glow);
-      expect(value).toBeGreaterThanOrEqual(0.5);
+      expect(value).toBeGreaterThanOrEqual(0.3);
       expect(value).toBeLessThanOrEqual(1);
       expect(value).toBeGreaterThanOrEqual(last);
       last = value;
