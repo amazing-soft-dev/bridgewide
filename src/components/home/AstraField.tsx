@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AstraStaticDust } from "@/components/home/AstraStaticDust";
 import { AstraReplayButton } from "@/components/home/AstraReplayButton";
 import { ASTRA_REPLAY_EVENT, type Pose, restState } from "@/lib/astra-pose";
+import { addTurn, dragTurn, keyTurn } from "@/lib/astra-pose-input";
 import { rayStrength } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
 import { CONTEXT_RESTORE_MS, canCreateWebgl, shouldRun } from "@/lib/astra-webgl";
@@ -414,18 +415,36 @@ export function AstraField() {
   const [fallback, setFallback] = useState(false);
   const pointer = useRef({ x: 0, y: 0, inside: false, moveX: 0, moveY: 0 });
   const orbit = useRef<Pose>(restState({ yaw: REST_YAW, pitch: REST_PITCH }));
+  const surfaceRef = useRef<HTMLButtonElement>(null);
   const drag = useRef({
     active: false,
+    id: -1,
     startX: 0,
     startY: 0,
     originYaw: REST_YAW,
     originPitch: REST_PITCH,
   });
 
-  const endDrag = () => {
+  const endDrag = useCallback(() => {
     if (!drag.current.active) return;
     drag.current.active = false;
-  };
+    drag.current.id = -1;
+    delete surfaceRef.current?.dataset.dragging;
+  }, []);
+
+  // A drag also ends when the window loses focus or the tab is hidden: the
+  // pointer-up would never arrive.
+  useEffect(() => {
+    const onHidden = () => {
+      if (document.hidden) endDrag();
+    };
+    window.addEventListener("blur", endDrag);
+    document.addEventListener("visibilitychange", onHidden);
+    return () => {
+      window.removeEventListener("blur", endDrag);
+      document.removeEventListener("visibilitychange", onHidden);
+    };
+  }, [endDrag]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -907,7 +926,7 @@ export function AstraField() {
 
       // Replay: the mark goes back to rest and the entrance starts again from its first frame.
       const onReplay = () => {
-        drag.current.active = false;
+        endDrag();
         Object.assign(orbit.current, restState({ yaw: REST_YAW, pitch: REST_PITCH }));
         revealStart = performance.now();
       };
@@ -961,7 +980,7 @@ export function AstraField() {
       alive = false;
       cleanup();
     };
-  }, []);
+  }, [endDrag]);
 
   return (
     <section
@@ -970,26 +989,14 @@ export function AstraField() {
       aria-label={
         fallback
           ? "BridgeWide between the words Bridge and Wide."
-          : "BridgeWide mark between the words Bridge and Wide. Drag to turn the mark."
+          : "BridgeWide mark between the words Bridge and Wide."
       }
     >
       <div
         ref={wrapRef}
-        className="sticky top-0 h-[100svh] min-h-[36rem] cursor-grab touch-pan-y overflow-hidden bg-[#08101a] text-white select-none active:cursor-grabbing"
-        onPointerDown={(event) => {
-          if (event.pointerType === "mouse" && event.button !== 0) return;
-          const rect = event.currentTarget.getBoundingClientRect();
-          pointer.current.x = event.clientX - rect.left;
-          pointer.current.y = event.clientY - rect.top;
-          pointer.current.moveX = 0;
-          pointer.current.moveY = 0;
-          drag.current.active = true;
-          drag.current.startX = event.clientX;
-          drag.current.startY = event.clientY;
-          drag.current.originYaw = orbit.current.yaw;
-          drag.current.originPitch = orbit.current.pitch;
-        }}
+        className="sticky top-0 h-[100svh] min-h-[36rem] overflow-hidden bg-[#08101a] text-white select-none"
         onPointerMove={(event) => {
+          // The cursor nudge: where the pointer is, and how far it moved since the last frame.
           const rect = event.currentTarget.getBoundingClientRect();
           const x = event.clientX - rect.left;
           const y = event.clientY - rect.top;
@@ -1000,14 +1007,8 @@ export function AstraField() {
           pointer.current.x = x;
           pointer.current.y = y;
           pointer.current.inside = true;
-          if (!drag.current.active) return;
-          orbit.current.yaw = drag.current.originYaw + (event.clientX - drag.current.startX) * 0.0075;
-          orbit.current.pitch = drag.current.originPitch + (event.clientY - drag.current.startY) * 0.005;
         }}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
         onPointerLeave={() => {
-          endDrag();
           pointer.current.inside = false;
           pointer.current.moveX = 0;
           pointer.current.moveY = 0;
@@ -1022,6 +1023,63 @@ export function AstraField() {
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgba(0,0,0,0.3)_100%)]"
         />
+        {fallback ? null : (
+          // A real button over the stage, so the mark can be turned by pointer or by the arrow keys.
+          <button
+            ref={surfaceRef}
+            type="button"
+            aria-label="Drag or use arrow keys to turn the BridgeWide mark"
+            className="absolute inset-0 z-[1] cursor-grab touch-pan-y appearance-none border-0 bg-transparent p-0 outline-white/70 focus-visible:outline-2 focus-visible:-outline-offset-4 data-[dragging=true]:cursor-grabbing motion-reduce:hidden"
+            onKeyDown={(event) => {
+              // Arrow keys turn the mark; a modified arrow (Alt+Left is Back) keeps its normal job.
+              if (event.altKey || event.ctrlKey || event.metaKey) return;
+              const turn = keyTurn(event.key);
+              if (!turn) return;
+              event.preventDefault();
+              Object.assign(orbit.current, addTurn(orbit.current, turn));
+            }}
+            onPointerDown={(event) => {
+              if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+              if (drag.current.active) return;
+              try {
+                // Keep receiving the drag when the pointer leaves the stage.
+                event.currentTarget.setPointerCapture(event.pointerId);
+              } catch {
+                return;
+              }
+              const rect = event.currentTarget.getBoundingClientRect();
+              pointer.current.x = event.clientX - rect.left;
+              pointer.current.y = event.clientY - rect.top;
+              pointer.current.moveX = 0;
+              pointer.current.moveY = 0;
+              drag.current.active = true;
+              drag.current.id = event.pointerId;
+              drag.current.startX = event.clientX;
+              drag.current.startY = event.clientY;
+              drag.current.originYaw = orbit.current.yaw;
+              drag.current.originPitch = orbit.current.pitch;
+              event.currentTarget.dataset.dragging = "true";
+            }}
+            onPointerMove={(event) => {
+              if (!drag.current.active || event.pointerId !== drag.current.id) return;
+              const next = addTurn(
+                { yaw: drag.current.originYaw, pitch: drag.current.originPitch },
+                dragTurn(event.clientX - drag.current.startX, event.clientY - drag.current.startY),
+              );
+              orbit.current.yaw = next.yaw;
+              orbit.current.pitch = next.pitch;
+            }}
+            onPointerUp={(event) => {
+              if (event.pointerId === drag.current.id) endDrag();
+            }}
+            onPointerCancel={(event) => {
+              if (event.pointerId === drag.current.id) endDrag();
+            }}
+            onLostPointerCapture={(event) => {
+              if (event.pointerId === drag.current.id) endDrag();
+            }}
+          />
+        )}
         <p
           data-astra-left
           className="pointer-events-none absolute top-[24%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-[15%] md:translate-x-0 md:text-6xl"
