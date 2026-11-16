@@ -17,13 +17,8 @@ describe("ASTRA_REPLAY_EVENT", () => {
 });
 
 describe("restState", () => {
-  it("is the rest angles, not moving", () => {
-    expect(restState({ yaw: 0.62, pitch: -0.18 })).toEqual({
-      yaw: 0.62,
-      pitch: -0.18,
-      yawVelocity: 0,
-      pitchVelocity: 0,
-    });
+  it("is the rest angles", () => {
+    expect(restState({ yaw: 0.62, pitch: -0.18 })).toEqual({ yaw: 0.62, pitch: -0.18 });
   });
 
   it("returns a fresh object each time, so a pose can be changed without changing rest", () => {

@@ -8,10 +8,10 @@
 /** The window event the Replay button sends and the star field listens for. */
 export const ASTRA_REPLAY_EVENT = "astra:replay";
 
-/** The mark's turn, with the speed it is turning at. */
-export type Pose = { yaw: number; pitch: number; yawVelocity: number; pitchVelocity: number };
+/** The mark's turn: `yaw` is sideways, `pitch` is tipped. Both are in radians. */
+export type Pose = { yaw: number; pitch: number };
 
-/** The pose at rest: at the given angles and not moving. */
-export function restState(rest: { yaw: number; pitch: number }): Pose {
-  return { yaw: rest.yaw, pitch: rest.pitch, yawVelocity: 0, pitchVelocity: 0 };
+/** The pose at rest: a fresh object at the given angles. */
+export function restState(rest: Pose): Pose {
+  return { yaw: rest.yaw, pitch: rest.pitch };
 }
