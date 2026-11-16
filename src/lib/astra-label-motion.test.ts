@@ -4,7 +4,9 @@ import {
   LABEL_SHIFT_PX,
   LABEL_STEP_S,
   labelDelay,
+  labelLetters,
   labelShift,
+  labelVars,
 } from "@/lib/astra-label-motion";
 
 describe("labelShift", () => {
@@ -58,5 +60,49 @@ describe("labelDelay", () => {
   it("never goes below the base delay, even for an index outside the word", () => {
     expect(labelDelay(9, 3, "left")).toBe(LABEL_BASE_DELAY_S);
     expect(labelDelay(-4, 3, "right")).toBe(LABEL_BASE_DELAY_S);
+  });
+});
+
+describe("labelLetters", () => {
+  it("splits a word into its letters", () => {
+    expect(labelLetters("Bridge")).toEqual(["B", "r", "i", "d", "g", "e"]);
+    expect(labelLetters("Wide")).toEqual(["W", "i", "d", "e"]);
+  });
+
+  it("joins back to the word, so the text is unchanged", () => {
+    expect(labelLetters("Bridge").join("")).toBe("Bridge");
+  });
+
+  it("keeps a space as a non-breaking space so it holds its width", () => {
+    expect(labelLetters("a b")).toEqual(["a", "\u00a0", "b"]);
+  });
+
+  it("keeps a letter outside the basic plane in one piece", () => {
+    expect(labelLetters("a😀b")).toEqual(["a", "😀", "b"]);
+  });
+
+  it("returns nothing for an empty word", () => {
+    expect(labelLetters("")).toEqual([]);
+  });
+});
+
+describe("labelVars", () => {
+  it("writes the delay, duration and shift as CSS values", () => {
+    expect(labelVars(0, 4, "right")).toEqual({
+      "--astra-label-delay": "0.85s",
+      "--astra-label-duration": "1s",
+      "--astra-label-shift": "44px",
+    });
+    expect(labelVars(0, 3, "left")).toEqual({
+      "--astra-label-delay": "1.05s",
+      "--astra-label-duration": "1s",
+      "--astra-label-shift": "-44px",
+    });
+  });
+
+  it("never writes a floating-point tail into the CSS", () => {
+    for (let index = 0; index < 8; index++) {
+      expect(labelVars(index, 8, "right")["--astra-label-delay"]).toMatch(/^\d+(\.\d{1,3})?s$/);
+    }
   });
 });

@@ -19,6 +19,9 @@ export const LABEL_STEP_S = 0.1;
 /** How long one letter takes to arrive, in seconds. */
 export const LABEL_DURATION_S = 1;
 
+/** A non-breaking space: a letter that is a space still takes room as an inline-block. */
+const NBSP = " ";
+
 /** Rounds away floating-point noise, so 0.85 + 0.1 * 2 is 1.05 and not 1.0499999999999998. */
 function clean(seconds: number) {
   return Math.round(seconds * 1000) / 1000;
@@ -37,4 +40,28 @@ export function labelShift(side: Side): number {
 export function labelDelay(index: number, count: number, side: Side): number {
   const fromMiddle = side === "left" ? count - 1 - index : index;
   return clean(LABEL_BASE_DELAY_S + LABEL_STEP_S * Math.max(0, fromMiddle));
+}
+
+/**
+ * The letters of a word, one string each. A space becomes a non-breaking space
+ * so it keeps its width when it is its own inline-block.
+ */
+export function labelLetters(word: string): string[] {
+  return Array.from(word, (letter) => (letter === " " ? NBSP : letter));
+}
+
+/** The CSS custom properties the stylesheet reads to time one letter. */
+export type LabelVars = {
+  "--astra-label-delay": string;
+  "--astra-label-duration": string;
+  "--astra-label-shift": string;
+};
+
+/** The custom properties for letter `index` of a word of `count` letters. */
+export function labelVars(index: number, count: number, side: Side): LabelVars {
+  return {
+    "--astra-label-delay": `${labelDelay(index, count, side)}s`,
+    "--astra-label-duration": `${LABEL_DURATION_S}s`,
+    "--astra-label-shift": `${labelShift(side)}px`,
+  };
 }
