@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AstraStaticDust } from "@/components/home/AstraStaticDust";
+import { rayStrength } from "@/lib/astra-star-shader-math";
+import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
 import { CONTEXT_RESTORE_MS, canCreateWebgl, shouldRun } from "@/lib/astra-webgl";
 import { markPaths } from "@/components/brand/mark";
+import { firstSight, revealClock, revealProgress, revealSize } from "@/lib/astra-reveal";
 import { dustMotion } from "@/lib/astra-dust-motion";
 import { dustLook, ribbonLook, type Look, type Tier } from "@/lib/astra-star-look";
 
@@ -74,59 +77,6 @@ const BLOOM_THRESHOLD = 0.92;
 const STROKE_WIDTH = 7.5;
 const CORE_WIDTH = STROKE_WIDTH * 0.2;
 const MIST_WIDTH = STROKE_WIDTH * 1.2;
-
-const STAR_VERTEX = /* glsl */ `
-attribute float size;
-attribute float glow;
-attribute float alpha;
-uniform float uPixelRatio;
-uniform float uDepth;
-varying vec3 vColor;
-varying float vGlow;
-varying float vAlpha;
-varying float vSize;
-varying float vQuad;
-
-void main() {
-  vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-  gl_Position = projectionMatrix * mvPosition;
-  // Nearer stars draw larger and brighter, farther ones smaller and dimmer.
-  float persp = clamp(uDepth / max(-mvPosition.z, 0.001), 0.7, 1.3);
-  vColor = color;
-  vGlow = glow;
-  vAlpha = alpha * clamp(0.45 + 0.55 * persp, 0.6, 1.15);
-  vSize = max(size * persp * uPixelRatio, 1.0);
-  // The halo scales with the star, so large stars carry large soft glows.
-  vQuad = max(vSize * mix(1.6, 3.6, vGlow), 4.0 * uPixelRatio);
-  gl_PointSize = vQuad;
-}
-`;
-
-const STAR_FRAGMENT = /* glsl */ `
-uniform float uPixelRatio;
-varying vec3 vColor;
-varying float vGlow;
-varying float vAlpha;
-varying float vSize;
-varying float vQuad;
-
-void main() {
-  float d = length(gl_PointCoord - 0.5) * vQuad;
-  float r = d / (vQuad * 0.5);
-  if (r > 1.0) discard;
-  // Gaussian core about the star's own size; at least one device pixel wide so
-  // small stars do not shimmer as they move.
-  float coreRadius = max(vSize * 0.5, 1.0);
-  float core = exp(-2.6 * (d / coreRadius) * (d / coreRadius));
-  // Soft halo that fades to exactly zero at the quad edge (no hard rim).
-  // Small and mid stars get a faint halo; only hero stars (glow 1) carry a real glow.
-  float heroGlow = smoothstep(0.85, 1.0, vGlow);
-  float halo = mix(0.08, 0.24, heroGlow) * vGlow * exp(-6.5 * r * r) * (1.0 - smoothstep(0.5, 1.0, r));
-  // Keep the star's colour in the core, warmed toward white at the centre.
-  vec3 coreColor = mix(vColor, vec3(1.0), 0.18 * core);
-  gl_FragColor = vec4((coreColor * core + vColor * halo) * vAlpha, 1.0);
-}
-`;
 
 type Sample = { x: number; y: number };
 type Spine = Sample[];
@@ -557,6 +507,8 @@ export function AstraField() {
       const sizes = new Float32Array(stars.length);
       const glows = new Float32Array(stars.length);
       const alphas = new Float32Array(stars.length);
+      // Ray strength per star: 0 unless it is a ribbon flare that has landed on the mark.
+      const rays = new Float32Array(stars.length);
       const nudgeX = new Float32Array(stars.length);
       const nudgeY = new Float32Array(stars.length);
       const ribbonColors = new Float32Array(stars.length * 3);
@@ -592,6 +544,9 @@ export function AstraField() {
       geometry.setAttribute("size", sizeAttr);
       geometry.setAttribute("glow", glowAttr);
       geometry.setAttribute("alpha", alphaAttr);
+      const rayAttr = new THREE.BufferAttribute(rays, 1);
+      rayAttr.setUsage(THREE.DynamicDrawUsage);
+      geometry.setAttribute("ray", rayAttr);
 
       const uniforms = {
         uPixelRatio: { value: 1 },
@@ -741,11 +696,15 @@ export function AstraField() {
       let running = false;
       let previous = performance.now();
       let scroll = reduced.matches ? 1 : readProgress();
+      // When the section was first seen: the entrance runs once from here and is
+      // not replayed when the loop stops and starts again.
+      let revealStart: number | null = null;
 
       const draw = (now: number) => {
         const dt = Math.min(0.05, (now - previous) * 0.001);
         previous = now;
         const still = reduced.matches;
+        const reveal = revealClock(now, revealStart, still);
         const target = still ? 1 : readProgress();
         scroll += (target - scroll) * (1 - Math.exp(-dt * SCROLL_EASE));
         if (Math.abs(target - scroll) < 1e-4) scroll = target;
@@ -829,6 +788,7 @@ export function AstraField() {
           let alpha = 1;
           if (star.kind === "ribbon") {
             const land = smoothstep((gather - LAND_START) / (1 - LAND_START));
+            rays[index] = land * rayStrength(star.tier, star.glow);
             const outer = star.outer;
             const ribbonSize = star.tier === "fine" ? star.size : star.size * sizeScale;
             size = outer.size + (ribbonSize - outer.size) * land;
@@ -917,13 +877,17 @@ export function AstraField() {
           array[index * 3] = x;
           array[index * 3 + 1] = y;
           array[index * 3 + 2] = z;
-          sizes[index] = size;
-          alphas[index] = alpha;
+          // Entrance: each star fades in on its own delay and grows from a point.
+          // Both factors are exactly 1 after the reveal.
+          const appeared = revealProgress(reveal, star.delay);
+          sizes[index] = size * revealSize(appeared);
+          alphas[index] = alpha * appeared;
         }
         positionAttr.needsUpdate = true;
         sizeAttr.needsUpdate = true;
         glowAttr.needsUpdate = true;
         alphaAttr.needsUpdate = true;
+        rayAttr.needsUpdate = true;
         colorAttr.needsUpdate = true;
 
         composer.render(dt);
@@ -934,6 +898,7 @@ export function AstraField() {
         if (running) return;
         running = true;
         previous = performance.now();
+        revealStart = firstSight(revealStart, previous);
         scroll = reduced.matches ? 1 : readProgress();
         frame = requestAnimationFrame(draw);
       };
