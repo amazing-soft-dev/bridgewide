@@ -3,6 +3,7 @@ import {
   between,
   dustLook,
   paletteColor,
+  ribbonLook,
   pickWeighted,
   powerLaw,
   STAR_PALETTE,
@@ -166,5 +167,72 @@ describe("paletteColor", () => {
     }
     expect(cool / count).toBeGreaterThan(0.7);
     expect(cool / count).toBeLessThan(0.74);
+  });
+});
+
+describe("ribbonLook", () => {
+  const count = 40000;
+  const rand = seeded(99);
+  const looks = Array.from({ length: count }, () => ribbonLook(rand));
+  const share = (tier: string) => looks.filter((look) => look.tier === tier).length / count;
+  const hero = (look: { tier: string; size: number }) => look.tier === "flare" && look.size >= 6.5;
+  const mean = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
+
+  it("keeps the ribbon's tier shares", () => {
+    expect(share("fine")).toBeGreaterThan(0.465);
+    expect(share("fine")).toBeLessThan(0.495);
+    expect(share("ambient")).toBeGreaterThan(0.365);
+    expect(share("ambient")).toBeLessThan(0.395);
+    expect(share("flare")).toBeGreaterThan(0.13);
+    expect(share("flare")).toBeLessThan(0.15);
+  });
+
+  it("keeps a quarter of the flares as hero stars", () => {
+    const flares = looks.filter((look) => look.tier === "flare");
+    const share = flares.filter(hero).length / flares.length;
+    expect(share).toBeGreaterThan(0.22);
+    expect(share).toBeLessThan(0.28);
+  });
+
+  it("keeps every size inside its range, with no star too small to see", () => {
+    for (const look of looks) {
+      expect(look.size).toBeGreaterThanOrEqual(1.1);
+      expect(look.size).toBeLessThanOrEqual(9.8);
+      expect(look.glow).toBeGreaterThan(0);
+      expect(look.brightness).toBeGreaterThanOrEqual(0.65);
+      expect(look.brightness).toBeLessThanOrEqual(1);
+    }
+    for (const look of looks.filter((item) => item.tier === "fine")) {
+      expect(look.size).toBeLessThanOrEqual(2.3);
+    }
+  });
+
+  it("keeps each tier's mean size close to the old uniform ranges, so the glow density holds", () => {
+    const sizes = (pick: (look: { tier: string; size: number }) => boolean) =>
+      mean(looks.filter(pick).map((look) => look.size));
+    const within = (value: number, old: number) => Math.abs(value - old) / old < 0.12;
+    expect(within(sizes((look) => look.tier === "fine"), 1.7)).toBe(true);
+    expect(within(sizes((look) => look.tier === "ambient"), 3.1)).toBe(true);
+    expect(within(sizes((look) => look.tier === "flare" && !hero(look)), 5)).toBe(true);
+    expect(within(sizes(hero), 8)).toBe(true);
+  });
+
+  it("spreads sizes wider than the old tier ranges and skews them small", () => {
+    const fine = looks.filter((look) => look.tier === "fine");
+    const below = fine.filter((look) => look.size < 1.7).length / fine.length;
+    // Old uniform 1.3-2.1: about half below 1.7. The skew puts clearly more there.
+    expect(below).toBeGreaterThan(0.58);
+    expect(Math.min(...fine.map((look) => look.size))).toBeLessThan(1.3);
+    expect(Math.max(...fine.map((look) => look.size))).toBeGreaterThan(2.1);
+  });
+
+  it("keeps the flare colours as they were", () => {
+    const flares = looks.filter((look) => look.tier === "flare");
+    const colours = new Set(flares.map((look) => look.color));
+    expect([...colours].sort()).toEqual([0xbcdcff, 0xcfe4ff, 0xffbb8a, 0xffc9a0].sort());
+  });
+
+  it("uses the global random source when none is passed", () => {
+    expect(["fine", "ambient", "flare"]).toContain(ribbonLook().tier);
   });
 });

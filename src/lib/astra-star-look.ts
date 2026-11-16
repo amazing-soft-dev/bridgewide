@@ -113,3 +113,56 @@ export function dustLook(rand: Rand = Math.random): Look {
     brightness: lerp(0.85, 1, t),
   };
 }
+
+/** Ribbon tiers: 48% fine, 38% ambient, the remaining 14% flares. */
+export const RIBBON_TIER_SHARES = { fine: 0.48, ambient: 0.38 } as const;
+/** A quarter of the flares are large "hero" stars. */
+export const HERO_SHARE = 0.25;
+
+/**
+ * A star on the mark's ribbons. The tier shares and the hero share are the
+ * ones the ribbon always had, so its density of glow does not change; what
+ * changes is the spread of sizes inside each tier, which is now skewed toward
+ * the small end with a similar mean. A wide size range with no invisible
+ * specks is what makes the line read as a glowing ribbon instead of a string
+ * of equal beads.
+ */
+export function ribbonLook(rand: Rand = Math.random): Look {
+  const roll = rand();
+  if (roll < RIBBON_TIER_SHARES.fine) {
+    // Small, but bright enough to stay visible next to the big stars.
+    return {
+      tier: "fine",
+      size: lerp(1.1, 2.3, powerLaw(rand, 1.6)),
+      glow: 0.3,
+      color: paletteColor(rand),
+      brightness: between(rand, 0.65, 0.9),
+    };
+  }
+  if (roll < RIBBON_TIER_SHARES.fine + RIBBON_TIER_SHARES.ambient) {
+    return {
+      tier: "ambient",
+      size: lerp(2.2, 4, powerLaw(rand, 1.4)),
+      glow: 0.55,
+      color: paletteColor(rand),
+      brightness: between(rand, 0.65, 0.9),
+    };
+  }
+  const warm = rand() < 0.2;
+  if (rand() < HERO_SHARE) {
+    return {
+      tier: "flare",
+      size: lerp(6.5, 9.8, powerLaw(rand, 1.15)),
+      glow: 1,
+      color: warm ? 0xffc9a0 : 0xcfe4ff,
+      brightness: 1,
+    };
+  }
+  return {
+    tier: "flare",
+    size: lerp(3.8, 6.3, powerLaw(rand, 1.2)),
+    glow: 0.9,
+    color: warm ? 0xffbb8a : 0xbcdcff,
+    brightness: 0.95,
+  };
+}
