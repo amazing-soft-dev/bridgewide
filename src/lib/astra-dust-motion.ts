@@ -63,3 +63,19 @@ export function dustTwinkle(time: number, phase: number, rate: number, strength 
   const wave = 0.5 + 0.5 * Math.sin(time * rate + phase);
   return 1 - TWINKLE_DEPTH * clamp01(strength) * wave;
 }
+
+/** How far the nearest dust slides, in NDC, across the whole scroll of the section. */
+export const PARALLAX_REACH = 0.12;
+
+/**
+ * A vertical offset (NDC, positive is up) that grows with scroll and with the
+ * square of the depth, so near dust slides past while far dust hardly moves.
+ * It is zero at the middle of the scroll, so the dust rests where it was laid
+ * out when the section is centred. `scroll` is 0 to 1, `strength` is 0 to 1.
+ */
+export function dustParallax(scroll: number, depth: number, strength = 1): number {
+  const near = clamp01(depth);
+  const amount = (clamp01(scroll) - 0.5) * PARALLAX_REACH * near * near * clamp01(strength);
+  // Keep a negative zero out of the positions.
+  return amount === 0 ? 0 : amount;
+}

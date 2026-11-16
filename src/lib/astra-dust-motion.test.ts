@@ -3,7 +3,9 @@ import {
   DRIFT_REACH,
   DRIFT_SPEED,
   dustDrift,
+  dustParallax,
   dustTwinkle,
+  PARALLAX_REACH,
   TWINKLE_DEPTH,
 } from "@/lib/astra-dust-motion";
 
@@ -117,5 +119,41 @@ describe("dustTwinkle", () => {
   it("clamps an out-of-range strength", () => {
     expect(dustTwinkle(1, 0, 1, 9)).toBe(dustTwinkle(1, 0, 1, 1));
     expect(dustTwinkle(1, 0, 1, -2)).toBe(1);
+  });
+});
+
+describe("dustParallax", () => {
+  it("is zero in the middle of the scroll", () => {
+    for (const depth of [0, 0.4, 1]) expect(dustParallax(0.5, depth)).toBe(0);
+  });
+
+  it("slides up as the scroll goes down, and back down before the middle", () => {
+    expect(dustParallax(1, 1)).toBeGreaterThan(0);
+    expect(dustParallax(0, 1)).toBeLessThan(0);
+    expect(dustParallax(1, 1)).toBeCloseTo(-dustParallax(0, 1), 12);
+  });
+
+  it("grows with the square of the depth, so far dust barely moves", () => {
+    expect(dustParallax(1, 0)).toBe(0);
+    expect(dustParallax(1, 1) / dustParallax(1, 0.5)).toBeCloseTo(4, 10);
+    expect(dustParallax(1, 1)).toBeCloseTo(PARALLAX_REACH / 2, 12);
+  });
+
+  it("never moves more than half the reach either way", () => {
+    for (let scroll = -0.5; scroll <= 1.5; scroll += 0.05) {
+      expect(Math.abs(dustParallax(scroll, 1))).toBeLessThanOrEqual(PARALLAX_REACH / 2 + 1e-12);
+    }
+  });
+
+  it("is a plain zero at strength 0, not a negative zero", () => {
+    expect(Object.is(dustParallax(0.1, 1, 0), 0)).toBe(true);
+    expect(Object.is(dustParallax(0.9, 1, 0), 0)).toBe(true);
+  });
+
+  it("clamps an out-of-range scroll, depth and strength", () => {
+    expect(dustParallax(7, 1)).toBe(dustParallax(1, 1));
+    expect(dustParallax(-7, 1)).toBe(dustParallax(0, 1));
+    expect(dustParallax(1, 9)).toBe(dustParallax(1, 1));
+    expect(dustParallax(1, 1, 9)).toBe(dustParallax(1, 1, 1));
   });
 });
