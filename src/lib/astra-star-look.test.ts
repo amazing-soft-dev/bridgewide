@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { between, pickWeighted, powerLaw, type Rand } from "@/lib/astra-star-look";
+import { between, dustLook, pickWeighted, powerLaw, type Rand } from "@/lib/astra-star-look";
 
 /** Small seeded generator (mulberry32) so every run sees the same stars. */
 function seeded(seed: number): Rand {
@@ -77,5 +77,58 @@ describe("pickWeighted", () => {
     for (let i = 0; i < count; i++) if (pickWeighted(rand, entries) === "b") b++;
     expect(b / count).toBeGreaterThan(0.73);
     expect(b / count).toBeLessThan(0.77);
+  });
+});
+
+describe("dustLook", () => {
+  const count = 30000;
+  const rand = seeded(21);
+  const looks = Array.from({ length: count }, () => dustLook(rand));
+  const share = (tier: string) => looks.filter((look) => look.tier === tier).length / count;
+
+  it("splits into fine, ambient and a rare bright tier", () => {
+    expect(share("fine")).toBeGreaterThan(0.835);
+    expect(share("fine")).toBeLessThan(0.865);
+    expect(share("ambient")).toBeGreaterThan(0.11);
+    expect(share("ambient")).toBeLessThan(0.13);
+    expect(share("flare")).toBeGreaterThan(0.023);
+    expect(share("flare")).toBeLessThan(0.037);
+  });
+
+  it("keeps every tier inside its size range, with bright dust larger than any fine grain", () => {
+    for (const look of looks) {
+      if (look.tier === "fine") {
+        expect(look.size).toBeGreaterThanOrEqual(0.7);
+        expect(look.size).toBeLessThanOrEqual(1.8);
+      } else if (look.tier === "ambient") {
+        expect(look.size).toBeGreaterThanOrEqual(1.6);
+        expect(look.size).toBeLessThanOrEqual(2.8);
+      } else {
+        expect(look.size).toBeGreaterThanOrEqual(2.8);
+        expect(look.size).toBeLessThanOrEqual(4.4);
+      }
+      expect(look.brightness).toBeGreaterThan(0);
+      expect(look.brightness).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("skews fine grains toward the small end", () => {
+    const fine = looks.filter((look) => look.tier === "fine");
+    const small = fine.filter((look) => look.size < 1.25).length / fine.length;
+    // A uniform spread would put half below the midpoint; the skew puts about 75%.
+    expect(small).toBeGreaterThan(0.7);
+  });
+
+  it("gives bigger fine grains more brightness", () => {
+    const fine = looks.filter((look) => look.tier === "fine");
+    for (const look of fine) {
+      const t = (look.size - 0.7) / 1.1;
+      expect(look.brightness).toBeCloseTo(0.28 + 0.34 * t, 6);
+    }
+  });
+
+  it("uses the global random source when none is passed", () => {
+    const look = dustLook();
+    expect(["fine", "ambient", "flare"]).toContain(look.tier);
   });
 });

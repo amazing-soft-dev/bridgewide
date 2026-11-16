@@ -41,3 +41,61 @@ export function pickWeighted<T>(rand: Rand, entries: readonly [Weighted<T>, ...W
   const live = entries.filter((entry) => entry.weight > 0);
   return (live[live.length - 1] ?? entries[0]).value;
 }
+
+export type Tier = "fine" | "ambient" | "flare";
+
+/** One star's look. Sizes are CSS px on the full 600px mark. */
+export type Look = {
+  tier: Tier;
+  size: number;
+  glow: number;
+  color: number;
+  brightness: number;
+};
+
+/** Dust tiers: 85% fine, 12% ambient and the remaining 3% bright. */
+export const DUST_TIER_SHARES = { fine: 0.85, ambient: 0.12 } as const;
+
+const DUST_COLOR = 0xc9dcff;
+const DUST_WARM = 0xffd2b0;
+
+function lerp(from: number, to: number, t: number): number {
+  return from + (to - from) * t;
+}
+
+/**
+ * Background dust. Most grains are tiny and dim, a few are larger, and about
+ * 3% are bright "flare" stars, so the sky has a few eye-catchers instead of
+ * evenly sized beads. Brightness follows size inside a tier.
+ */
+export function dustLook(rand: Rand = Math.random): Look {
+  const roll = rand();
+  if (roll < DUST_TIER_SHARES.fine) {
+    const t = powerLaw(rand, 2.4);
+    return {
+      tier: "fine",
+      size: lerp(0.7, 1.8, t),
+      glow: 0.15,
+      color: DUST_COLOR,
+      brightness: lerp(0.28, 0.62, t),
+    };
+  }
+  if (roll < DUST_TIER_SHARES.fine + DUST_TIER_SHARES.ambient) {
+    const t = powerLaw(rand, 1.6);
+    return {
+      tier: "ambient",
+      size: lerp(1.6, 2.8, t),
+      glow: 0.35,
+      color: rand() < 0.2 ? DUST_WARM : DUST_COLOR,
+      brightness: lerp(0.45, 0.72, t),
+    };
+  }
+  const t = rand();
+  return {
+    tier: "flare",
+    size: lerp(2.8, 4.4, t),
+    glow: 0.6,
+    color: DUST_COLOR,
+    brightness: lerp(0.85, 1, t),
+  };
+}
