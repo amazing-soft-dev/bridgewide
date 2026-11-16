@@ -999,7 +999,7 @@ export function AstraField() {
       aria-label={
         fallback
           ? "BridgeWide between the words Bridge and Wide."
-          : "BridgeWide mark between the words Bridge and Wide. Drag to turn the mark."
+          : "BridgeWide mark between the words Bridge and Wide."
       }
     >
       <div
@@ -1038,8 +1038,8 @@ export function AstraField() {
           <button
             ref={surfaceRef}
             type="button"
-            aria-label="Drag to turn the BridgeWide mark"
-            className="absolute inset-0 z-[1] cursor-grab touch-pan-y appearance-none border-0 bg-transparent p-0 data-[dragging=true]:cursor-grabbing motion-reduce:hidden"
+            aria-label="Drag or use arrow keys to turn the BridgeWide mark"
+            className="absolute inset-0 z-[1] cursor-grab touch-pan-y appearance-none border-0 bg-transparent p-0 outline-white/70 focus-visible:outline-2 focus-visible:-outline-offset-4 data-[dragging=true]:cursor-grabbing motion-reduce:hidden"
             onKeyDown={(event) => {
               // Arrow keys turn the mark; a modified arrow (Alt+Left is Back) keeps its normal job.
               if (event.altKey || event.ctrlKey || event.metaKey) return;
