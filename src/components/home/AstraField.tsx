@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { markPaths } from "@/components/brand/mark";
+import { firstSight, revealClock, revealProgress } from "@/lib/astra-reveal";
 
 /** Mark units → world. */
 const SCALE = 0.0368;
@@ -788,11 +789,15 @@ export function AstraField() {
       let running = false;
       let previous = performance.now();
       let scroll = reduced.matches ? 1 : readProgress();
+      // When the section was first seen: the entrance runs once from here and is
+      // not replayed when the loop stops and starts again.
+      let revealStart: number | null = null;
 
       const draw = (now: number) => {
         const dt = Math.min(0.05, (now - previous) * 0.001);
         previous = now;
         const still = reduced.matches;
+        const reveal = revealClock(now, revealStart, still);
         const target = still ? 1 : readProgress();
         scroll += (target - scroll) * (1 - Math.exp(-dt * SCROLL_EASE));
         if (Math.abs(target - scroll) < 1e-4) scroll = target;
@@ -947,8 +952,10 @@ export function AstraField() {
           array[index * 3] = x;
           array[index * 3 + 1] = y;
           array[index * 3 + 2] = z;
+          // Entrance: each star fades in on its own delay. Complete (1) after the reveal.
+          const appeared = revealProgress(reveal, star.delay);
           sizes[index] = size;
-          alphas[index] = alpha;
+          alphas[index] = alpha * appeared;
         }
         positionAttr.needsUpdate = true;
         sizeAttr.needsUpdate = true;
@@ -964,6 +971,7 @@ export function AstraField() {
         if (running) return;
         running = true;
         previous = performance.now();
+        revealStart = firstSight(revealStart, previous);
         scroll = reduced.matches ? 1 : readProgress();
         frame = requestAnimationFrame(draw);
       };
