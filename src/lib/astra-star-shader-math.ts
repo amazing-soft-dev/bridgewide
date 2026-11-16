@@ -69,3 +69,22 @@ export function rayIntensity(x: number, y: number, strength: number): number {
 export function coreWhite(strength: number): number {
   return WHITE_CORE_BASE + WHITE_CORE_EXTRA * clamp01(strength);
 }
+
+/**
+ * The halo's quad (the point sprite's side, in device px) for a star: it scales
+ * with the star, so large stars carry large soft glows, with a floor of four
+ * device pixels. This is the size every star's quad always had.
+ */
+export function haloQuad(size: number, glow: number, pixelRatio: number): number {
+  return Math.max(size * lerp(1.6, 3.6, glow), 4 * pixelRatio);
+}
+
+/**
+ * The quad the star is actually drawn with. A star with rays gets a larger
+ * quad, `RAY_REACH` star radii each way from the centre, so the rays fit; a
+ * star without rays keeps exactly its halo quad.
+ */
+export function pointQuad(size: number, glow: number, pixelRatio: number, ray: number): number {
+  const halo = haloQuad(size, glow, pixelRatio);
+  return ray > 0 ? Math.max(halo, size * RAY_REACH) : halo;
+}

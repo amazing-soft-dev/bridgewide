@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   coreWhite,
+  haloQuad,
+  pointQuad,
   RAY_FADE_FROM,
   RAY_GAIN,
   RAY_REACH,
@@ -121,5 +123,42 @@ describe("coreWhite", () => {
     expect(coreWhite(1)).toBeLessThan(1);
     expect(coreWhite(9)).toBe(coreWhite(1));
     expect(coreWhite(-9)).toBe(coreWhite(0));
+  });
+});
+
+describe("haloQuad and pointQuad", () => {
+  const sizes = [1, 1.6, 2.4, 4, 6.5, 9.5, 14];
+  const glows = [0.15, 0.3, 0.55, 0.9, 1];
+  const ratios = [1, 1.5, 1.75, 2];
+
+  it("keeps exactly the old quad for a star without rays", () => {
+    for (const size of sizes) {
+      for (const glow of glows) {
+        for (const ratio of ratios) {
+          const old = Math.max(size * (1.6 + (3.6 - 1.6) * glow), 4 * ratio);
+          expect(haloQuad(size, glow, ratio)).toBe(old);
+          expect(pointQuad(size, glow, ratio, 0)).toBe(old);
+        }
+      }
+    }
+  });
+
+  it("never shrinks the halo for a star with rays", () => {
+    for (const size of sizes) {
+      for (const glow of glows) {
+        expect(pointQuad(size, glow, 1, 1)).toBeGreaterThanOrEqual(haloQuad(size, glow, 1));
+      }
+    }
+  });
+
+  it("holds the whole ray (the reach in radii each way) for a star with rays", () => {
+    for (const size of sizes) {
+      // The quad is a side length: half of it, in radii, must cover the reach.
+      expect(pointQuad(size, 0.9, 1, 0.5) / 2 / (size / 2)).toBeGreaterThanOrEqual(RAY_REACH);
+    }
+  });
+
+  it("depends only on whether a star has rays, not on how strong they are", () => {
+    expect(pointQuad(6, 0.9, 1, 0.2)).toBe(pointQuad(6, 0.9, 1, 1));
   });
 });

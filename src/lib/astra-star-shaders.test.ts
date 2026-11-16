@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { RAY_REACH } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
 
 /** Every `varying` declared in a shader, as "type name". */
@@ -43,5 +44,23 @@ describe("ray attribute", () => {
     expect(STAR_VERTEX).toContain("varying float vRay;");
     expect(STAR_VERTEX).toContain("vRay = ray;");
     expect(STAR_FRAGMENT).toContain("varying float vRay;");
+  });
+});
+
+describe("ray quad", () => {
+  it("gives a star with rays a larger quad, from the tested reach", () => {
+    expect(STAR_VERTEX).toContain("vQuad = vRay > 0.0 ? max(vHaloQuad, vSize * 5.0) : vHaloQuad;");
+    expect(STAR_VERTEX).toContain(`${RAY_REACH.toFixed(1)} star radii`);
+  });
+
+  it("keeps the halo on its own quad, with the clip on the point quad", () => {
+    expect(STAR_VERTEX).toContain("varying float vHaloQuad;");
+    expect(STAR_FRAGMENT).toContain("varying float vHaloQuad;");
+    expect(STAR_FRAGMENT).toContain("float r = d / (vHaloQuad * 0.5);");
+    expect(STAR_FRAGMENT).toContain("if (d > vQuad * 0.5) discard;");
+  });
+
+  it("builds the halo quad the way the tested mirror does", () => {
+    expect(STAR_VERTEX).toContain("vHaloQuad = max(vSize * mix(1.6, 3.6, vGlow), 4.0 * uPixelRatio);");
   });
 });

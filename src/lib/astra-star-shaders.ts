@@ -1,8 +1,17 @@
 /**
  * GLSL for the stars in the Astra field after the footer: one vertex and one
  * fragment shader drawing every star as a point sprite with a soft core and
- * halo. They live here, as strings, so tests can read them.
+ * halo. They live here, as strings, so tests can read them, and they are built
+ * from the constants in astra-star-shader-math.ts so the shader and the tested
+ * maths cannot drift apart.
  */
+
+import { RAY_REACH } from "@/lib/astra-star-shader-math";
+
+/** A number as a GLSL float literal (always with a decimal point). */
+function glsl(value: number): string {
+  return Number.isInteger(value) ? value.toFixed(1) : String(value);
+}
 
 export const STAR_VERTEX = /* glsl */ `
 attribute float size;
@@ -17,6 +26,7 @@ varying float vGlow;
 varying float vAlpha;
 varying float vSize;
 varying float vQuad;
+varying float vHaloQuad;
 varying float vRay;
 
 void main() {
@@ -30,7 +40,10 @@ void main() {
   vAlpha = alpha * clamp(0.45 + 0.55 * persp, 0.6, 1.15);
   vSize = max(size * persp * uPixelRatio, 1.0);
   // The halo scales with the star, so large stars carry large soft glows.
-  vQuad = max(vSize * mix(1.6, 3.6, vGlow), 4.0 * uPixelRatio);
+  vHaloQuad = max(vSize * mix(1.6, 3.6, vGlow), 4.0 * uPixelRatio);
+  // A star with rays gets a larger quad so the rays fit (${glsl(RAY_REACH)} star radii each way);
+  // the halo keeps its own size, and a star without rays keeps exactly its old quad.
+  vQuad = vRay > 0.0 ? max(vHaloQuad, vSize * ${glsl(RAY_REACH)}) : vHaloQuad;
   gl_PointSize = vQuad;
 }
 `;
@@ -42,12 +55,15 @@ varying float vGlow;
 varying float vAlpha;
 varying float vSize;
 varying float vQuad;
+varying float vHaloQuad;
 varying float vRay;
 
 void main() {
   float d = length(gl_PointCoord - 0.5) * vQuad;
-  float r = d / (vQuad * 0.5);
-  if (r > 1.0) discard;
+  // The halo is measured against its own quad and the round clip against the point
+  // quad: they are the same for a star without rays.
+  float r = d / (vHaloQuad * 0.5);
+  if (d > vQuad * 0.5) discard;
   // Gaussian core about the star's own size; at least one device pixel wide so
   // small stars do not shimmer as they move.
   float coreRadius = max(vSize * 0.5, 1.0);
