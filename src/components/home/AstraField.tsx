@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AstraStaticDust } from "@/components/home/AstraStaticDust";
-import { canCreateWebgl } from "@/lib/astra-webgl";
+import { canCreateWebgl, shouldRun } from "@/lib/astra-webgl";
 import { markPaths } from "@/components/brand/mark";
 import { dustMotion } from "@/lib/astra-dust-motion";
 import { dustLook, ribbonLook, type Look, type Tier } from "@/lib/astra-star-look";
@@ -941,15 +941,28 @@ export function AstraField() {
         running = false;
         cancelAnimationFrame(frame);
       };
-      const visibility = new IntersectionObserver((entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) start();
+      // The loop draws only while someone can see it: the section is on screen and
+      // the tab is visible. (The next commit adds the WebGL context being alive.)
+      const runState = { inView: false, tabVisible: !document.hidden, contextLive: true };
+      const sync = () => {
+        if (shouldRun(runState)) start();
         else stop();
+      };
+      const visibility = new IntersectionObserver((entries) => {
+        runState.inView = entries.some((entry) => entry.isIntersecting);
+        sync();
       });
       visibility.observe(track);
+      const onVisibilityChange = () => {
+        runState.tabVisible = !document.hidden;
+        sync();
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
 
       cleanup = () => {
         stop();
         visibility.disconnect();
+        document.removeEventListener("visibilitychange", onVisibilityChange);
         observer.disconnect();
         geometry.dispose();
         material.dispose();
