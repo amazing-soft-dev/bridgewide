@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AstraStaticDust } from "@/components/home/AstraStaticDust";
 import { rayStrength } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
@@ -419,23 +419,41 @@ export function AstraField() {
   const [fallback, setFallback] = useState(false);
   const pointer = useRef({ x: 0, y: 0, inside: false, moveX: 0, moveY: 0 });
   const orbit = useRef({ yaw: REST_YAW, pitch: REST_PITCH, yawVelocity: 0, pitchVelocity: 0 });
+  const surfaceRef = useRef<HTMLButtonElement>(null);
   const drag = useRef({
     active: false,
+    id: -1,
     startX: 0,
     startY: 0,
     originYaw: REST_YAW,
     originPitch: REST_PITCH,
   });
 
-  const endDrag = () => {
+  const endDrag = useCallback(() => {
     if (!drag.current.active) return;
     drag.current.active = false;
+    drag.current.id = -1;
+    delete surfaceRef.current?.dataset.dragging;
     const current = orbit.current;
     current.yaw = REST_YAW + wrapAngle(current.yaw - REST_YAW);
     current.pitch = REST_PITCH + wrapAngle(current.pitch - REST_PITCH);
     current.yawVelocity = 0;
     current.pitchVelocity = 0;
-  };
+  }, []);
+
+  // A drag also ends when the window loses focus or the tab is hidden: the
+  // pointer-up would never arrive.
+  useEffect(() => {
+    const onHidden = () => {
+      if (document.hidden) endDrag();
+    };
+    window.addEventListener("blur", endDrag);
+    document.addEventListener("visibilitychange", onHidden);
+    return () => {
+      window.removeEventListener("blur", endDrag);
+      document.removeEventListener("visibilitychange", onHidden);
+    };
+  }, [endDrag]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
