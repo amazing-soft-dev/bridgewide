@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AstraStaticDust } from "@/components/home/AstraStaticDust";
+import { AstraReplayButton } from "@/components/home/AstraReplayButton";
+import { ASTRA_REPLAY_EVENT, type Pose, restState } from "@/lib/astra-pose";
 import { addTurn, dragTurn, keyTurn } from "@/lib/astra-pose-input";
 import { rayStrength } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
@@ -53,8 +55,6 @@ const NUDGE_RADIUS_PX = 150;
 const NUDGE_GAIN = 0.7;
 const NUDGE_MAX_PX = 56;
 const NUDGE_RETURN = 3.2;
-const SPRING_K = 38;
-const SPRING_C = 9;
 const DUST_PER_SIDE = 320;
 /** Dust settles between these NDC distances from the centre line, on both sides. */
 const BAND_INNER = 0.4;
@@ -132,11 +132,6 @@ function clamp(value: number, min: number, max: number) {
 function smoothstep(value: number) {
   const t = clamp01(value);
   return t * t * (3 - 2 * t);
-}
-
-function wrapAngle(angle: number) {
-  const turn = Math.PI * 2;
-  return ((((angle + Math.PI) % turn) + turn) % turn) - Math.PI;
 }
 
 function sampleSpine(d: string, steps: number): Spine {
@@ -419,7 +414,7 @@ export function AstraField() {
   // True when WebGL or three could not start: the stage then shows a still sky.
   const [fallback, setFallback] = useState(false);
   const pointer = useRef({ x: 0, y: 0, inside: false, moveX: 0, moveY: 0 });
-  const orbit = useRef({ yaw: REST_YAW, pitch: REST_PITCH, yawVelocity: 0, pitchVelocity: 0 });
+  const orbit = useRef<Pose>(restState({ yaw: REST_YAW, pitch: REST_PITCH }));
   const surfaceRef = useRef<HTMLButtonElement>(null);
   const drag = useRef({
     active: false,
@@ -435,11 +430,6 @@ export function AstraField() {
     drag.current.active = false;
     drag.current.id = -1;
     delete surfaceRef.current?.dataset.dragging;
-    const current = orbit.current;
-    current.yaw = REST_YAW + wrapAngle(current.yaw - REST_YAW);
-    current.pitch = REST_PITCH + wrapAngle(current.pitch - REST_PITCH);
-    current.yawVelocity = 0;
-    current.pitchVelocity = 0;
   }, []);
 
   // A drag also ends when the window loses focus or the tab is hidden: the
@@ -730,20 +720,11 @@ export function AstraField() {
         const flow = still ? 0 : smoothstep((scroll - FLOW_START) / FLOW_SPAN);
         const time = now * 0.001;
 
+        // The mark stays where the visitor turned it. Only reduced motion pins it to rest.
         const pose = orbit.current;
-        if (!drag.current.active) {
-          if (still) {
-            pose.yaw = REST_YAW;
-            pose.pitch = REST_PITCH;
-            pose.yawVelocity = 0;
-            pose.pitchVelocity = 0;
-          } else {
-            pose.yawVelocity += (SPRING_K * (REST_YAW - pose.yaw) - SPRING_C * pose.yawVelocity) * dt;
-            pose.pitchVelocity +=
-              (SPRING_K * (REST_PITCH - pose.pitch) - SPRING_C * pose.pitchVelocity) * dt;
-            pose.yaw += pose.yawVelocity * dt;
-            pose.pitch += pose.pitchVelocity * dt;
-          }
+        if (still) {
+          pose.yaw = REST_YAW;
+          pose.pitch = REST_PITCH;
         }
         group.rotation.set(pose.pitch, pose.yaw, 0);
         group.updateMatrixWorld(true);
@@ -943,6 +924,14 @@ export function AstraField() {
       };
       document.addEventListener("visibilitychange", onVisibilityChange);
 
+      // Replay: the mark goes back to rest and the entrance starts again from its first frame.
+      const onReplay = () => {
+        endDrag();
+        Object.assign(orbit.current, restState({ yaw: REST_YAW, pitch: REST_PITCH }));
+        revealStart = performance.now();
+      };
+      window.addEventListener(ASTRA_REPLAY_EVENT, onReplay);
+
       // A lost WebGL context (a GPU reset, memory pressure): stop drawing, let the
       // browser restore it (three.js rebuilds its own state), and show the still sky
       // if it does not come back in time.
@@ -971,6 +960,7 @@ export function AstraField() {
         stop();
         visibility.disconnect();
         document.removeEventListener("visibilitychange", onVisibilityChange);
+        window.removeEventListener(ASTRA_REPLAY_EVENT, onReplay);
         window.clearTimeout(restoreTimer);
         canvas.removeEventListener("webglcontextlost", onContextLost);
         canvas.removeEventListener("webglcontextrestored", onContextRestored);
@@ -990,7 +980,7 @@ export function AstraField() {
       alive = false;
       cleanup();
     };
-  }, []);
+  }, [endDrag]);
 
   return (
     <section
@@ -1046,11 +1036,7 @@ export function AstraField() {
               const turn = keyTurn(event.key);
               if (!turn) return;
               event.preventDefault();
-              const next = addTurn({ yaw: orbit.current.yaw, pitch: orbit.current.pitch }, turn);
-              orbit.current.yaw = next.yaw;
-              orbit.current.pitch = next.pitch;
-              orbit.current.yawVelocity = 0;
-              orbit.current.pitchVelocity = 0;
+              Object.assign(orbit.current, addTurn(orbit.current, turn));
             }}
             onPointerDown={(event) => {
               if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
@@ -1072,8 +1058,6 @@ export function AstraField() {
               drag.current.startY = event.clientY;
               drag.current.originYaw = orbit.current.yaw;
               drag.current.originPitch = orbit.current.pitch;
-              orbit.current.yawVelocity = 0;
-              orbit.current.pitchVelocity = 0;
               event.currentTarget.dataset.dragging = "true";
             }}
             onPointerMove={(event) => {
@@ -1108,6 +1092,7 @@ export function AstraField() {
         >
           Wide
         </p>
+        {fallback ? null : <AstraReplayButton />}
       </div>
     </section>
   );
