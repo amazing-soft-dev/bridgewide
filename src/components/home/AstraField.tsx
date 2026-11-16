@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { rayStrength } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
 import { markPaths } from "@/components/brand/mark";
 import { dustLook, ribbonLook, type Look, type Tier } from "@/lib/astra-star-look";
@@ -489,6 +490,8 @@ export function AstraField() {
       const sizes = new Float32Array(stars.length);
       const glows = new Float32Array(stars.length);
       const alphas = new Float32Array(stars.length);
+      // Ray strength per star: 0 unless it is a ribbon flare that has landed on the mark.
+      const rays = new Float32Array(stars.length);
       const nudgeX = new Float32Array(stars.length);
       const nudgeY = new Float32Array(stars.length);
       const ribbonColors = new Float32Array(stars.length * 3);
@@ -524,6 +527,9 @@ export function AstraField() {
       geometry.setAttribute("size", sizeAttr);
       geometry.setAttribute("glow", glowAttr);
       geometry.setAttribute("alpha", alphaAttr);
+      const rayAttr = new THREE.BufferAttribute(rays, 1);
+      rayAttr.setUsage(THREE.DynamicDrawUsage);
+      geometry.setAttribute("ray", rayAttr);
 
       const uniforms = {
         uPixelRatio: { value: 1 },
@@ -746,6 +752,7 @@ export function AstraField() {
           let alpha = 1;
           if (star.kind === "ribbon") {
             const land = smoothstep((gather - LAND_START) / (1 - LAND_START));
+            rays[index] = land * rayStrength(star.tier, star.glow);
             const outer = star.outer;
             const ribbonSize = star.tier === "fine" ? star.size : star.size * sizeScale;
             size = outer.size + (ribbonSize - outer.size) * land;
@@ -839,6 +846,7 @@ export function AstraField() {
         sizeAttr.needsUpdate = true;
         glowAttr.needsUpdate = true;
         alphaAttr.needsUpdate = true;
+        rayAttr.needsUpdate = true;
         colorAttr.needsUpdate = true;
 
         composer.render(dt);

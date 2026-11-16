@@ -8,6 +8,8 @@ export const STAR_VERTEX = /* glsl */ `
 attribute float size;
 attribute float glow;
 attribute float alpha;
+// Strength of the diffraction rays, 0 to 1. Stars with 0 draw exactly as they always did.
+attribute float ray;
 uniform float uPixelRatio;
 uniform float uDepth;
 varying vec3 vColor;
@@ -15,6 +17,7 @@ varying float vGlow;
 varying float vAlpha;
 varying float vSize;
 varying float vQuad;
+varying float vRay;
 
 void main() {
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
@@ -23,6 +26,7 @@ void main() {
   float persp = clamp(uDepth / max(-mvPosition.z, 0.001), 0.7, 1.3);
   vColor = color;
   vGlow = glow;
+  vRay = ray;
   vAlpha = alpha * clamp(0.45 + 0.55 * persp, 0.6, 1.15);
   vSize = max(size * persp * uPixelRatio, 1.0);
   // The halo scales with the star, so large stars carry large soft glows.
@@ -38,6 +42,7 @@ varying float vGlow;
 varying float vAlpha;
 varying float vSize;
 varying float vQuad;
+varying float vRay;
 
 void main() {
   float d = length(gl_PointCoord - 0.5) * vQuad;

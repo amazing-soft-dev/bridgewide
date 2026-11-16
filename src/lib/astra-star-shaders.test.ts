@@ -36,3 +36,12 @@ describe("star shaders", () => {
     for (const received of varyings(STAR_FRAGMENT)) expect(sent.has(received)).toBe(true);
   });
 });
+
+describe("ray attribute", () => {
+  it("is declared by the vertex shader and passed on to the fragment shader", () => {
+    expect(STAR_VERTEX).toContain("attribute float ray;");
+    expect(STAR_VERTEX).toContain("varying float vRay;");
+    expect(STAR_VERTEX).toContain("vRay = ray;");
+    expect(STAR_FRAGMENT).toContain("varying float vRay;");
+  });
+});
