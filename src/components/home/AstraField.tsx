@@ -181,6 +181,10 @@ type RibbonStar = StarBase & {
 type DustStar = StarBase & {
   kind: "dust";
   band: { nx: number; ny: number };
+  /** Per-star seed in [0, 1) for the drift loop. */
+  drift: number;
+  /** 0 (far) to 1 (near): how far and fast the grain drifts and how much it slides with scroll. */
+  depth: number;
 };
 type Star = RibbonStar | DustStar;
 type Area = { left: number; right: number; top: number; bottom: number };
@@ -512,6 +516,8 @@ function makeDust(side: -1 | 1): DustStar {
     kind: "dust",
     band: bandPoint(side),
     z: (Math.random() - 0.5) * 0.4,
+    drift: Math.random(),
+    depth: Math.random(),
   };
 }
 
