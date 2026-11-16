@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { markPaths } from "@/components/brand/mark";
+import { dustMotion } from "@/lib/astra-dust-motion";
 
 /** Mark units → world. */
 const SCALE = 0.0368;
@@ -846,6 +847,7 @@ export function AstraField() {
             ? 1
             : smoothstep((scroll - star.delay * GATHER_STAGGER) / GATHER_SPAN);
 
+          let dustAlpha = 1;
           if (star.kind === "ribbon") {
             const path = paths[star.path];
             if (flow > 0 && path) {
@@ -856,7 +858,21 @@ export function AstraField() {
             const [tx, ty, tz] = restPosition(star);
             settled.set(tx, ty, tz);
           } else {
-            ndcToLocal(star.band.nx, star.band.ny, star.z, settled);
+            // Dust drifts around its place, slides with scroll by depth and twinkles
+            // from the first frame. Reduced motion holds it exactly at rest.
+            const motion = dustMotion(
+              {
+                time,
+                seed: star.drift,
+                depth: star.depth,
+                phase: star.phase,
+                rate: star.rate,
+                scroll,
+              },
+              still,
+            );
+            dustAlpha = motion.alpha;
+            ndcToLocal(star.band.nx + motion.dx, star.band.ny + motion.dy, star.z, settled);
           }
 
           let x = settled.x;
@@ -897,7 +913,9 @@ export function AstraField() {
             y = sprayed.y + (y - sprayed.y) * gather;
             z = sprayed.z + (z - sprayed.z) * gather;
           }
-          if (flow > 0) {
+          if (star.kind === "dust") {
+            alpha *= dustAlpha;
+          } else if (flow > 0) {
             const depth = flare ? FLARE_TWINKLE : fine ? FINE_TWINKLE : TWINKLE;
             alpha *= 1 - depth * flow * (0.5 + 0.5 * Math.sin(time * star.rate + star.phase));
           }
