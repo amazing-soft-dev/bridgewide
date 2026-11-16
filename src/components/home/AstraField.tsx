@@ -1104,14 +1104,14 @@ export function AstraField() {
           side="left"
           animate={!fallback}
           data-astra-left
-          className="pointer-events-none absolute top-[24%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-[15%] md:translate-x-0 md:text-6xl"
+          className="text-[#fafafa] [text-shadow:0_2px_6px_rgba(0,0,0,0.65),0_0_1.25rem_rgba(0,0,0,0.45)] pointer-events-none absolute top-[24%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-[15%] md:translate-x-0 md:text-6xl"
         />
         <AstraWord
           word="Wide"
           side="right"
           animate={!fallback}
           data-astra-right
-          className="pointer-events-none absolute top-[76%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-auto md:right-[15%] md:translate-x-0 md:text-6xl"
+          className="text-[#fafafa] [text-shadow:0_2px_6px_rgba(0,0,0,0.65),0_0_1.25rem_rgba(0,0,0,0.45)] pointer-events-none absolute top-[76%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-auto md:right-[15%] md:translate-x-0 md:text-6xl"
         />
       </div>
     </section>
