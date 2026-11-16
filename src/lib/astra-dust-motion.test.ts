@@ -3,6 +3,7 @@ import {
   DRIFT_REACH,
   DRIFT_SPEED,
   dustDrift,
+  dustMotion,
   dustParallax,
   dustTwinkle,
   PARALLAX_REACH,
@@ -155,5 +156,37 @@ describe("dustParallax", () => {
     expect(dustParallax(-7, 1)).toBe(dustParallax(0, 1));
     expect(dustParallax(1, 9)).toBe(dustParallax(1, 1));
     expect(dustParallax(1, 1, 9)).toBe(dustParallax(1, 1, 1));
+  });
+});
+
+describe("dustMotion", () => {
+  const input = { time: 5.5, seed: 0.37, depth: 0.8, phase: 1.9, rate: 1.1, scroll: 0.9 };
+
+  it("combines drift, parallax and twinkle", () => {
+    const motion = dustMotion(input, false);
+    const drift = dustDrift(input.time, input.seed, input.depth);
+    expect(motion.dx).toBe(drift.x);
+    expect(motion.dy).toBeCloseTo(drift.y + dustParallax(input.scroll, input.depth), 12);
+    expect(motion.alpha).toBe(dustTwinkle(input.time, input.phase, input.rate));
+  });
+
+  it("moves the dust when motion is allowed", () => {
+    const motion = dustMotion(input, false);
+    expect(motion.dx).not.toBe(0);
+    expect(motion.dy).not.toBe(0);
+    expect(motion.alpha).toBeLessThan(1);
+  });
+
+  it("freezes the dust under reduced motion: no offset, full brightness", () => {
+    for (const seed of seeds) {
+      for (const time of times) {
+        for (const scroll of [0, 0.3, 0.5, 1]) {
+          const motion = dustMotion({ ...input, seed, time, scroll, depth: seed }, true);
+          expect(Object.is(motion.dx, 0)).toBe(true);
+          expect(Object.is(motion.dy, 0)).toBe(true);
+          expect(motion.alpha).toBe(1);
+        }
+      }
+    }
   });
 });

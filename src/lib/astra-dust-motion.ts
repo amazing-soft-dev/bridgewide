@@ -79,3 +79,35 @@ export function dustParallax(scroll: number, depth: number, strength = 1): numbe
   // Keep a negative zero out of the positions.
   return amount === 0 ? 0 : amount;
 }
+
+export type DustMotionInput = {
+  /** Seconds. */
+  time: number;
+  /** Per-star drift seed in [0, 1). */
+  seed: number;
+  /** 0 (far) to 1 (near). */
+  depth: number;
+  /** Per-star twinkle phase and rate. */
+  phase: number;
+  rate: number;
+  /** Scroll progress through the section, 0 to 1. */
+  scroll: number;
+};
+
+/** What one grain does this frame: an NDC offset and a brightness factor. */
+export type DustMotion = { dx: number; dy: number; alpha: number };
+
+/**
+ * Drift, parallax and twinkle for one grain in one call, so the draw loop has a
+ * single place to ask. With `still` (the visitor prefers reduced motion) the
+ * dust holds exactly at rest: no offset and full brightness.
+ */
+export function dustMotion(input: DustMotionInput, still: boolean): DustMotion {
+  const strength = still ? 0 : 1;
+  const drift = dustDrift(input.time, input.seed, input.depth, strength);
+  return {
+    dx: drift.x,
+    dy: drift.y + dustParallax(input.scroll, input.depth, strength),
+    alpha: dustTwinkle(input.time, input.phase, input.rate, strength),
+  };
+}
