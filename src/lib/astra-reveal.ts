@@ -44,3 +44,27 @@ export function revealProgress(t: number, seed: number): number {
 export function revealSize(progress: number): number {
   return Math.sqrt(clamp01(progress));
 }
+
+/** Seconds from the first sight of the section until every star has appeared. */
+export const REVEAL_SECONDS = 1.6;
+
+/**
+ * When the reveal started. Pass the value you have (null the first time) and
+ * the current time in ms: the first sight sets it and later calls keep it, so
+ * scrolling away and back does not replay the entrance.
+ */
+export function firstSight(startedAt: number | null, now: number): number {
+  return startedAt ?? now;
+}
+
+/**
+ * Progress of the whole reveal, 0 to 1, from the time the section was first
+ * seen. Before it has been seen (`startedAt` null) the sky is still hidden. With
+ * `still` (the visitor prefers reduced motion) the reveal is already complete,
+ * so there is no entrance animation at all.
+ */
+export function revealClock(now: number, startedAt: number | null, still: boolean): number {
+  if (still) return 1;
+  if (startedAt === null) return 0;
+  return clamp01((now - startedAt) / (REVEAL_SECONDS * 1000));
+}

@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { REVEAL_WINDOW, revealProgress, revealSize } from "@/lib/astra-reveal";
+import {
+  firstSight,
+  REVEAL_SECONDS,
+  REVEAL_WINDOW,
+  revealClock,
+  revealProgress,
+  revealSize,
+} from "@/lib/astra-reveal";
 
 const seeds = Array.from({ length: 50 }, (_, index) => index / 50);
 const steps = Array.from({ length: 101 }, (_, index) => index / 100);
@@ -90,5 +97,53 @@ describe("revealSize", () => {
   it("clamps a progress outside 0 to 1", () => {
     expect(revealSize(-2)).toBe(0);
     expect(revealSize(5)).toBe(1);
+  });
+});
+
+describe("firstSight", () => {
+  it("sets the start the first time and keeps it after, so the entrance never replays", () => {
+    const first = firstSight(null, 1200);
+    expect(first).toBe(1200);
+    expect(firstSight(first, 9000)).toBe(1200);
+    expect(firstSight(firstSight(first, 9000), 20000)).toBe(1200);
+  });
+
+  it("treats a start at time 0 as already started", () => {
+    expect(firstSight(0, 500)).toBe(0);
+  });
+});
+
+describe("revealClock", () => {
+  const ms = REVEAL_SECONDS * 1000;
+
+  it("keeps the sky hidden until the section has been seen", () => {
+    expect(revealClock(5000, null, false)).toBe(0);
+  });
+
+  it("runs from 0 to 1 over the reveal time", () => {
+    expect(revealClock(1000, 1000, false)).toBe(0);
+    expect(revealClock(1000 + ms / 2, 1000, false)).toBeCloseTo(0.5, 12);
+    expect(revealClock(1000 + ms, 1000, false)).toBe(1);
+  });
+
+  it("stays at 1 after the reveal is over", () => {
+    expect(revealClock(1000 + ms * 10, 1000, false)).toBe(1);
+  });
+
+  it("never reads below 0 if the frame time is a little before the start", () => {
+    expect(revealClock(990, 1000, false)).toBe(0);
+  });
+
+  it("is already complete under reduced motion, even before first sight", () => {
+    expect(revealClock(0, null, true)).toBe(1);
+    expect(revealClock(1000, 1000, true)).toBe(1);
+  });
+
+  it("gives every star its full alpha and size once complete under reduced motion", () => {
+    const t = revealClock(0, null, true);
+    for (const seed of seeds) {
+      expect(revealProgress(t, seed)).toBe(1);
+      expect(revealSize(revealProgress(t, seed))).toBe(1);
+    }
   });
 });
