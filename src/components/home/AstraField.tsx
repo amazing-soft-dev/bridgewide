@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AstraStaticDust } from "@/components/home/AstraStaticDust";
-import { type Pose, restState } from "@/lib/astra-pose";
+import { AstraReplayButton } from "@/components/home/AstraReplayButton";
+import { ASTRA_REPLAY_EVENT, type Pose, restState } from "@/lib/astra-pose";
 import { rayStrength } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
 import { CONTEXT_RESTORE_MS, canCreateWebgl, shouldRun } from "@/lib/astra-webgl";
@@ -904,6 +905,14 @@ export function AstraField() {
       };
       document.addEventListener("visibilitychange", onVisibilityChange);
 
+      // Replay: the mark goes back to rest and the entrance starts again from its first frame.
+      const onReplay = () => {
+        drag.current.active = false;
+        Object.assign(orbit.current, restState({ yaw: REST_YAW, pitch: REST_PITCH }));
+        revealStart = performance.now();
+      };
+      window.addEventListener(ASTRA_REPLAY_EVENT, onReplay);
+
       // A lost WebGL context (a GPU reset, memory pressure): stop drawing, let the
       // browser restore it (three.js rebuilds its own state), and show the still sky
       // if it does not come back in time.
@@ -932,6 +941,7 @@ export function AstraField() {
         stop();
         visibility.disconnect();
         document.removeEventListener("visibilitychange", onVisibilityChange);
+        window.removeEventListener(ASTRA_REPLAY_EVENT, onReplay);
         window.clearTimeout(restoreTimer);
         canvas.removeEventListener("webglcontextlost", onContextLost);
         canvas.removeEventListener("webglcontextrestored", onContextRestored);
@@ -1024,6 +1034,7 @@ export function AstraField() {
         >
           Wide
         </p>
+        {fallback ? null : <AstraReplayButton />}
       </div>
     </section>
   );
