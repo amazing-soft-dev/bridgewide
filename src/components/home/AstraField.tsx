@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AstraStaticDust } from "@/components/home/AstraStaticDust";
+import { AstraWord } from "@/components/home/AstraWord";
 import { addTurn, dragTurn, keyTurn } from "@/lib/astra-pose-input";
 import { rayStrength } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
@@ -918,6 +919,8 @@ export function AstraField() {
         running = true;
         previous = performance.now();
         revealStart = firstSight(revealStart, previous);
+        // The words' letters wait for this before they slide in.
+        wrap.dataset.astraSeen = "true";
         scroll = reduced.matches ? 1 : readProgress();
         frame = requestAnimationFrame(draw);
       };
@@ -1096,18 +1099,20 @@ export function AstraField() {
             }}
           />
         )}
-        <p
+        <AstraWord
+          word="Bridge"
+          side="left"
+          animate={!fallback}
           data-astra-left
           className="pointer-events-none absolute top-[24%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-[15%] md:translate-x-0 md:text-6xl"
-        >
-          Bridge
-        </p>
-        <p
+        />
+        <AstraWord
+          word="Wide"
+          side="right"
+          animate={!fallback}
           data-astra-right
           className="pointer-events-none absolute top-[76%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-auto md:right-[15%] md:translate-x-0 md:text-6xl"
-        >
-          Wide
-        </p>
+        />
       </div>
     </section>
   );
