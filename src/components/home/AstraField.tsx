@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AstraStaticDust } from "@/components/home/AstraStaticDust";
+import { canCreateWebgl } from "@/lib/astra-webgl";
 import { markPaths } from "@/components/brand/mark";
 import { dustMotion } from "@/lib/astra-dust-motion";
 import { dustLook, ribbonLook, type Look, type Tier } from "@/lib/astra-star-look";
@@ -463,6 +465,8 @@ export function AstraField() {
   const trackRef = useRef<HTMLElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // True when WebGL or three could not start: the stage then shows a still sky.
+  const [fallback, setFallback] = useState(false);
   const pointer = useRef({ x: 0, y: 0, inside: false, moveX: 0, moveY: 0 });
   const orbit = useRef({ yaw: REST_YAW, pitch: REST_PITCH, yawVelocity: 0, pitchVelocity: 0 });
   const drag = useRef({
@@ -500,6 +504,11 @@ export function AstraField() {
       import("three/examples/jsm/postprocessing/OutputPass.js"),
     ]).then(([THREE, { EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }]) => {
       if (!alive) return;
+      // No WebGL (a blocked GPU, a disabled setting, an old device): show the still sky.
+      if (!canCreateWebgl(() => document.createElement("canvas"))) {
+        setFallback(true);
+        return;
+      }
 
       const upperSpine = sampleSpine(upperWing, 880);
       const lowerSpine = sampleSpine(lowerArch, 1040);
@@ -948,6 +957,9 @@ export function AstraField() {
         composer.dispose();
         renderer.dispose();
       };
+    }).catch(() => {
+      // three failed to load, or the renderer could not be made: show the still sky.
+      if (alive) setFallback(true);
     });
 
     return () => {
@@ -960,7 +972,11 @@ export function AstraField() {
     <section
       ref={trackRef}
       className="relative z-10 h-[220vh] bg-[#08101a]"
-      aria-label="BridgeWide mark between the words Bridge and Wide. Drag to turn the mark."
+      aria-label={
+        fallback
+          ? "BridgeWide between the words Bridge and Wide."
+          : "BridgeWide mark between the words Bridge and Wide. Drag to turn the mark."
+      }
     >
       <div
         ref={wrapRef}
@@ -1004,7 +1020,11 @@ export function AstraField() {
           pointer.current.moveY = 0;
         }}
       >
-        <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
+        {fallback ? (
+          <AstraStaticDust />
+        ) : (
+          <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
+        )}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgba(0,0,0,0.3)_100%)]"
