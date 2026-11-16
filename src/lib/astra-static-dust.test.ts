@@ -51,7 +51,7 @@ describe("staticDust", () => {
       expect(dot.x).toBeLessThan(100);
       expect(dot.y).toBeGreaterThanOrEqual(0);
       expect(dot.y).toBeLessThan(100);
-      expect(dot.radius).toBeGreaterThanOrEqual(0.6);
+      expect(dot.radius).toBeGreaterThanOrEqual(0.8);
       expect(dot.alpha).toBeGreaterThan(0);
       expect(dot.alpha).toBeLessThanOrEqual(1);
       expect(palette.has(dot.color)).toBe(true);
@@ -61,10 +61,13 @@ describe("staticDust", () => {
   it("has mostly small dots and a few larger ones, like the live sky", () => {
     const dots = staticDust(2000);
     const small = dots.filter((dot) => dot.radius < 1.1).length / dots.length;
+    const bright = dots.filter((dot) => dot.alpha > 0.5).length / dots.length;
     const large = dots.filter((dot) => dot.radius > 1.7).length / dots.length;
     expect(small).toBeGreaterThan(0.6);
     expect(large).toBeGreaterThan(0);
     expect(large).toBeLessThan(0.2);
+    // Brightened for CSS: a good share of the dots are clearly visible, not all near-invisible.
+    expect(bright).toBeGreaterThan(0.3);
   });
 });
 

@@ -26,7 +26,18 @@ export function seededRandom(seed: number): Rand {
 export type StaticDust = { x: number; y: number; radius: number; color: number; alpha: number };
 
 /** The smallest radius a dot is drawn with, so no dot is too small to see. */
-const MIN_RADIUS = 0.6;
+const MIN_RADIUS = 0.8;
+/**
+ * A dot's radius as a share of the live star's size (its diameter in CSS px), so
+ * the dot is a little wider than the star it stands for: soft edges lose width.
+ */
+const RADIUS_GAIN = 0.7;
+/**
+ * The live field adds its stars together and blooms them, which makes them
+ * brighter than their colour says. CSS dots do not, so they are drawn brighter
+ * to read as the same sky.
+ */
+const ALPHA_GAIN = 1.7;
 
 /** The dots of the static sky. The same arguments always give the same dots. */
 export function staticDust(count = STATIC_DUST_COUNT, seed = STATIC_DUST_SEED): StaticDust[] {
@@ -36,9 +47,9 @@ export function staticDust(count = STATIC_DUST_COUNT, seed = STATIC_DUST_SEED): 
     return {
       x: rand() * 100,
       y: rand() * 100,
-      radius: Math.max(MIN_RADIUS, look.size * 0.6),
+      radius: Math.max(MIN_RADIUS, look.size * RADIUS_GAIN),
       color: look.color,
-      alpha: Math.min(1, Math.max(0, look.brightness)),
+      alpha: Math.min(1, Math.max(0, look.brightness * ALPHA_GAIN)),
     };
   });
 }
