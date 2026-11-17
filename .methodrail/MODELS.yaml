@@ -1,0 +1,64 @@
+schema_version: 1
+owner: "methodrail"
+preference: "balanced"
+freshness_days: 30
+roles:
+  arena runners:
+    tier: "deep"
+    diversity: "families"
+  arena cross-judge:
+    tier: "deep"
+    diversity: "families"
+  architect runners:
+    tier: "deep"
+    diversity: "families"
+  how explorer:
+    tier: "fast"
+  how explainer:
+    tier: "deep"
+  why investigators:
+    tier: "fast"
+  why synthesizer:
+    tier: "deep"
+  interrogate reviewers:
+    tier: "deep"
+    diversity: "families"
+  reflect judgment:
+    tier: "deep"
+  reflect divergent:
+    tier: "deep"
+  reflect tooling:
+    tier: "balanced"
+  reflect synthesizer:
+    tier: "deep"
+  swarm workers:
+    tier: "fast"
+  hillclimb:
+    tier: "balanced"
+  perf-issue:
+    tier: "balanced"
+pins: {}
+hosts:
+  cursor:
+    parent: "auto"
+    router_mode: "balance"
+    tiers:
+      fast:
+        selection: "inherit"
+        fallback: "omit"
+        effort: null
+      balanced:
+        selection: "inherit"
+        fallback: "omit"
+        effort: null
+      deep:
+        selection: "inherit"
+        fallback: "omit"
+        effort: null
+    evidence:
+      host_version: null
+      provider: null
+      source: "https://cursor.com/docs/cursor-router"
+      observed_at: null
+      availability: "documented-only"
+      rationale: "Native parent strategy is Auto. Router mode balance is a model-picker choice on Teams or Enterprise and is not set by a project rule. Subagent tiers inherit until account access is observed."

@@ -141,17 +141,6 @@ Announcement bar → header → hero → two doors (employer / engineer) → "pl
 
 Everything below the two-doors section loads through `next/dynamic` to keep first paint small.
 
-#### Star looks
-
-How big, bright and coloured each star in `AstraField` is lives in `src/lib/astra-star-look.ts`, so it can be tested without WebGL:
-
-- **Sizes are skewed small.** Each tier draws its size from a power-law, so most stars are tiny and a few are large. Brightness follows size inside a tier.
-- **Dust has a rare bright tier.** Dust is 85% fine, 12% ambient and 3% bright; the bright dust is smaller than the ribbon flares, so it never competes with the mark.
-- **One palette for the whole sky.** Dust and ribbon stars both draw from `STAR_PALETTE` (blue-white 36%, ice 22%, peach 16%, white 14%, amber 12%).
-- **The ribbon keeps its glow.** Ribbon tier shares and the hero share are unchanged, and each tier's mean size stays within 12% of the old ranges (a test enforces this).
-
-The generators take an injectable random source (`rand`, default `Math.random`), which is how the tests stay deterministic.
-
 ## Form API
 
 All routes run on the Node.js runtime and return `{ ok: true }` or `{ ok: false, error }`. A successful post also returns an `id`. The static export has no `/api`, and those forms say they cannot send.
@@ -184,7 +173,7 @@ src/
     analytics/          Production-only Vercel Analytics and Speed Insights
     ui/                 Button, Reveal, Accordion, Marquee, CountUp, etc.
   content/site.ts       All site copy and data
-  lib/                  Form validation, CV checks, Resend mailer, motion variants, star looks (astra-star-look)
+  lib/                  Form validation, CV checks, Resend mailer, motion variants
 public/images/          Self-hosted WebP photos (see ATTRIBUTION.md)
 plan.md                 Original build plan and design decisions
 ```

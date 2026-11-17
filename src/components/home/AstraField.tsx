@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AstraStaticDust } from "@/components/home/AstraStaticDust";
+import { AstraWord } from "@/components/home/AstraWord";
 import { AstraReplayButton } from "@/components/home/AstraReplayButton";
 import { ASTRA_REPLAY_EVENT, type Pose, restState } from "@/lib/astra-pose";
 import { addTurn, dragTurn, keyTurn } from "@/lib/astra-pose-input";
@@ -899,6 +900,8 @@ export function AstraField() {
         running = true;
         previous = performance.now();
         revealStart = firstSight(revealStart, previous);
+        // The words' letters wait for this before they slide in.
+        wrap.dataset.astraSeen = "true";
         scroll = reduced.matches ? 1 : readProgress();
         frame = requestAnimationFrame(draw);
       };
@@ -1080,18 +1083,20 @@ export function AstraField() {
             }}
           />
         )}
-        <p
+        <AstraWord
+          word="Bridge"
+          side="left"
+          animate={!fallback}
           data-astra-left
-          className="pointer-events-none absolute top-[24%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-[15%] md:translate-x-0 md:text-6xl"
-        >
-          Bridge
-        </p>
-        <p
+          className="text-[#fafafa] [text-shadow:0_2px_6px_rgba(0,0,0,0.65),0_0_1.25rem_rgba(0,0,0,0.45)] pointer-events-none absolute top-[24%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-[15%] md:translate-x-0 md:text-6xl"
+        />
+        <AstraWord
+          word="Wide"
+          side="right"
+          animate={!fallback}
           data-astra-right
-          className="pointer-events-none absolute top-[76%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-auto md:right-[15%] md:translate-x-0 md:text-6xl"
-        >
-          Wide
-        </p>
+          className="text-[#fafafa] [text-shadow:0_2px_6px_rgba(0,0,0,0.65),0_0_1.25rem_rgba(0,0,0,0.45)] pointer-events-none absolute top-[76%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-auto md:right-[15%] md:translate-x-0 md:text-6xl"
+        />
         {fallback ? null : <AstraReplayButton />}
       </div>
     </section>
