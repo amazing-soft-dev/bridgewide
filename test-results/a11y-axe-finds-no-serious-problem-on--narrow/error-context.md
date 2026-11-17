@@ -1,0 +1,964 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: a11y.spec.ts >> axe finds no serious problem on /
+- Location: e2e\a11y.spec.ts:30:3
+
+# Error details
+
+```
+Test timeout of 30000ms exceeded.
+```
+
+```
+Error: page.waitForLoadState: Test timeout of 30000ms exceeded.
+```
+
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main"
+  - banner:
+    - generic [ref=e3]:
+      - generic [ref=e5]: 14 roles live
+      - link "Salary guide →" [ref=e6] [cursor=pointer]:
+        - /url: /salary-guide
+    - generic [ref=e8]:
+      - link "BridgeWide" [ref=e9] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e13]:
+        - button "Search roles" [ref=e14] [cursor=pointer]
+        - button "Menu" [ref=e18] [cursor=pointer]
+  - main [ref=e21]:
+    - region "A shortlist managers will interview." [ref=e22]:
+      - img "Team working together around a laptop" [ref=e25]
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - paragraph [ref=e30]: Software engineers for hiring teams
+          - heading "A shortlist managers will interview." [level=1] [ref=e31]
+          - paragraph [ref=e33]: BridgeWide places software engineers for companies. We source from the USA, Canada, LATAM, Europe, and Asia, and we stay on the search until the seat is filled.
+          - generic [ref=e34]:
+            - link "Hire engineers" [ref=e35] [cursor=pointer]:
+              - /url: /employers
+              - generic [ref=e36]:
+                - generic [ref=e37]: Hire engineers
+                - generic [aria-hidden] [ref=e38]: Hire engineers
+            - link "Find a role" [ref=e42] [cursor=pointer]:
+              - /url: /engineers
+              - generic [ref=e43]:
+                - generic [ref=e44]: Find a role
+                - generic [aria-hidden] [ref=e45]: Find a role
+          - generic [ref=e49]:
+            - generic [ref=e50]:
+              - term [ref=e51]: Placements in the past year
+              - definition [ref=e52]: "186"
+            - generic [ref=e53]:
+              - term [ref=e54]: Median days to a shortlist
+              - definition [ref=e55]: "9"
+            - generic [ref=e56]:
+              - term [ref=e57]: Still in role after one year
+              - definition [ref=e58]: 94%
+            - generic [ref=e59]:
+              - term [ref=e60]: Median days to fill a contract seat
+              - definition [ref=e61]: "11"
+        - generic [ref=e62]:
+          - generic [ref=e63]:
+            - paragraph [ref=e64]:
+              - text: Open roles
+              - generic [ref=e66]: "14"
+            - paragraph [ref=e67]:
+              - generic [ref=e68]: Live
+              - text: SF 15:51:45
+          - list [ref=e69]:
+            - listitem [ref=e70]:
+              - link "ENG Singapore $95k New" [ref=e71] [cursor=pointer]:
+                - /url: /roles/senior-backend-engineer-singapore
+                - generic [ref=e72]: ENG
+                - generic [aria-hidden] [ref=e74]:
+                  - generic [ref=e75]: S
+                  - generic [ref=e76]: E
+                  - generic [ref=e77]: "N"
+                  - generic [ref=e78]: I
+                  - generic [ref=e79]: O
+                  - generic [ref=e80]: R
+                  - generic [ref=e82]: B
+                  - generic [ref=e83]: A
+                  - generic [ref=e84]: C
+                  - generic [ref=e85]: K
+                  - generic [ref=e86]: E
+                  - generic [ref=e87]: "N"
+                  - generic [ref=e88]: D
+                - generic [ref=e95]:
+                  - generic [ref=e96]: Singapore
+                  - generic [ref=e97]: $95k
+                  - generic [ref=e98]: New
+                - generic [aria-hidden] [ref=e99]: →
+            - listitem [ref=e100]:
+              - link "DAT India $85k" [ref=e101] [cursor=pointer]:
+                - /url: /roles/senior-data-engineer-bangalore
+                - generic [ref=e102]: DAT
+                - generic [aria-hidden] [ref=e104]:
+                  - generic [ref=e105]: S
+                  - generic [ref=e106]: E
+                  - generic [ref=e107]: "N"
+                  - generic [ref=e108]: I
+                  - generic [ref=e109]: O
+                  - generic [ref=e110]: R
+                  - generic [ref=e112]: D
+                  - generic [ref=e113]: A
+                  - generic [ref=e114]: T
+                  - generic [ref=e115]: A
+                - generic [ref=e125]:
+                  - generic [ref=e126]: India
+                  - generic [ref=e127]: $85k
+                - generic [aria-hidden] [ref=e128]: →
+            - listitem [ref=e129]:
+              - link "ENG California, USA $210k Hot" [ref=e130] [cursor=pointer]:
+                - /url: /roles/staff-backend-engineer-san-francisco
+                - generic [ref=e131]: ENG
+                - generic [aria-hidden] [ref=e133]:
+                  - generic [ref=e134]: S
+                  - generic [ref=e135]: T
+                  - generic [ref=e136]: A
+                  - generic [ref=e137]: F
+                  - generic [ref=e138]: F
+                  - generic [ref=e140]: B
+                  - generic [ref=e141]: A
+                  - generic [ref=e142]: C
+                  - generic [ref=e143]: K
+                  - generic [ref=e144]: E
+                  - generic [ref=e145]: "N"
+                  - generic [ref=e146]: D
+                - generic [ref=e154]:
+                  - generic [ref=e155]: California, USA
+                  - generic [ref=e156]: $210k
+                  - generic [ref=e157]: Hot
+                - generic [aria-hidden] [ref=e158]: →
+            - listitem [ref=e159]:
+              - link "ENG Texas, USA $165k New" [ref=e160] [cursor=pointer]:
+                - /url: /roles/senior-frontend-engineer-austin
+                - generic [ref=e161]: ENG
+                - generic [aria-hidden] [ref=e163]:
+                  - generic [ref=e164]: S
+                  - generic [ref=e165]: E
+                  - generic [ref=e166]: "N"
+                  - generic [ref=e167]: I
+                  - generic [ref=e168]: O
+                  - generic [ref=e169]: R
+                  - generic [ref=e171]: F
+                  - generic [ref=e172]: R
+                  - generic [ref=e173]: O
+                  - generic [ref=e174]: "N"
+                  - generic [ref=e175]: T
+                  - generic [ref=e176]: E
+                  - generic [ref=e177]: "N"
+                  - generic [ref=e178]: D
+                - generic [ref=e184]:
+                  - generic [ref=e185]: Texas, USA
+                  - generic [ref=e186]: $165k
+                  - generic [ref=e187]: New
+                - generic [aria-hidden] [ref=e188]: →
+          - generic [ref=e189]:
+            - generic [ref=e190]: Just placed
+            - paragraph [ref=e191]: Staff Backend Engineer → Northline · placed in 16 days
+    - region "Employers and engineers" [ref=e192]:
+      - heading "Employers and engineers" [level=2] [ref=e193]
+      - generic [ref=e194]:
+        - article [ref=e195]:
+          - img "Hiring team around a long conference table" [ref=e196]
+          - generic [ref=e199]:
+            - paragraph [ref=e200]: Employers
+            - heading "Hire for the seat you actually have" [level=3] [ref=e201]
+            - paragraph [ref=e202]: Send the stack, the hiring manager, and what the first ninety days need to prove. We come back with people your engineering managers will interview.
+            - link "Hire engineers" [ref=e204] [cursor=pointer]:
+              - /url: /employers
+              - generic [ref=e205]:
+                - generic [ref=e206]: Hire engineers
+                - generic [aria-hidden] [ref=e207]: Hire engineers
+        - article [ref=e211]:
+          - img "Engineers at their desks in a sunlit office" [ref=e212]
+          - generic [ref=e215]:
+            - paragraph [ref=e216]: Engineers
+            - heading "A role with the band already named" [level=3] [ref=e217]
+            - paragraph [ref=e218]: Live seats in the USA, Canada, Latin America, and Europe. You do not pay a fee to be introduced, and your consultant shares the band before your name goes across.
+            - link "Find a role" [ref=e220] [cursor=pointer]:
+              - /url: /engineers
+              - generic [ref=e221]:
+                - generic [ref=e222]: Find a role
+                - generic [aria-hidden] [ref=e223]: Find a role
+    - region "Get paid to train the world’s best AI" [ref=e227]:
+      - generic [ref=e228]:
+        - paragraph [ref=e229]: AI training
+        - heading [level=2] [ref=e230]:
+          - link "Get paid to train the world’s best AI" [ref=e231] [cursor=pointer]:
+            - /url: /ai-training
+        - paragraph [ref=e232]: "One application for the roles those platforms post: software, data, AI, writing, STEM, multilingual work, and other specialist tracks. Remote, paid in USD by the platform, including the United States."
+        - generic [ref=e233]:
+          - link "Apply" [ref=e234] [cursor=pointer]:
+            - /url: /ai-training/for-candidates
+            - generic [ref=e235]:
+              - generic [ref=e236]: Apply
+              - generic [aria-hidden] [ref=e237]: Apply
+          - link "For partners" [ref=e241] [cursor=pointer]:
+            - /url: /ai-training/for-partners
+            - generic [ref=e242]:
+              - generic [ref=e243]: For partners
+              - generic [aria-hidden] [ref=e244]: For partners
+    - region "Placed this month" [ref=e248]:
+      - heading "Placed this month" [level=2] [ref=e250]
+      - generic [ref=e252]:
+        - paragraph [ref=e253]:
+          - generic [ref=e254]: Staff Backend Engineer
+          - generic [ref=e255]: Northline
+          - generic [ref=e256]: USA · Permanent · 16 days
+        - paragraph [ref=e257]:
+          - generic [ref=e258]: Senior Data Engineer
+          - generic [ref=e259]: Harbor Metrics
+          - generic [ref=e260]: CAN · Permanent · 12 days
+        - paragraph [ref=e261]:
+          - generic [ref=e262]: Mobile Engineer
+          - generic [ref=e263]: Campo Health
+          - generic [ref=e264]: LATAM · Contract · 8 days
+        - paragraph [ref=e265]:
+          - generic [ref=e266]: Senior Backend Engineer
+          - generic [ref=e267]: Lumen Pay
+          - generic [ref=e268]: ASIA · Permanent · 14 days
+        - paragraph [ref=e269]:
+          - generic [ref=e270]: Platform Engineer
+          - generic [ref=e271]: Keel Systems
+          - generic [ref=e272]: EUR · Permanent · 19 days
+    - region "Five regions" [ref=e273]:
+      - generic [ref=e274]:
+        - generic [ref=e275]:
+          - paragraph [ref=e276]: Coverage
+          - heading "Five regions" [level=2] [ref=e277]
+          - generic [ref=e278]: Hybrid and remote seats, permanent and contract. Each region has its own desk.
+        - generic [ref=e279]:
+          - link "Paseo de la Reforma and the Mexico City skyline from the air LATAM Latin America Remote engineers across Mexico, Brazil, Colombia, and the wider region, overlapped with US hours. Companies use this desk for contract seats and for permanent hires who will join a US or Canadian team. 3 open roles" [ref=e282] [cursor=pointer]:
+            - /url: /regions/latam
+            - img "Paseo de la Reforma and the Mexico City skyline from the air" [ref=e283]
+            - generic [ref=e285]: LATAM
+            - generic [ref=e286]:
+              - generic [ref=e287]: Latin America
+              - generic [ref=e288]: Remote engineers across Mexico, Brazil, Colombia, and the wider region, overlapped with US hours. Companies use this desk for contract seats and for permanent hires who will join a US or Canadian team.
+              - generic [ref=e289]: 3 open roles
+          - link "The River Thames and St Paul's Cathedral in London from the air EUR Europe London, Berlin, Amsterdam, Dublin, and other UK and EU hubs. Hybrid seats for product companies that need senior engineers and engineering leaders on the ground. 4 open roles" [ref=e292] [cursor=pointer]:
+            - /url: /regions/europe
+            - img "The River Thames and St Paul's Cathedral in London from the air" [ref=e293]
+            - generic [ref=e295]: EUR
+            - generic [ref=e296]:
+              - generic [ref=e297]: Europe
+              - generic [ref=e298]: London, Berlin, Amsterdam, Dublin, and other UK and EU hubs. Hybrid seats for product companies that need senior engineers and engineering leaders on the ground.
+              - generic [ref=e299]: 4 open roles
+          - link "Marina Bay and the Singapore financial district at dusk ASIA Asia India, Pakistan, Indonesia, and Singapore, with remote seats across the region that overlap Singapore or US West hours. Teams use this desk for follow-the-sun coverage and for senior engineers who join a distributed product team. 2 open roles" [ref=e302] [cursor=pointer]:
+            - /url: /regions/asia
+            - img "Marina Bay and the Singapore financial district at dusk" [ref=e303]
+            - generic [ref=e305]: ASIA
+            - generic [ref=e306]:
+              - generic [ref=e307]: Asia
+              - generic [ref=e308]: India, Pakistan, Indonesia, and Singapore, with remote seats across the region that overlap Singapore or US West hours. Teams use this desk for follow-the-sun coverage and for senior engineers who join a distributed product team.
+              - generic [ref=e309]: 2 open roles
+          - link "Manhattan skyline and the Brooklyn Bridge over the East River USA United States Hybrid seats in San Francisco, New York, Austin, and other US hubs, sourced against your stack and your bar. This desk is the default when the hiring manager and the team sit in the same city most weeks. 3 open roles" [ref=e312] [cursor=pointer]:
+            - /url: /regions/usa
+            - img "Manhattan skyline and the Brooklyn Bridge over the East River" [ref=e313]
+            - generic [ref=e315]: USA
+            - generic [ref=e316]:
+              - generic [ref=e317]: United States
+              - generic [ref=e318]: Hybrid seats in San Francisco, New York, Austin, and other US hubs, sourced against your stack and your bar. This desk is the default when the hiring manager and the team sit in the same city most weeks.
+              - generic [ref=e319]: 3 open roles
+          - link "The Toronto skyline and CN Tower across Lake Ontario at golden hour CAN Canada Toronto and Vancouver anchors, plus remote Canada seats when the team is already distributed. A strong fit for data, cloud, and product engineering that has to follow Canadian employment rules. 2 open roles" [ref=e322] [cursor=pointer]:
+            - /url: /regions/canada
+            - img "The Toronto skyline and CN Tower across Lake Ontario at golden hour" [ref=e323]
+            - generic [ref=e325]: CAN
+            - generic [ref=e326]:
+              - generic [ref=e327]: Canada
+              - generic [ref=e328]: Toronto and Vancouver anchors, plus remote Canada seats when the team is already distributed. A strong fit for data, cloud, and product engineering that has to follow Canadian employment rules.
+              - generic [ref=e329]: 2 open roles
+    - region "The week" [ref=e330]:
+      - generic [ref=e333]:
+        - generic [ref=e334]:
+          - paragraph [ref=e335]: How a search runs
+          - heading "The week" [level=2] [ref=e336]
+          - generic [ref=e337]: Monday we take the brief. Friday the offer is on its way, with the desk still on the thread.
+        - list [ref=e340]:
+          - listitem [ref=e341]:
+            - article [ref=e343]:
+              - paragraph [ref=e344]: Mon
+              - heading "Brief" [level=3] [ref=e345]
+              - paragraph [ref=e346]: You tell us the stack, the hiring manager, and what good looks like in the first ninety days.
+          - listitem [ref=e347]:
+            - article [ref=e349]:
+              - paragraph [ref=e350]: Tue
+              - heading "Long list" [level=3] [ref=e351]
+              - paragraph [ref=e352]: We send a long list with notes on depth, so your team can see who is worth a conversation.
+          - listitem [ref=e353]:
+            - article [ref=e355]:
+              - paragraph [ref=e356]: Wed
+              - heading "Interviews" [level=3] [ref=e357]
+              - paragraph [ref=e358]: We run the first conversations and hold the calendar for people your managers should meet.
+          - listitem [ref=e359]:
+            - article [ref=e361]:
+              - paragraph [ref=e362]: Thu
+              - heading "Shortlist" [level=3] [ref=e363]
+              - paragraph [ref=e364]: A short list arrives with salary, notice, and a plain reason each engineer fits this brief.
+          - listitem [ref=e365]:
+            - article [ref=e367]:
+              - paragraph [ref=e368]: Fri
+              - heading "Sent" [level=3] [ref=e369]
+              - paragraph [ref=e370]: Offers go out with our desk still on the thread until the engineer starts.
+        - paragraph [aria-hidden]: Sent
+    - region "Open roles" [ref=e371]:
+      - generic [ref=e372]:
+        - generic [ref=e373]:
+          - generic [ref=e374]:
+            - paragraph [ref=e375]: Now hiring
+            - heading "Open roles" [level=2] [ref=e376]
+            - generic [ref=e377]: Four of the seats that are live. The full list is on the roles page.
+          - link "See all roles" [ref=e378] [cursor=pointer]:
+            - /url: /roles
+            - generic [ref=e379]:
+              - generic [ref=e380]: See all roles
+              - generic [aria-hidden] [ref=e381]: See all roles
+        - list [ref=e385]:
+          - listitem [ref=e386]:
+            - link "ENG Senior Backend Engineer A senior backend seat on a Singapore fintech’s settlements team, remote across Asia with a daily overlap on Singapore hours. The engineer should have run Kotlin or Go services in production and be ready to own a queue-backed workflow end to end. $95k" [ref=e387] [cursor=pointer]:
+              - /url: /roles/senior-backend-engineer-singapore
+              - generic [ref=e388]: ENG
+              - generic [ref=e389]:
+                - heading "Senior Backend Engineer" [level=3] [ref=e390]
+                - generic [ref=e391]: A senior backend seat on a Singapore fintech’s settlements team, remote across Asia with a daily overlap on Singapore hours. The engineer should have run Kotlin or Go services in production and be ready to own a queue-backed workflow end to end.
+              - generic [ref=e392]: $95k
+          - listitem [ref=e393]:
+            - link "DAT Senior Data Engineer A senior data seat on a Bangalore analytics team that serves product managers in three time zones. The engineer should have run dbt and a cloud warehouse at scale and be able to explain a model to the people who read its numbers. $85k" [ref=e394] [cursor=pointer]:
+              - /url: /roles/senior-data-engineer-bangalore
+              - generic [ref=e395]: DAT
+              - generic [ref=e396]:
+                - heading "Senior Data Engineer" [level=3] [ref=e397]
+                - generic [ref=e398]: A senior data seat on a Bangalore analytics team that serves product managers in three time zones. The engineer should have run dbt and a cloud warehouse at scale and be able to explain a model to the people who read its numbers.
+              - generic [ref=e399]: $85k
+          - listitem [ref=e400]:
+            - link "ENG Staff Backend Engineer A staff backend seat for a San Francisco payments team that needs one owner for a ledger service. The engineer should have shipped Go or Java in production and be ready to review design with the people already on the team. $210k" [ref=e401] [cursor=pointer]:
+              - /url: /roles/staff-backend-engineer-san-francisco
+              - generic [ref=e402]: ENG
+              - generic [ref=e403]:
+                - heading "Staff Backend Engineer" [level=3] [ref=e404]
+                - generic [ref=e405]: A staff backend seat for a San Francisco payments team that needs one owner for a ledger service. The engineer should have shipped Go or Java in production and be ready to review design with the people already on the team.
+              - generic [ref=e406]: $210k
+          - listitem [ref=e407]:
+            - link "ENG Senior Frontend Engineer Hybrid frontend seat in Austin on a product surface that operations staff use all day. We are shortlisting senior engineers who have owned a design system and can work beside an existing React team. $165k" [ref=e408] [cursor=pointer]:
+              - /url: /roles/senior-frontend-engineer-austin
+              - generic [ref=e409]: ENG
+              - generic [ref=e410]:
+                - heading "Senior Frontend Engineer" [level=3] [ref=e411]
+                - generic [ref=e412]: Hybrid frontend seat in Austin on a product surface that operations staff use all day. We are shortlisting senior engineers who have owned a design system and can work beside an existing React team.
+              - generic [ref=e413]: $165k
+    - region "Numbers we would put on a departures board." [ref=e414]:
+      - generic [ref=e415]:
+        - generic [ref=e416]:
+          - paragraph [ref=e417]:
+            - generic [ref=e418]: The record
+          - heading "Numbers we would put on a departures board." [level=2] [ref=e420]:
+            - generic [ref=e421]:
+              - generic [ref=e422]: Numbers
+              - generic [ref=e423]: we
+              - generic [ref=e424]: would
+              - generic [ref=e425]: put
+              - generic [ref=e426]: "on"
+              - generic [ref=e427]: a
+              - generic [ref=e428]: departures
+              - generic [ref=e429]: board.
+        - list [ref=e431]:
+          - listitem [ref=e432]:
+            - generic "186" [ref=e433]:
+              - generic [ref=e434]: "1"
+              - generic [ref=e435]: "8"
+              - generic [ref=e436]: "6"
+            - paragraph [ref=e437]: Placements in the past year
+            - paragraph [ref=e438]: Engineers whose start date fell in the 12 months to 12 November 2026.
+          - listitem [ref=e439]:
+            - generic "9" [ref=e440]
+            - paragraph [ref=e442]: Median days to a shortlist
+            - paragraph [ref=e443]: Median calendar days from the brief to the shortlist, for the placements counted above.
+          - listitem [ref=e444]:
+            - generic "94%" [ref=e445]:
+              - generic [ref=e446]: "9"
+              - generic [ref=e447]: "4"
+              - generic [ref=e448]: "%"
+            - paragraph [ref=e449]: Still in role after one year
+            - paragraph [ref=e450]: Of engineers who started 12 to 24 months before 12 November 2026, the share still in role 12 months after their start date.
+          - listitem [ref=e451]:
+            - generic "11" [ref=e452]:
+              - generic [ref=e453]: "1"
+              - generic [ref=e454]: "1"
+            - paragraph [ref=e455]: Median days to fill a contract seat
+            - paragraph [ref=e456]: Median calendar days from the brief to the start date, for contract seats started in the same 12 months.
+      - paragraph [ref=e457]: 186 is the desk total, including placements by people who are not on this page. The six consultants above account for 157.
+    - region "Recruiters who did the job first." [ref=e458]:
+      - generic [ref=e463]:
+        - generic [ref=e464]:
+          - paragraph [ref=e465]:
+            - generic [ref=e466]: The desk
+          - heading "Recruiters who did the job first." [level=2] [ref=e468]
+          - paragraph [ref=e469]: Former engineers and managers. Each consultant keeps a region or a discipline, and stays on the search until someone starts.
+          - link "Meet the team" [ref=e471] [cursor=pointer]:
+            - /url: /about
+            - generic [ref=e472]:
+              - generic [ref=e473]: Meet the team
+              - generic [aria-hidden] [ref=e474]: Meet the team
+        - list [ref=e478]:
+          - listitem [ref=e479]:
+            - link "Lena Cho 42 placements Lena Cho Partner, former staff backend engineer United States" [ref=e480] [cursor=pointer]:
+              - /url: /about#lena-cho
+              - img "Lena Cho" [ref=e482]
+              - generic: 42 placements
+              - generic [ref=e483]:
+                - heading "Lena Cho" [level=3] [ref=e484]
+                - generic [ref=e485]: Partner, former staff backend engineer
+                - generic [ref=e486]: United States
+          - listitem [ref=e487]:
+            - link "Henrik Dahl 31 placements Henrik Dahl Principal, former platform engineer United Kingdom (Europe)" [ref=e488] [cursor=pointer]:
+              - /url: /about#henrik-dahl
+              - img "Henrik Dahl" [ref=e490]
+              - generic: 31 placements
+              - generic [ref=e491]:
+                - heading "Henrik Dahl" [level=3] [ref=e492]
+                - generic [ref=e493]: Principal, former platform engineer
+                - generic [ref=e494]: United Kingdom (Europe)
+          - listitem [ref=e495]:
+            - link "Sofia Navarro 27 placements Sofia Navarro Consultant, former iOS engineer Mexico (LATAM)" [ref=e496] [cursor=pointer]:
+              - /url: /about#sofia-navarro
+              - img "Sofia Navarro" [ref=e498]
+              - generic: 27 placements
+              - generic [ref=e499]:
+                - heading "Sofia Navarro" [level=3] [ref=e500]
+                - generic [ref=e501]: Consultant, former iOS engineer
+                - generic [ref=e502]: Mexico (LATAM)
+          - listitem [ref=e503]:
+            - link "Marcus Adeyemi 24 placements Marcus Adeyemi Consultant, former data engineer Canada" [ref=e504] [cursor=pointer]:
+              - /url: /about#marcus-adeyemi
+              - img "Marcus Adeyemi" [ref=e506]
+              - generic: 24 placements
+              - generic [ref=e507]:
+                - heading "Marcus Adeyemi" [level=3] [ref=e508]
+                - generic [ref=e509]: Consultant, former data engineer
+                - generic [ref=e510]: Canada
+          - listitem [ref=e511]:
+            - link "Mei Tan 14 placements Mei Tan Consultant, former backend engineer Singapore (Asia)" [ref=e512] [cursor=pointer]:
+              - /url: /about#mei-tan
+              - img "Mei Tan" [ref=e514]
+              - generic: 14 placements
+              - generic [ref=e515]:
+                - heading "Mei Tan" [level=3] [ref=e516]
+                - generic [ref=e517]: Consultant, former backend engineer
+                - generic [ref=e518]: Singapore (Asia)
+          - listitem [ref=e519]:
+            - link "Priya Raman 19 placements Priya Raman Director, former engineering manager United States" [ref=e520] [cursor=pointer]:
+              - /url: /about#priya-raman
+              - img "Priya Raman" [ref=e522]
+              - generic: 19 placements
+              - generic [ref=e523]:
+                - heading "Priya Raman" [level=3] [ref=e524]
+                - generic [ref=e525]: Director, former engineering manager
+                - generic [ref=e526]: United States
+    - region "Salary guide" [ref=e527]:
+      - generic [ref=e528]:
+        - generic [ref=e529]:
+          - generic [ref=e530]:
+            - paragraph [ref=e531]: Autumn 2026 edition
+            - heading "Salary guide" [level=2] [ref=e532]
+            - generic [ref=e533]: Annual base salary in USD. Backend, frontend, and data are below. Cloud, mobile, and leadership are in the full guide.
+          - link "Full salary guide" [ref=e534] [cursor=pointer]:
+            - /url: /salary-guide
+            - generic [ref=e535]:
+              - generic [ref=e536]: Full salary guide
+              - generic [aria-hidden] [ref=e537]: Full salary guide
+        - generic [ref=e541]:
+          - article [ref=e543]:
+            - heading "Backend" [level=3] [ref=e544]
+            - generic [ref=e545]:
+              - generic [ref=e546]:
+                - term [ref=e547]: USA
+                - definition [ref=e548]: $198,000
+                - definition [ref=e549]: $165,000–$245,000
+              - generic [ref=e550]:
+                - term [ref=e551]: CAN
+                - definition [ref=e552]: $155,000
+                - definition [ref=e553]: $130,000–$185,000
+              - generic [ref=e554]:
+                - term [ref=e555]: LATAM
+                - definition [ref=e556]: $96,000
+                - definition [ref=e557]: $72,000–$128,000
+              - generic [ref=e558]:
+                - term [ref=e559]: EUR
+                - definition [ref=e560]: $142,000
+                - definition [ref=e561]: $110,000–$178,000
+              - generic [ref=e562]:
+                - term [ref=e563]: ASIA
+                - definition [ref=e564]: $88,000
+                - definition [ref=e565]: $66,000–$118,000
+          - article [ref=e567]:
+            - heading "Frontend" [level=3] [ref=e568]
+            - generic [ref=e569]:
+              - generic [ref=e570]:
+                - term [ref=e571]: USA
+                - definition [ref=e572]: $180,000
+                - definition [ref=e573]: $150,000–$220,000
+              - generic [ref=e574]:
+                - term [ref=e575]: CAN
+                - definition [ref=e576]: $145,000
+                - definition [ref=e577]: $120,000–$175,000
+              - generic [ref=e578]:
+                - term [ref=e579]: LATAM
+                - definition [ref=e580]: $86,000
+                - definition [ref=e581]: $64,000–$115,000
+              - generic [ref=e582]:
+                - term [ref=e583]: EUR
+                - definition [ref=e584]: $130,000
+                - definition [ref=e585]: $100,000–$165,000
+              - generic [ref=e586]:
+                - term [ref=e587]: ASIA
+                - definition [ref=e588]: $79,000
+                - definition [ref=e589]: $59,000–$106,000
+          - article [ref=e591]:
+            - heading "Data" [level=3] [ref=e592]
+            - generic [ref=e593]:
+              - generic [ref=e594]:
+                - term [ref=e595]: USA
+                - definition [ref=e596]: $205,000
+                - definition [ref=e597]: $168,000–$250,000
+              - generic [ref=e598]:
+                - term [ref=e599]: CAN
+                - definition [ref=e600]: $162,000
+                - definition [ref=e601]: $135,000–$195,000
+              - generic [ref=e602]:
+                - term [ref=e603]: LATAM
+                - definition [ref=e604]: $102,000
+                - definition [ref=e605]: $76,000–$140,000
+              - generic [ref=e606]:
+                - term [ref=e607]: EUR
+                - definition [ref=e608]: $148,000
+                - definition [ref=e609]: $115,000–$185,000
+              - generic [ref=e610]:
+                - term [ref=e611]: ASIA
+                - definition [ref=e612]: $94,000
+                - definition [ref=e613]: $70,000–$129,000
+    - region "Employer stories" [ref=e614]:
+      - heading "Employer stories" [level=2] [ref=e615]
+      - generic [ref=e617]:
+        - article [ref=e618]:
+          - img "Lumen Pay" [ref=e620]
+          - generic [ref=e622]:
+            - generic [ref=e623]:
+              - paragraph [ref=e624]:
+                - text: Employer stories
+                - generic [ref=e626]: 01 / 06
+              - paragraph [ref=e627]: Lumen Pay · Asia
+              - figure "Wei Lin, CTO, Lumen Pay" [ref=e628]:
+                - blockquote [ref=e629]: “The shortlist arrived with the overlap hours already checked. We interviewed three people and hired the second.”
+              - link "Read the story" [ref=e631] [cursor=pointer]:
+                - /url: /stories/lumen-pay-settlements
+                - generic [ref=e632]:
+                  - generic [ref=e633]: Read the story
+                  - generic [aria-hidden] [ref=e634]: Read the story
+            - generic [ref=e638]:
+              - generic [ref=e639]:
+                - paragraph [ref=e640]: "14"
+                - paragraph [ref=e641]: days from brief to start
+                - paragraph [ref=e642]: ASIA placement 01
+              - paragraph [ref=e643]: Senior backend engineer placed in Singapore
+        - article [ref=e644]:
+          - img "People in a meeting around a table" [ref=e646]
+          - generic [ref=e648]:
+            - generic [ref=e649]:
+              - paragraph [ref=e650]:
+                - text: Employer stories
+                - generic [ref=e652]: 02 / 06
+              - paragraph [ref=e653]: Northline · United States
+              - figure "Amira Shah, VP Engineering, Northline" [ref=e654]:
+                - blockquote [ref=e655]: “We stopped interviewing generalists. The shortlist was four people who had already owned a ledger.”
+              - link "Read the story" [ref=e657] [cursor=pointer]:
+                - /url: /stories/northline-ledger-owner
+                - generic [ref=e658]:
+                  - generic [ref=e659]: Read the story
+                  - generic [aria-hidden] [ref=e660]: Read the story
+            - generic [ref=e664]:
+              - generic [ref=e665]:
+                - paragraph [ref=e666]: "16"
+                - paragraph [ref=e667]: days from brief to start
+                - paragraph [ref=e668]: USA placement 02
+              - paragraph [ref=e669]: Staff backend engineer placed in San Francisco
+        - article [ref=e670]:
+          - img "A quiet modern office interior" [ref=e672]
+          - generic [ref=e674]:
+            - generic [ref=e675]:
+              - paragraph [ref=e676]:
+                - text: Employer stories
+                - generic [ref=e678]: 03 / 06
+              - paragraph [ref=e679]: Harbor Metrics · Canada
+              - figure "Jonah Blake, Head of Data, Harbor Metrics" [ref=e680]:
+                - blockquote [ref=e681]: “They sent people who had already run the warehouse we were trying to grow, which saved us a quarter of interviews.”
+              - link "Read the story" [ref=e683] [cursor=pointer]:
+                - /url: /stories/harbor-metrics-warehouse
+                - generic [ref=e684]:
+                  - generic [ref=e685]: Read the story
+                  - generic [aria-hidden] [ref=e686]: Read the story
+            - generic [ref=e690]:
+              - generic [ref=e691]:
+                - paragraph [ref=e692]: "12"
+                - paragraph [ref=e693]: days from brief to start
+                - paragraph [ref=e694]: CAN placement 03
+              - paragraph [ref=e695]: Senior data engineer placed in Toronto
+        - article [ref=e696]:
+          - img "A laptop open on a desk" [ref=e698]
+          - generic [ref=e700]:
+            - generic [ref=e701]:
+              - paragraph [ref=e702]:
+                - text: Employer stories
+                - generic [ref=e704]: 04 / 06
+              - paragraph [ref=e705]: Campo Health · Latin America
+              - figure "Elena Varga, COO, Campo Health" [ref=e706]:
+                - blockquote [ref=e707]: “We needed a mobile engineer who could ship a release, and we had the contract signed before the sprint slipped.”
+              - link "Read the story" [ref=e709] [cursor=pointer]:
+                - /url: /stories/campo-health-release
+                - generic [ref=e710]:
+                  - generic [ref=e711]: Read the story
+                  - generic [aria-hidden] [ref=e712]: Read the story
+            - generic [ref=e716]:
+              - generic [ref=e717]:
+                - paragraph [ref=e718]: "8"
+                - paragraph [ref=e719]: days from brief to start
+                - paragraph [ref=e720]: LATAM placement 04
+              - paragraph [ref=e721]: Contract mobile engineer placed, remote from São Paulo
+        - article [ref=e722]:
+          - img "A team working side by side" [ref=e724]
+          - generic [ref=e726]:
+            - generic [ref=e727]:
+              - paragraph [ref=e728]:
+                - text: Employer stories
+                - generic [ref=e730]: 05 / 06
+              - paragraph [ref=e731]: Keel Systems · Europe
+              - figure "Thomas Keller, CTO, Keel Systems" [ref=e732]:
+                - blockquote [ref=e733]: “The platform hire was the one our product managers felt. Deploys got quieter in the first month.”
+              - link "Read the story" [ref=e735] [cursor=pointer]:
+                - /url: /stories/keel-systems-paved-path
+                - generic [ref=e736]:
+                  - generic [ref=e737]: Read the story
+                  - generic [aria-hidden] [ref=e738]: Read the story
+            - generic [ref=e742]:
+              - generic [ref=e743]:
+                - paragraph [ref=e744]: "19"
+                - paragraph [ref=e745]: days from brief to start
+                - paragraph [ref=e746]: EUR placement 05
+              - paragraph [ref=e747]: Staff platform engineer placed in London
+        - article [ref=e748]:
+          - img "An abstract mark for an anonymized client story" [ref=e750]
+          - generic [ref=e752]:
+            - generic [ref=e753]:
+              - paragraph [ref=e754]:
+                - text: Employer stories
+                - generic [ref=e756]: 06 / 06
+              - paragraph [ref=e757]: Anonymized client · Canada
+              - figure "Client not named. 11 days is the published median to fill a contract seat, not a new claim." [ref=e758]:
+                - blockquote [ref=e759]: “The contract data seat was filled before the sprint date moved.”
+              - link "Read the story" [ref=e761] [cursor=pointer]:
+                - /url: /stories/anon-canada-contract
+                - generic [ref=e762]:
+                  - generic [ref=e763]: Read the story
+                  - generic [aria-hidden] [ref=e764]: Read the story
+            - generic [ref=e768]:
+              - generic [ref=e769]:
+                - paragraph [ref=e770]: "11"
+                - paragraph [ref=e771]: days from brief to start
+                - paragraph [ref=e772]: CAN placement 06
+              - paragraph [ref=e773]: Contract data engineer, client not named
+    - region "Insights" [ref=e774]:
+      - generic [ref=e775]:
+        - generic [ref=e776]:
+          - paragraph [ref=e777]: Notes
+          - heading "Insights" [level=2] [ref=e778]
+          - generic [ref=e779]: Short reading for the person opening the seat.
+        - generic [ref=e780]:
+          - article [ref=e782]:
+            - paragraph [ref=e783]:
+              - text: For hiring managers
+              - generic [ref=e784]: 12 September 2026 · 6 min
+            - generic [ref=e785]:
+              - heading [level=3] [ref=e786]:
+                - link "The brief that earns a shortlist in nine days" [ref=e787] [cursor=pointer]:
+                  - /url: /insights/brief-that-earns-a-shortlist
+              - paragraph [ref=e788]: A short brief that names the manager, the system, and the first ninety days will outrun a long requisition full of tools.
+          - article [ref=e790]:
+            - paragraph [ref=e791]:
+              - text: Contracts
+              - generic [ref=e792]: 18 August 2026 · 5 min
+            - generic [ref=e793]:
+              - heading [level=3] [ref=e794]:
+                - link "Fill a contract seat before the sprint slips" [ref=e795] [cursor=pointer]:
+                  - /url: /insights/contract-seat-before-the-sprint-slips
+              - paragraph [ref=e796]: A contract search moves when the rate, the overlap, and the end date are decided before the first call.
+          - article [ref=e798]:
+            - paragraph [ref=e799]:
+              - text: Pay
+              - generic [ref=e800]: 2 September 2026 · 7 min
+            - generic [ref=e801]:
+              - heading [level=3] [ref=e802]:
+                - link "How to read salary bands across five regions" [ref=e803] [cursor=pointer]:
+                  - /url: /insights/reading-salary-bands-across-regions
+              - paragraph [ref=e804]: The Autumn 2026 bands are annual base in USD. Use them to set an offer, and keep equity and local rules in a separate conversation.
+    - region "Questions we hear" [ref=e805]:
+      - generic [ref=e806]:
+        - generic [ref=e807]:
+          - paragraph [ref=e808]: Answers
+          - heading "Questions we hear" [level=2] [ref=e809]
+          - generic [ref=e810]: From hiring teams and from engineers, before a name goes on a shortlist.
+        - generic [ref=e812]:
+          - generic [ref=e813]:
+            - heading [level=3] [ref=e814]:
+              - button "Employers What do you charge for a permanent hire?" [ref=e815]:
+                - generic [ref=e816]:
+                  - generic [ref=e817]: Employers
+                  - text: What do you charge for a permanent hire?
+                - generic [aria-hidden] [ref=e818]: +
+            - region "Employers What do you charge for a permanent hire?":
+              - paragraph [ref=e819]: 20% of first-year base salary, invoiced when the engineer starts. The Autumn salary guide does not change the fee. We confirm the percentage in the search agreement before work begins.
+          - generic [ref=e820]:
+            - heading [level=3] [ref=e821]:
+              - button "Employers How fast is a shortlist?" [ref=e822]:
+                - generic [ref=e823]:
+                  - generic [ref=e824]: Employers
+                  - text: How fast is a shortlist?
+                - generic [aria-hidden] [ref=e825]: +
+            - region "Employers How fast is a shortlist?":
+              - paragraph [ref=e826]: Nine days from a complete brief to a shortlist, and eleven days to fill a contract seat. The clock starts when we have the manager, the stack, the band, and what the first ninety days require. A brief that changes mid-search resets that count.
+          - generic [ref=e827]:
+            - heading [level=3] [ref=e828]:
+              - button "Employers What does the replacement guarantee cover?" [ref=e829]:
+                - generic [ref=e830]:
+                  - generic [ref=e831]: Employers
+                  - text: What does the replacement guarantee cover?
+                - generic [aria-hidden] [ref=e832]: +
+            - region "Employers What does the replacement guarantee cover?":
+              - paragraph [ref=e833]: If a permanent hire leaves within 12 weeks of the start date, we reopen that search once at no extra fee. The guarantee covers a replacement search. The signed agreement is the one that applies.
+          - generic [ref=e834]:
+            - heading [level=3] [ref=e835]:
+              - button "Engineers Does it cost anything to be put forward?" [ref=e836]:
+                - generic [ref=e837]:
+                  - generic [ref=e838]: Engineers
+                  - text: Does it cost anything to be put forward?
+                - generic [aria-hidden] [ref=e839]: +
+            - region "Engineers Does it cost anything to be put forward?":
+              - paragraph [ref=e840]: No. Companies pay BridgeWide. Engineers do not pay a fee to be introduced, interviewed, or hired. If a role is live, your consultant will tell you the band, the city or remote setup, and the hiring manager before your name goes across.
+          - generic [ref=e841]:
+            - heading [level=3] [ref=e842]:
+              - button "Employers Can you run a confidential search?" [ref=e843]:
+                - generic [ref=e844]:
+                  - generic [ref=e845]: Employers
+                  - text: Can you run a confidential search?
+                - generic [aria-hidden] [ref=e846]: +
+            - region "Employers Can you run a confidential search?":
+              - paragraph [ref=e847]: Yes. We can keep your company name inside a small group until a candidate reaches a first conversation. The brief still needs a real stack and a real band. Confidential searches take the same week-shaped process, with the public title held back.
+          - generic [ref=e848]:
+            - heading [level=3] [ref=e849]:
+              - button "Employers Which regions do you hire from?" [ref=e850]:
+                - generic [ref=e851]:
+                  - generic [ref=e852]: Employers
+                  - text: Which regions do you hire from?
+                - generic [aria-hidden] [ref=e853]: +
+            - region "Employers Which regions do you hire from?":
+              - paragraph [ref=e854]: "Five: the United States, Canada, Latin America, Europe, and Asia. Each region has its own desk. We place hybrid and remote engineers, on permanent and contract terms, and we can run one search that draws from more than one region when you want that comparison."
+    - region "Tell us the seat." [ref=e855]:
+      - generic [ref=e859]:
+        - generic [ref=e860]:
+          - paragraph [ref=e861]: Start a search
+          - heading "Tell us the seat." [level=2] [ref=e862]:
+            - generic [ref=e863]:
+              - generic [ref=e864]: Tell
+              - generic [ref=e866]: us
+              - generic [ref=e868]: the
+              - generic [ref=e870]: seat.
+          - paragraph [ref=e873]: The brief needs a manager, a stack, and a band you will actually offer. The desk takes it from there.
+          - generic [ref=e874]:
+            - link "Hire engineers" [ref=e875] [cursor=pointer]:
+              - /url: /employers
+              - generic [ref=e876]:
+                - generic [ref=e877]: Hire engineers
+                - generic [aria-hidden] [ref=e878]: Hire engineers
+            - link "Find a role" [ref=e882] [cursor=pointer]:
+              - /url: /engineers
+              - generic [ref=e883]:
+                - generic [ref=e884]: Find a role
+                - generic [aria-hidden] [ref=e885]: Find a role
+        - generic [ref=e889]:
+          - paragraph [ref=e890]: Open
+          - paragraph [ref=e891]:
+            - generic [ref=e892]: "14"
+            - text: roles open right now
+  - contentinfo [ref=e895]:
+    - generic [ref=e896]:
+      - generic [ref=e897]:
+        - generic [ref=e898]:
+          - link "BridgeWide" [ref=e899] [cursor=pointer]:
+            - /url: /
+          - form "Salary guide" [ref=e903]:
+            - generic [aria-hidden] [ref=e904]:
+              - text: Company website
+              - textbox [ref=e905]
+            - paragraph [ref=e906]: Salary guide
+            - heading "Autumn 2026 edition" [level=2] [ref=e908]
+            - generic [ref=e910]:
+              - generic [ref=e911]:
+                - textbox "Email" [ref=e912]
+                - generic: Email
+              - button "Send" [ref=e913] [cursor=pointer]:
+                - generic [ref=e914]:
+                  - generic [ref=e915]: Send
+                  - generic [aria-hidden] [ref=e916]: Send
+        - navigation "Footer" [ref=e920]:
+          - generic [ref=e921]:
+            - heading "Company" [level=2] [ref=e922]
+            - list [ref=e923]:
+              - listitem [ref=e924]:
+                - link "About" [ref=e925] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e926]:
+                - link "Regions" [ref=e927] [cursor=pointer]:
+                  - /url: /regions
+              - listitem [ref=e928]:
+                - link "Stories" [ref=e929] [cursor=pointer]:
+                  - /url: /stories
+              - listitem [ref=e930]:
+                - link "Insights" [ref=e931] [cursor=pointer]:
+                  - /url: /insights
+          - generic [ref=e932]:
+            - heading "Staffing" [level=2] [ref=e933]
+            - list [ref=e934]:
+              - listitem [ref=e935]:
+                - link "Hire engineers" [ref=e936] [cursor=pointer]:
+                  - /url: /employers
+              - listitem [ref=e937]:
+                - link "How hiring works" [ref=e938] [cursor=pointer]:
+                  - /url: /employers#how
+              - listitem [ref=e939]:
+                - link "Salary guide" [ref=e940] [cursor=pointer]:
+                  - /url: /salary-guide
+              - listitem [ref=e941]:
+                - link "Open roles" [ref=e942] [cursor=pointer]:
+                  - /url: /roles
+          - generic [ref=e943]:
+            - heading "AI training" [level=2] [ref=e944]
+            - list [ref=e945]:
+              - listitem [ref=e946]:
+                - link "Overview" [ref=e947] [cursor=pointer]:
+                  - /url: /ai-training
+              - listitem [ref=e948]:
+                - link "For candidates" [ref=e949] [cursor=pointer]:
+                  - /url: /ai-training/for-candidates
+              - listitem [ref=e950]:
+                - link "For partners" [ref=e951] [cursor=pointer]:
+                  - /url: /ai-training/for-partners
+              - listitem [ref=e952]:
+                - link "Jobs" [ref=e953] [cursor=pointer]:
+                  - /url: /ai-training/jobs
+          - generic [ref=e954]:
+            - heading "The desk" [level=2] [ref=e955]
+            - list [ref=e956]:
+              - listitem [ref=e957]:
+                - link "michael.allen@bridgewide.org" [ref=e958] [cursor=pointer]:
+                  - /url: mailto:michael.allen@bridgewide.org
+              - listitem [ref=e959]:
+                - link "+1 (442) 567-1328" [ref=e960] [cursor=pointer]:
+                  - /url: tel:+14425671328
+                - link "WhatsApp +1 (442) 567-1328" [ref=e963] [cursor=pointer]:
+                  - /url: https://wa.me/14425671328
+                - generic "Mon–Fri · 08:00–18:00 PT" [ref=e966]:
+                  - text: Open
+                  - generic [ref=e967]: . Mon–Fri · 08:00–18:00 PT
+              - listitem [ref=e968]:
+                - link "Send a CV" [ref=e969] [cursor=pointer]:
+                  - /url: /engineers
+      - generic [ref=e970]:
+        - generic [ref=e971]: © 2026 BridgeWide
+        - generic [ref=e972]: San Francisco · remote desks in five regions
+        - generic [ref=e973]:
+          - link "Privacy" [ref=e974] [cursor=pointer]:
+            - /url: /privacy
+          - link "Terms" [ref=e975] [cursor=pointer]:
+            - /url: /terms
+  - button "Open Next.js Dev Tools" [ref=e981] [cursor=pointer]
+  - alert [ref=e985]
+  - region "BridgeWide mark between the words Bridge and Wide." [ref=e986]:
+    - generic [ref=e987]:
+      - paragraph:
+        - generic: B
+        - generic: r
+        - generic: i
+        - generic: d
+        - generic: g
+        - generic: e
+      - paragraph:
+        - generic: W
+        - generic: i
+        - generic: d
+        - generic: e
+```
+
+# Test source
+
+```ts
+  1  | import AxeBuilder from "@axe-core/playwright";
+  2  | import { expect, test } from "@playwright/test";
+  3  | 
+  4  | // Pages a visitor reaches first. The browser job runs this on a desktop and a
+  5  | // narrow viewport. A serious or critical violation fails the job and names the
+  6  | // rule, the page, and each element, with the two colours and the ratio for a
+  7  | // contrast failure.
+  8  | const routes = [
+  9  |   "/",
+  10 |   "/contact",
+  11 |   "/ai-training/contact",
+  12 |   "/roles",
+  13 |   "/employers",
+  14 |   "/engineers",
+  15 |   "/salary-guide",
+  16 |   "/regions/usa",
+  17 |   "/privacy",
+  18 |   "/terms",
+  19 |   "/this-page-does-not-exist",
+  20 | ];
+  21 | 
+  22 | const tags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+  23 | 
+  24 | test.beforeEach(async ({ page }) => {
+  25 |   // Motion that fades content in would hide it from the scan, so ask for none.
+  26 |   await page.emulateMedia({ reducedMotion: "reduce" });
+  27 | });
+  28 | 
+  29 | for (const route of routes) {
+  30 |   test(`axe finds no serious problem on ${route}`, async ({ page }) => {
+  31 |     await page.goto(route);
+> 32 |     await page.waitForLoadState("networkidle");
+     |                ^ Error: page.waitForLoadState: Test timeout of 30000ms exceeded.
+  33 | 
+  34 |     const results = await new AxeBuilder({ page }).withTags(tags).analyze();
+  35 | 
+  36 |     const serious = results.violations.filter((violation) => violation.impact === "serious" || violation.impact === "critical");
+  37 |     const report = serious.map((violation) => {
+  38 |       const nodes = violation.nodes.slice(0, 12).map((node) => {
+  39 |         const data = (node.any[0]?.data ?? {}) as { fgColor?: string; bgColor?: string; contrastRatio?: number };
+  40 |         const colours = data.fgColor ? ` [${data.fgColor} on ${data.bgColor}, ${data.contrastRatio}:1]` : "";
+  41 |         return `  ${node.target.join(" ")}${colours}`;
+  42 |       });
+  43 |       return `${violation.id} (${violation.impact}), ${violation.nodes.length} element(s): ${violation.help}\n${nodes.join("\n")}`;
+  44 |     });
+  45 |     expect(report, `accessibility violations on ${route}:\n${report.join("\n")}`).toEqual([]);
+  46 |   });
+  47 | }
+  48 | 
+```
