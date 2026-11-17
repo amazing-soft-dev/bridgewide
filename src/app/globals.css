@@ -179,34 +179,6 @@
   }
 }
 
-/*
- * The two words in the star field after the footer arrive a letter at a time,
- * sliding in from the outside. src/lib/astra-label-motion.ts times each letter
- * through the three custom properties. The letters wait (paused) until the
- * stage is first seen, when AstraField sets data-astra-seen on it. Letters also
- * carry data-motion, so reduced motion shows them at once (see below).
- */
-@keyframes astra-label-reveal {
-  from {
-    opacity: 0;
-    translate: var(--astra-label-shift, 0px) 0;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-
-.astra-letter {
-  display: inline-block;
-  animation: astra-label-reveal var(--astra-label-duration, 1s) cubic-bezier(0.22, 1, 0.36, 1)
-    var(--astra-label-delay, 0s) both paused;
-}
-
-[data-astra-seen="true"] .astra-letter {
-  animation-play-state: running;
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
