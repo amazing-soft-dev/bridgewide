@@ -6,7 +6,6 @@ import { AstraWord } from "@/components/home/AstraWord";
 import { AstraReplayButton } from "@/components/home/AstraReplayButton";
 import { ASTRA_REPLAY_EVENT, type Pose, restState } from "@/lib/astra-pose";
 import { addTurn, dragTurn, keyTurn } from "@/lib/astra-pose-input";
-import { rayStrength } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
 import { CONTEXT_RESTORE_MS, canCreateWebgl, shouldRun } from "@/lib/astra-webgl";
 import { markPaths } from "@/components/brand/mark";
@@ -515,26 +514,26 @@ export function AstraField() {
       const positions = new Float32Array(stars.length * 3);
       const colors = new Float32Array(stars.length * 3);
       const sizes = new Float32Array(stars.length);
-      const glows = new Float32Array(stars.length);
+      // HDR brightness per star. The shader turns it into rays and a white-hot centre.
+      const brights = new Float32Array(stars.length);
       const alphas = new Float32Array(stars.length);
-      // Ray strength per star: 0 unless it is a ribbon flare that has landed on the mark.
-      const rays = new Float32Array(stars.length);
       const nudgeX = new Float32Array(stars.length);
       const nudgeY = new Float32Array(stars.length);
       const ribbonColors = new Float32Array(stars.length * 3);
       const outerColors = new Float32Array(stars.length * 3);
       // Colours stay in display space: the shader writes them without conversion.
+      // Brightness is its own attribute, so a hot star keeps its hue under its white core.
       const writeColor = (out: Float32Array, index: number, look: Look) => {
-        out[index * 3] = (((look.color >> 16) & 255) / 255) * look.brightness;
-        out[index * 3 + 1] = (((look.color >> 8) & 255) / 255) * look.brightness;
-        out[index * 3 + 2] = ((look.color & 255) / 255) * look.brightness;
+        out[index * 3] = ((look.color >> 16) & 255) / 255;
+        out[index * 3 + 1] = ((look.color >> 8) & 255) / 255;
+        out[index * 3 + 2] = (look.color & 255) / 255;
       };
       stars.forEach((star, index) => {
         writeColor(ribbonColors, index, star);
         writeColor(outerColors, index, star.kind === "ribbon" ? star.outer : star);
         writeColor(colors, index, star);
         sizes[index] = star.size;
-        glows[index] = star.glow;
+        brights[index] = star.brightness;
         alphas[index] = 1;
       });
 
@@ -543,8 +542,8 @@ export function AstraField() {
       positionAttr.setUsage(THREE.DynamicDrawUsage);
       const sizeAttr = new THREE.BufferAttribute(sizes, 1);
       sizeAttr.setUsage(THREE.DynamicDrawUsage);
-      const glowAttr = new THREE.BufferAttribute(glows, 1);
-      glowAttr.setUsage(THREE.DynamicDrawUsage);
+      const brightAttr = new THREE.BufferAttribute(brights, 1);
+      brightAttr.setUsage(THREE.DynamicDrawUsage);
       const alphaAttr = new THREE.BufferAttribute(alphas, 1);
       alphaAttr.setUsage(THREE.DynamicDrawUsage);
       geometry.setAttribute("position", positionAttr);
@@ -552,11 +551,8 @@ export function AstraField() {
       colorAttr.setUsage(THREE.DynamicDrawUsage);
       geometry.setAttribute("color", colorAttr);
       geometry.setAttribute("size", sizeAttr);
-      geometry.setAttribute("glow", glowAttr);
+      geometry.setAttribute("bright", brightAttr);
       geometry.setAttribute("alpha", alphaAttr);
-      const rayAttr = new THREE.BufferAttribute(rays, 1);
-      rayAttr.setUsage(THREE.DynamicDrawUsage);
-      geometry.setAttribute("ray", rayAttr);
 
       const uniforms = {
         uPixelRatio: { value: 1 },
@@ -789,11 +785,10 @@ export function AstraField() {
           let alpha = 1;
           if (star.kind === "ribbon") {
             const land = smoothstep((gather - LAND_START) / (1 - LAND_START));
-            rays[index] = land * rayStrength(star.tier, star.glow);
             const outer = star.outer;
             const ribbonSize = star.tier === "fine" ? star.size : star.size * sizeScale;
             size = outer.size + (ribbonSize - outer.size) * land;
-            glows[index] = outer.glow + (star.glow - outer.glow) * land;
+            brights[index] = outer.brightness + (star.brightness - outer.brightness) * land;
             for (let c = index * 3; c < index * 3 + 3; c++) {
               const from = outerColors[c] ?? 0;
               colors[c] = from + ((ribbonColors[c] ?? 0) - from) * land;
@@ -886,9 +881,8 @@ export function AstraField() {
         }
         positionAttr.needsUpdate = true;
         sizeAttr.needsUpdate = true;
-        glowAttr.needsUpdate = true;
+        brightAttr.needsUpdate = true;
         alphaAttr.needsUpdate = true;
-        rayAttr.needsUpdate = true;
         colorAttr.needsUpdate = true;
 
         composer.render(dt);

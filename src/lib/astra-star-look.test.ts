@@ -228,13 +228,6 @@ describe("ribbonLook", () => {
     expect(mean(ordinary)).toBeLessThan(2.9);
   });
 
-  it("gives hero stars the full halo and the rest a faint one", () => {
-    for (const look of looks) {
-      const expected = look.tier === "flare" ? 1 : look.tier === "ambient" ? 0.55 : 0.3;
-      expect(look.glow).toBe(expected);
-    }
-  });
-
   it("colours every star, hero stars included, from the palette", () => {
     const palette = new Set<number>(STAR_PALETTE.map((entry) => entry.value));
     for (const look of looks) expect(palette.has(look.color)).toBe(true);

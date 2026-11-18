@@ -48,7 +48,6 @@ export type Tier = "fine" | "ambient" | "flare";
 export type Look = {
   tier: Tier;
   size: number;
-  glow: number;
   color: number;
   brightness: number;
 };
@@ -96,21 +95,12 @@ export const HERO_BRIGHTNESS = { min: 2, max: 3.5 } as const;
 /** Dust is the ordinary star at this share of its brightness, so the sky sits behind the mark. */
 export const DUST_BRIGHTNESS = 0.8;
 
-/**
- * Halo weight for the shader, 0 to 1. Hero stars carry the full halo; the rest
- * a faint one.
- */
-function haloWeight(tier: Tier): number {
-  return tier === "flare" ? 1 : tier === "ambient" ? 0.55 : 0.3;
-}
-
 function ordinaryLook(rand: Rand, brightnessScale: number): Look {
   const unit = 0.12 + powerLaw(rand, 2.4) * 0.68;
   const tier: Tier = unit < FINE_UNIT_MAX ? "fine" : "ambient";
   return {
     tier,
     size: SIZE_BASE_PX + unit * SIZE_GAIN_PX,
-    glow: haloWeight(tier),
     color: paletteColor(rand),
     brightness: between(rand, ORDINARY_BRIGHTNESS.min, ORDINARY_BRIGHTNESS.max) * brightnessScale,
   };
@@ -120,7 +110,6 @@ function heroLook(rand: Rand): Look {
   return {
     tier: "flare",
     size: SIZE_BASE_PX + between(rand, 0.85, 2.1) * SIZE_GAIN_PX,
-    glow: haloWeight("flare"),
     color: paletteColor(rand),
     brightness: between(rand, HERO_BRIGHTNESS.min, HERO_BRIGHTNESS.max),
   };
