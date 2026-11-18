@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
+import { LoadingImage } from "@/components/ui/LoadingImage";
 import { ramp } from "@/hooks/scroll-frame";
 import { useTrackProgress } from "@/hooks/use-track-progress";
 
@@ -102,7 +102,7 @@ export function StorySlides({
                 style={{ "--i": index, zIndex: index } as CSSProperties}
               >
                 <div className="absolute inset-0 [&_img]:scale-[calc(1.12_-_var(--e)*0.12)] gate:[&_img]:scale-none">
-                  <Image
+                  <LoadingImage
                     src={slide.image.src}
                     alt={slide.image.alt}
                     fill

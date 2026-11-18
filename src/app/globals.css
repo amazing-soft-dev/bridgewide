@@ -99,6 +99,7 @@
   --animate-sth-blink: sth-blink 1.4s steps(2) infinite;
   --animate-sth-board-in: sth-board-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.35s both;
   --animate-role-stamp: role-stamp 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-skeleton: skeleton 1.4s ease-in-out infinite;
 
   @keyframes flap-fold {
     50% {
@@ -177,6 +178,30 @@
       scale: 1.8;
     }
   }
+
+  @keyframes skeleton {
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: 0 0;
+    }
+  }
+}
+
+/*
+ * Placeholder shimmer for content that is still loading (see
+ * src/components/ui/Skeleton.tsx). It is drawn in currentColor, so a skeleton
+ * sets text-ink or text-cloud to suit the surface behind it.
+ */
+.skeleton-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, currentColor 8%, transparent) 0%,
+    color-mix(in srgb, currentColor 22%, transparent) 40%,
+    color-mix(in srgb, currentColor 8%, transparent) 80%
+  );
+  background-size: 200% 100%;
 }
 
 /*
@@ -235,6 +260,12 @@
     translate: none !important;
     scale: none !important;
     opacity: 1 !important;
+  }
+
+  .skeleton-shimmer {
+    animation: none;
+    background-image: none;
+    background-color: color-mix(in srgb, currentColor 12%, transparent);
   }
 }
 
