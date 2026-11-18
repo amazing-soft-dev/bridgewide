@@ -1,164 +1,145 @@
 import { describe, expect, it } from "vitest";
 import {
-  coreWhite,
-  haloQuad,
+  COLOR_ENERGY_GAIN,
+  core,
+  colorEnergy,
+  cubicCoverage,
+  filteredCoverage,
+  MIN_QUAD_PX,
   pointQuad,
-  RAY_FADE_FROM,
   RAY_GAIN,
-  RAY_REACH,
   rayIntensity,
   rayShape,
   rayStrength,
-  WHITE_CORE_BASE,
-  WHITE_CORE_EXTRA,
+  resolved,
+  smoothstep,
+  UNRESOLVED_CORE,
+  WHITE_CORE,
+  whiteCore,
 } from "@/lib/astra-star-shader-math";
 
-describe("rayStrength", () => {
-  it("gives fine and ambient stars no rays, whatever their glow", () => {
-    for (const glow of [0, 0.15, 0.3, 0.55, 0.9, 1]) {
-      expect(rayStrength("fine", glow)).toBe(0);
-      expect(rayStrength("ambient", glow)).toBe(0);
-    }
+describe("smoothstep", () => {
+  it("is 0 below, 1 above and 0.5 halfway", () => {
+    expect(smoothstep(1, 3, 0)).toBe(0);
+    expect(smoothstep(1, 3, 4)).toBe(1);
+    expect(smoothstep(1, 3, 2)).toBeCloseTo(0.5);
+  });
+});
+
+describe("pointQuad", () => {
+  it("is the star's diameter, but never under the minimum quad", () => {
+    expect(pointQuad(12)).toBe(12);
+    expect(pointQuad(1.5)).toBe(MIN_QUAD_PX);
+  });
+});
+
+describe("cubicCoverage", () => {
+  it("is the cubic B-spline: 2/3 at the centre, 1/6 at one pixel, 0 from two", () => {
+    expect(cubicCoverage(0)).toBeCloseTo(2 / 3);
+    expect(cubicCoverage(1)).toBeCloseTo(1 / 6);
+    expect(cubicCoverage(-1)).toBeCloseTo(1 / 6);
+    expect(cubicCoverage(2)).toBe(0);
+    expect(cubicCoverage(3)).toBe(0);
   });
 
-  it("gives a hero flare (glow 1) full strength", () => {
-    expect(rayStrength("flare", 1)).toBe(1);
+  it("sums to 1 across whole-pixel offsets, so a filtered point keeps its light", () => {
+    let total = 0;
+    for (let x = -2; x <= 2; x++) total += cubicCoverage(x);
+    expect(total).toBeCloseTo(1, 6);
+  });
+});
+
+describe("filteredCoverage", () => {
+  it("grows with the square of the diameter", () => {
+    expect(filteredCoverage(0, 0, 2) / filteredCoverage(0, 0, 1)).toBeCloseTo(4);
+  });
+});
+
+describe("core", () => {
+  it("is full at the centre and gone at the edge", () => {
+    expect(core(0)).toBe(1);
+    expect(core(0.05)).toBe(1);
+    expect(core(1)).toBe(0);
   });
 
-  it("gives an ordinary flare (glow 0.9) a subtle 30%", () => {
-    expect(rayStrength("flare", 0.9)).toBeCloseTo(0.3, 12);
-  });
-
-  it("grows with glow and stays between 0.3 and 1 for flares", () => {
-    let last = 0;
-    for (let glow = 0; glow <= 1; glow += 0.05) {
-      const value = rayStrength("flare", glow);
-      expect(value).toBeGreaterThanOrEqual(0.3);
-      expect(value).toBeLessThanOrEqual(1);
-      expect(value).toBeGreaterThanOrEqual(last);
+  it("falls steadily from the centre outward", () => {
+    let last = core(0);
+    for (let d = 0.1; d <= 1; d += 0.1) {
+      const value = core(d);
+      expect(value).toBeLessThanOrEqual(last);
       last = value;
     }
+    expect(core(0.5)).toBeLessThan(0.35);
+  });
+});
+
+describe("resolved", () => {
+  it("is 0 for a sub-2px star and 1 from 4px", () => {
+    expect(resolved(1)).toBe(0);
+    expect(resolved(3)).toBeCloseTo(0.5);
+    expect(resolved(6)).toBe(1);
+  });
+});
+
+describe("rayStrength", () => {
+  it("gives ordinary stars (brightness under 1.45) no rays", () => {
+    for (const brightness of [0, 0.56, 1, 1.34, 1.45]) expect(rayStrength(brightness)).toBe(0);
+  });
+
+  it("grows with brightness and is full on the hottest hero stars", () => {
+    expect(rayStrength(2)).toBeGreaterThan(0);
+    expect(rayStrength(2.5)).toBeGreaterThan(rayStrength(2));
+    expect(rayStrength(2.8)).toBe(1);
+    expect(rayStrength(3.5)).toBe(1);
   });
 });
 
 describe("rayShape", () => {
-  it("is brightest on the axes and symmetric in all four directions", () => {
-    for (const distance of [0.2, 1, 2.5, 4]) {
-      const right = rayShape(distance, 0);
-      expect(rayShape(-distance, 0)).toBeCloseTo(right, 12);
-      expect(rayShape(0, distance)).toBeCloseTo(right, 12);
-      expect(rayShape(0, -distance)).toBeCloseTo(right, 12);
-    }
-  });
-
-  it("is 1 at the centre and strong close in along an axis", () => {
+  it("is brightest on the axes and the same in all four directions", () => {
+    expect(rayShape(0.4, 0)).toBeCloseTo(rayShape(-0.4, 0));
+    expect(rayShape(0, 0.4)).toBeCloseTo(rayShape(0, -0.4));
+    expect(rayShape(0.4, 0)).toBeCloseTo(rayShape(0, 0.4));
     expect(rayShape(0, 0)).toBe(1);
-    expect(rayShape(RAY_FADE_FROM, 0)).toBeCloseTo(1, 12);
   });
 
-  it("fades out along the length and is gone at the reach", () => {
-    let last = 2;
-    for (let x = RAY_FADE_FROM; x <= RAY_REACH; x += 0.25) {
-      const value = rayShape(x, 0);
-      expect(value).toBeLessThanOrEqual(last);
-      last = value;
-    }
-    // At the tip only the far tail of the other ray is left (exp(-15) on the axis).
-    expect(rayShape(RAY_REACH, 0)).toBeLessThan(1e-6);
-    expect(rayShape(RAY_REACH + 3, 0)).toBeLessThan(1e-9);
+  it("is thin: a tenth of a radius off the axis it has mostly gone", () => {
+    expect(rayShape(0.5, 0.1)).toBeLessThan(0.07 * rayShape(0.5, 0));
   });
 
-  it("is thin: a fraction of a radius off the axis the ray has mostly gone", () => {
-    expect(rayShape(2, 0.25)).toBeLessThan(rayShape(2, 0) * 0.5);
-    expect(rayShape(2, 1)).toBeLessThan(rayShape(2, 0) * 0.06);
-  });
-
-  it("leaves the diagonals dark away from the centre", () => {
-    expect(rayShape(2, 2)).toBeLessThan(0.01);
-    expect(rayShape(3, 3)).toBeLessThan(0.001);
-  });
-
-  it("stays between 0 and 1", () => {
-    for (let x = -6; x <= 6; x += 0.3) {
-      for (let y = -6; y <= 6; y += 0.3) {
-        const value = rayShape(x, y);
-        expect(value).toBeGreaterThanOrEqual(0);
-        expect(value).toBeLessThanOrEqual(1);
-      }
-    }
+  it("fades out toward the edge", () => {
+    expect(rayShape(0.1, 0)).toBe(1);
+    expect(rayShape(0.6, 0)).toBeLessThan(rayShape(0.3, 0));
+    expect(rayShape(1, 0)).toBeCloseTo(0, 9);
   });
 });
 
 describe("rayIntensity", () => {
-  it("scales the shape by the gain and the star's strength", () => {
-    expect(rayIntensity(1, 0, 1)).toBeCloseTo(rayShape(1, 0) * RAY_GAIN, 12);
-    expect(rayIntensity(1, 0, 0.5)).toBeCloseTo(rayShape(1, 0) * RAY_GAIN * 0.5, 12);
-  });
-
-  it("adds nothing to a star without rays, anywhere", () => {
-    for (let x = -6; x <= 6; x += 0.5) {
-      for (let y = -6; y <= 6; y += 0.5) expect(rayIntensity(x, y, 0)).toBe(0);
-    }
-  });
-
-  it("clamps an out-of-range strength", () => {
-    expect(rayIntensity(1, 0, 4)).toBe(rayIntensity(1, 0, 1));
-    expect(rayIntensity(1, 0, -4)).toBe(0);
+  it("is the shape times the gain times the strength", () => {
+    expect(rayIntensity(0, 0, 3)).toBeCloseTo(RAY_GAIN);
+    expect(rayIntensity(0.3, 0, 1)).toBe(0);
+    expect(rayIntensity(0.3, 0, 2.2)).toBeCloseTo(rayShape(0.3, 0) * RAY_GAIN * rayStrength(2.2));
   });
 });
 
-describe("coreWhite", () => {
-  it("is exactly the old fixed amount for a star without rays", () => {
-    expect(coreWhite(0)).toBe(WHITE_CORE_BASE);
-    expect(WHITE_CORE_BASE).toBe(0.18);
+describe("whiteCore", () => {
+  it("leaves a dim star its own colour", () => {
+    expect(whiteCore(1, 10, 0.8)).toBe(0);
   });
 
-  it("is whiter for a star with rays", () => {
-    expect(coreWhite(1)).toBeCloseTo(WHITE_CORE_BASE + WHITE_CORE_EXTRA, 12);
-    expect(coreWhite(0.5)).toBeGreaterThan(coreWhite(0));
-    expect(coreWhite(1)).toBeGreaterThan(coreWhite(0.5));
+  it("turns a hot star's resolved centre white by up to the gain", () => {
+    expect(whiteCore(1, 10, 3)).toBeCloseTo(WHITE_CORE.gain);
+    expect(whiteCore(0.25, 10, 3)).toBeCloseTo(0.25 * WHITE_CORE.gain);
   });
 
-  it("never mixes more than fully white, and clamps its input", () => {
-    expect(coreWhite(1)).toBeLessThan(1);
-    expect(coreWhite(9)).toBe(coreWhite(1));
-    expect(coreWhite(-9)).toBe(coreWhite(0));
+  it("uses a fixed weight for a star too small to resolve", () => {
+    expect(whiteCore(0, 1, 3)).toBeCloseTo(UNRESOLVED_CORE * WHITE_CORE.gain);
   });
 });
 
-describe("haloQuad and pointQuad", () => {
-  const sizes = [1, 1.6, 2.4, 4, 6.5, 9.5, 14];
-  const glows = [0.15, 0.3, 0.55, 0.9, 1];
-  const ratios = [1, 1.5, 1.75, 2];
-
-  it("keeps exactly the old quad for a star without rays", () => {
-    for (const size of sizes) {
-      for (const glow of glows) {
-        for (const ratio of ratios) {
-          const old = Math.max(size * (1.6 + (3.6 - 1.6) * glow), 4 * ratio);
-          expect(haloQuad(size, glow, ratio)).toBe(old);
-          expect(pointQuad(size, glow, ratio, 0)).toBe(old);
-        }
-      }
-    }
-  });
-
-  it("never shrinks the halo for a star with rays", () => {
-    for (const size of sizes) {
-      for (const glow of glows) {
-        expect(pointQuad(size, glow, 1, 1)).toBeGreaterThanOrEqual(haloQuad(size, glow, 1));
-      }
-    }
-  });
-
-  it("holds the whole ray (the reach in radii each way) for a star with rays", () => {
-    for (const size of sizes) {
-      // The quad is a side length: half of it, in radii, must cover the reach.
-      expect(pointQuad(size, 0.9, 1, 0.5) / 2 / (size / 2)).toBeGreaterThanOrEqual(RAY_REACH);
-    }
-  });
-
-  it("depends only on whether a star has rays, not on how strong they are", () => {
-    expect(pointQuad(6, 0.9, 1, 0.2)).toBe(pointQuad(6, 0.9, 1, 1));
+describe("colorEnergy", () => {
+  it("leaves white alone and lifts a saturated colour", () => {
+    expect(colorEnergy(1, 1, 1)).toBe(1);
+    expect(colorEnergy(1, 0.47, 0.08)).toBeCloseTo(1 + 0.92 * COLOR_ENERGY_GAIN);
+    expect(colorEnergy(0, 0, 0)).toBeCloseTo(1 + COLOR_ENERGY_GAIN);
   });
 });

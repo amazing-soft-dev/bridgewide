@@ -14,7 +14,6 @@ import {
   settleToward,
 } from "@/lib/astra-pose";
 import { addTurn, dragTurn, keyTurn } from "@/lib/astra-pose-input";
-import { rayStrength } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
 import { CONTEXT_RESTORE_MS, canCreateWebgl, shouldRun } from "@/lib/astra-webgl";
 import { markPaths } from "@/components/brand/mark";
@@ -47,13 +46,15 @@ const MEET_MIN_SCALE = 0.12;
 /** Depth of the mark's curved surface, in mark units: gives it a real 3D body when turned. */
 const DEPTH_AMPLITUDE = 13;
 /** Ribbon stars per mark unit of path length. */
-const STARS_PER_UNIT = 3.2;
+const STARS_PER_UNIT = 5.5;
 /** A star's offset from the line is spread over a tube: this much of it goes into depth. */
 const TUBE_DEPTH = 3;
-/** Twinkle never takes a star below 1 - depth of its brightness, so lines never drop out. */
-const TWINKLE = 0.22;
-const FLARE_TWINKLE = 0.12;
-const FINE_TWINKLE = 0.1;
+/**
+ * Ribbon twinkle, as on openai.com: 0.86 + 0.14 * sin(phase + t * 0.62 * rate),
+ * always on (not only once the stream flows), so lines never drop out.
+ */
+const TWINKLE_DEPTH = 0.14;
+const TWINKLE_SPEED = 0.62;
 /** Ribbon stars wear the outer-spray look until this far into their gather, then take their ribbon look. */
 const LAND_START = 0.75;
 const GATHER_STAGGER = 0.22;
@@ -65,7 +66,7 @@ const NUDGE_RADIUS_PX = 150;
 const NUDGE_GAIN = 0.7;
 const NUDGE_MAX_PX = 56;
 const NUDGE_RETURN = 3.2;
-const DUST_PER_SIDE = 320;
+const DUST_PER_SIDE = 200;
 /** Dust settles between these NDC distances from the centre line, on both sides. */
 const BAND_INNER = 0.4;
 const BAND_OUTER = 0.98;
@@ -77,13 +78,19 @@ const WORD_PAD_PX = 32;
  * How big, bright and coloured each star is (tier shares, skewed size ranges,
  * the palette) lives in src/lib/astra-star-look.ts, where it is tested.
  */
-/** Pre-tone-mapping sky colour. ACES crushes darks, so this lands at about #08101a on screen. */
-const BACKGROUND = 0x2d3b4a;
-/** Bloom merges neighbouring stars into one glowing ribbon. */
-const BLOOM_STRENGTH = 0.45;
-const BLOOM_RADIUS = 0.25;
-/** Only bright star centres bloom; small stars stay crisp, even over a big star's glow. */
-const BLOOM_THRESHOLD = 0.92;
+/**
+ * Linear sky colour. Nothing is tone mapped (as on openai.com), so this is what
+ * reaches the screen: about #03040a. The section behind the canvas matches it.
+ */
+const BACKGROUND = [0.011, 0.016, 0.038] as const;
+/** Bloom spreads the HDR hero stars into big soft halos. */
+const BLOOM_STRENGTH = 0.85;
+const BLOOM_RADIUS = 0.55;
+/**
+ * Low, like openai.com's 0.08: bloom then follows HDR brightness, so hero stars
+ * (2-3.5) glow wide while 1-3px specks stay crisp.
+ */
+const BLOOM_THRESHOLD = 0.12;
 /** Stroke width in mark units. Core is 20% of this; mist reaches 120%. */
 const STROKE_WIDTH = 7.5;
 const CORE_WIDTH = STROKE_WIDTH * 0.2;
@@ -105,6 +112,8 @@ type StarBase = Look & {
   delay: number;
   phase: number;
   rate: number;
+  /** Fixed per-star coverage, 0.82-0.98 (openai.com's starOpacity). */
+  opacity: number;
 };
 type RibbonStar = StarBase & {
   kind: "ribbon";
@@ -388,7 +397,8 @@ function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
     spray,
     delay: Math.random(),
     phase: Math.random() * Math.PI * 2,
-    rate: 0.5 + Math.random() * 1.1,
+    rate: 0.65 + Math.random() * 0.7,
+    opacity: 0.82 + Math.random() * 0.16,
   };
 }
 
@@ -521,11 +531,10 @@ export function AstraField() {
         alpha: false,
         powerPreference: "high-performance",
       });
-      renderer.setClearColor(BACKGROUND, 1);
+      renderer.setClearColor(new THREE.Color().setRGB(...BACKGROUND, THREE.LinearSRGBColorSpace), 1);
       renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
-      // Filmic tone mapping rolls overlapping stars off softly instead of clipping to flat white.
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.25;
+      // No tone mapping, as on openai.com: hero cores and overlaps clip to white.
+      renderer.toneMapping = THREE.NoToneMapping;
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 80);
@@ -536,26 +545,26 @@ export function AstraField() {
       const positions = new Float32Array(stars.length * 3);
       const colors = new Float32Array(stars.length * 3);
       const sizes = new Float32Array(stars.length);
-      const glows = new Float32Array(stars.length);
+      // HDR brightness per star. The shader turns it into rays and a white-hot centre.
+      const brights = new Float32Array(stars.length);
       const alphas = new Float32Array(stars.length);
-      // Ray strength per star: 0 unless it is a ribbon flare that has landed on the mark.
-      const rays = new Float32Array(stars.length);
       const nudgeX = new Float32Array(stars.length);
       const nudgeY = new Float32Array(stars.length);
       const ribbonColors = new Float32Array(stars.length * 3);
       const outerColors = new Float32Array(stars.length * 3);
       // Colours stay in display space: the shader writes them without conversion.
+      // Brightness is its own attribute, so a hot star keeps its hue under its white core.
       const writeColor = (out: Float32Array, index: number, look: Look) => {
-        out[index * 3] = (((look.color >> 16) & 255) / 255) * look.brightness;
-        out[index * 3 + 1] = (((look.color >> 8) & 255) / 255) * look.brightness;
-        out[index * 3 + 2] = ((look.color & 255) / 255) * look.brightness;
+        out[index * 3] = ((look.color >> 16) & 255) / 255;
+        out[index * 3 + 1] = ((look.color >> 8) & 255) / 255;
+        out[index * 3 + 2] = (look.color & 255) / 255;
       };
       stars.forEach((star, index) => {
         writeColor(ribbonColors, index, star);
         writeColor(outerColors, index, star.kind === "ribbon" ? star.outer : star);
         writeColor(colors, index, star);
         sizes[index] = star.size;
-        glows[index] = star.glow;
+        brights[index] = star.brightness;
         alphas[index] = 1;
       });
 
@@ -564,8 +573,8 @@ export function AstraField() {
       positionAttr.setUsage(THREE.DynamicDrawUsage);
       const sizeAttr = new THREE.BufferAttribute(sizes, 1);
       sizeAttr.setUsage(THREE.DynamicDrawUsage);
-      const glowAttr = new THREE.BufferAttribute(glows, 1);
-      glowAttr.setUsage(THREE.DynamicDrawUsage);
+      const brightAttr = new THREE.BufferAttribute(brights, 1);
+      brightAttr.setUsage(THREE.DynamicDrawUsage);
       const alphaAttr = new THREE.BufferAttribute(alphas, 1);
       alphaAttr.setUsage(THREE.DynamicDrawUsage);
       geometry.setAttribute("position", positionAttr);
@@ -573,11 +582,8 @@ export function AstraField() {
       colorAttr.setUsage(THREE.DynamicDrawUsage);
       geometry.setAttribute("color", colorAttr);
       geometry.setAttribute("size", sizeAttr);
-      geometry.setAttribute("glow", glowAttr);
+      geometry.setAttribute("bright", brightAttr);
       geometry.setAttribute("alpha", alphaAttr);
-      const rayAttr = new THREE.BufferAttribute(rays, 1);
-      rayAttr.setUsage(THREE.DynamicDrawUsage);
-      geometry.setAttribute("ray", rayAttr);
 
       const uniforms = {
         uPixelRatio: { value: 1 },
@@ -814,20 +820,17 @@ export function AstraField() {
           let y = settled.y;
           let z = settled.z;
           let size = star.size;
-          let tier = star.tier;
-          let alpha = 1;
+          let alpha = star.opacity;
           if (star.kind === "ribbon") {
             const land = smoothstep((gather - LAND_START) / (1 - LAND_START));
-            rays[index] = land * rayStrength(star.tier, star.glow);
             const outer = star.outer;
             const ribbonSize = star.tier === "fine" ? star.size : star.size * sizeScale;
             size = outer.size + (ribbonSize - outer.size) * land;
-            glows[index] = outer.glow + (star.glow - outer.glow) * land;
+            brights[index] = outer.brightness + (star.brightness - outer.brightness) * land;
             for (let c = index * 3; c < index * 3 + 3; c++) {
               const from = outerColors[c] ?? 0;
               colors[c] = from + ((ribbonColors[c] ?? 0) - from) * land;
             }
-            if (land < 0.5) tier = outer.tier;
             alpha *= 1 - land * (1 - spineFade(star.offset));
             // Once the stream flows, a star grows in after it spawns and shrinks
             // away as it reaches its path's meeting point. Before that (and with
@@ -841,8 +844,6 @@ export function AstraField() {
             size *= 1 - stream * (1 - (MEET_MIN_SCALE + (1 - MEET_MIN_SCALE) * envelope));
             alpha *= 1 - stream * (1 - fadeOut);
           }
-          const fine = tier === "fine";
-          const flare = tier === "flare";
           if (gather < 1) {
             ndcToLocal(star.spray.nx, star.spray.ny, star.spray.z, sprayed);
             x = sprayed.x + (x - sprayed.x) * gather;
@@ -851,9 +852,8 @@ export function AstraField() {
           }
           if (star.kind === "dust") {
             alpha *= dustAlpha;
-          } else if (flow > 0) {
-            const depth = flare ? FLARE_TWINKLE : fine ? FINE_TWINKLE : TWINKLE;
-            alpha *= 1 - depth * flow * (0.5 + 0.5 * Math.sin(time * star.rate + star.phase));
+          } else if (!still) {
+            alpha *= 1 - TWINKLE_DEPTH + TWINKLE_DEPTH * Math.sin(star.phase + time * TWINKLE_SPEED * star.rate);
           }
 
           let ox = (nudgeX[index] ?? 0) * nudgeFade;
@@ -915,9 +915,8 @@ export function AstraField() {
         }
         positionAttr.needsUpdate = true;
         sizeAttr.needsUpdate = true;
-        glowAttr.needsUpdate = true;
+        brightAttr.needsUpdate = true;
         alphaAttr.needsUpdate = true;
-        rayAttr.needsUpdate = true;
         colorAttr.needsUpdate = true;
 
         composer.render(dt);
@@ -1018,7 +1017,7 @@ export function AstraField() {
   return (
     <section
       ref={trackRef}
-      className="relative z-10 h-[220vh] bg-[#08101a]"
+      className="relative z-10 h-[220vh] bg-[#03040a]"
       aria-label={
         fallback
           ? "BridgeWide between the words Bridge and Wide."
@@ -1027,7 +1026,7 @@ export function AstraField() {
     >
       <div
         ref={wrapRef}
-        className="sticky top-0 h-[100svh] min-h-[36rem] overflow-hidden bg-[#08101a] text-white select-none"
+        className="sticky top-0 h-[100svh] min-h-[36rem] overflow-hidden bg-[#03040a] text-white select-none"
         onPointerMove={(event) => {
           // The cursor nudge: where the pointer is, and how far it moved since the last frame.
           const rect = event.currentTarget.getBoundingClientRect();

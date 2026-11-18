@@ -79,3 +79,11 @@ Reference for the formed spiral: the screenshot supplied with the request. The l
 | 6 | Motion check | Gather, flow and word clearing still work; no console errors; typecheck and lint clean |
 
 Not changed (differences that remain): OpenAI draws 12,000 particles from five SVG paths of its own glyph with a path texture; this site keeps its own BridgeWide mark paths and the scroll-driven gather. OpenAI also adds lens flare, dirty glass and a pointer lens; this field keeps its existing drag-to-rotate and pointer nudge.
+
+## Where it landed (2026-11-18)
+
+The comparison passes above were tuned on an inline rewrite of `AstraField.tsx` that never reached `dev`. The same model is now ported onto the modular field (#432): `src/lib/astra-star-look.ts` (palette, sizes, brightness, hero share), `src/lib/astra-star-shader-math.ts` and `src/lib/astra-star-shaders.ts` (core, filtered point, rays, white core, colour energy), and `AstraField.tsx` (HDR `bright` attribute, no tone mapping, near-black sky, bloom 0.85 / 0.55 / 0.12, 5.5 stars per unit, 200 dust a side, always-on twinkle). See `docs/astra-star-rays.md`.
+
+### Drag and return
+
+The scene config ships `interaction: { enabled: true, faceForward: true, followDamping: 6, mode: "rotate", pathLag: 0.68 }` (Confirmed in two bundle chunks, 2026-11-18). The renderer that reads those keys was not loaded on that visit and the page then returned 500, so how it applies them is **Inferred**: a released drag turns back to face forward with exponential damping at rate 6. #430 implements that; arrow-key turns still stay, as observed live for #414.

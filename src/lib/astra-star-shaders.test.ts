@@ -1,11 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { RAY_REACH, WHITE_CORE_BASE, WHITE_CORE_EXTRA } from "@/lib/astra-star-shader-math";
-import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
+import {
+  COLOR_ENERGY_GAIN,
+  CORE_EDGE,
+  CORE_POWER,
+  FILTERED_AREA,
+  MIN_QUAD_PX,
+  RAY_BRIGHTNESS,
+  RAY_FADE_FROM,
+  RAY_FALLOFF,
+  RAY_GAIN,
+  UNRESOLVED_CORE,
+  WHITE_CORE,
+} from "@/lib/astra-star-shader-math";
+import { glsl, STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
 
 /** Every `varying` declared in a shader, as "type name". */
 function varyings(source: string): string[] {
   return [...source.matchAll(/^varying\s+(\w+)\s+(\w+);/gm)].map((match) => `${match[1]} ${match[2]}`);
 }
+
+describe("glsl", () => {
+  it("always writes a float literal", () => {
+    expect(glsl(4)).toBe("4.0");
+    expect(glsl(0.28)).toBe("0.28");
+  });
+});
 
 describe("star shaders", () => {
   it("each have a main function and no unfilled template slot", () => {
@@ -17,89 +36,51 @@ describe("star shaders", () => {
     }
   });
 
-  it("read the per-star attributes the component fills", () => {
-    for (const attribute of ["size", "glow", "alpha"]) {
+  it("read the per-star attributes the component fills, brightness among them", () => {
+    for (const attribute of ["size", "bright", "alpha"]) {
       expect(STAR_VERTEX).toContain(`attribute float ${attribute};`);
     }
+    expect(STAR_VERTEX).not.toContain("attribute float glow;");
+    expect(STAR_VERTEX).not.toContain("attribute float ray;");
   });
 
-  it("set the point size from the quad", () => {
-    expect(STAR_VERTEX).toContain("gl_PointSize = vQuad;");
-  });
-
-  it("write the colour with the star's own alpha", () => {
-    expect(STAR_FRAGMENT).toContain("gl_FragColor");
-    expect(STAR_FRAGMENT).toContain("* vAlpha");
+  it("draw each star on its own diameter, never under the minimum quad", () => {
+    expect(STAR_VERTEX).toContain(`gl_PointSize = max(vDiameter, ${glsl(MIN_QUAD_PX)});`);
   });
 
   it("agree on every varying the fragment shader reads", () => {
     const sent = new Set(varyings(STAR_VERTEX));
     for (const received of varyings(STAR_FRAGMENT)) expect(sent.has(received)).toBe(true);
   });
-});
 
-describe("ray attribute", () => {
-  it("is declared by the vertex shader and passed on to the fragment shader", () => {
-    expect(STAR_VERTEX).toContain("attribute float ray;");
-    expect(STAR_VERTEX).toContain("varying float vRay;");
-    expect(STAR_VERTEX).toContain("vRay = ray;");
-    expect(STAR_FRAGMENT).toContain("varying float vRay;");
+  it("write HDR emission with the star's coverage as alpha", () => {
+    expect(STAR_FRAGMENT).toContain("* vBright * (1.0 + colorEnergy * " + glsl(COLOR_ENERGY_GAIN) + ")");
+    expect(STAR_FRAGMENT).toContain("gl_FragColor = vec4(emission, alpha);");
+    expect(STAR_FRAGMENT).toContain("* vAlpha;");
   });
 });
 
-describe("ray quad", () => {
-  it("gives a star with rays a larger quad, from the tested reach", () => {
-    expect(STAR_VERTEX).toContain("vQuad = vRay > 0.0 ? max(vHaloQuad, vSize * 5.0) : vHaloQuad;");
-    expect(STAR_VERTEX).toContain(`${RAY_REACH.toFixed(1)} star radii`);
+describe("the fragment shader is built from the tested maths", () => {
+  it("uses the core's edge and power", () => {
+    expect(STAR_FRAGMENT).toContain(`smoothstep(${glsl(CORE_EDGE)}, 1.0, distanceToCenter), ${glsl(CORE_POWER)})`);
   });
 
-  it("keeps the halo on its own quad, with the clip on the point quad", () => {
-    expect(STAR_VERTEX).toContain("varying float vHaloQuad;");
-    expect(STAR_FRAGMENT).toContain("varying float vHaloQuad;");
-    expect(STAR_FRAGMENT).toContain("float r = d / (vHaloQuad * 0.5);");
-    expect(STAR_FRAGMENT).toContain("if (d > vQuad * 0.5) discard;");
+  it("uses the ray falloff, fade, gain and brightness range", () => {
+    expect(STAR_FRAGMENT).toContain(`exp(-abs(point.y) * ${glsl(RAY_FALLOFF)})`);
+    expect(STAR_FRAGMENT).toContain(`smoothstep(${glsl(RAY_FADE_FROM)}, 1.0, abs(point.x))`);
+    expect(STAR_FRAGMENT).toContain(`* ${glsl(RAY_GAIN)}`);
+    expect(STAR_FRAGMENT).toContain(`smoothstep(${glsl(RAY_BRIGHTNESS.from)}, ${glsl(RAY_BRIGHTNESS.to)}, vBright)`);
   });
 
-  it("builds the halo quad the way the tested mirror does", () => {
-    expect(STAR_VERTEX).toContain("vHaloQuad = max(vSize * mix(1.6, 3.6, vGlow), 4.0 * uPixelRatio);");
-  });
-});
-
-describe("diffraction rays", () => {
-  it("are built from the constants the tested maths uses", () => {
-    expect(STAR_FRAGMENT).toContain("smoothstep(0.6, 5.0, p.x)");
-    expect(STAR_FRAGMENT).toContain("smoothstep(0.6, 5.0, p.y)");
-    expect(STAR_FRAGMENT).toContain("exp(-p.y * 3.0) * alongX");
-    expect(STAR_FRAGMENT).toContain("exp(-p.x * 3.0) * alongY");
-    expect(STAR_FRAGMENT).toContain("float rays = spike * 0.34 * vRay;");
-  });
-
-  it("add nothing for a star without rays, because the term is scaled by vRay", () => {
-    expect(STAR_FRAGMENT).toContain("(halo + rays)");
-    expect(STAR_FRAGMENT.match(/vRay/g)?.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it("measure the position in star radii on both axes", () => {
-    expect(STAR_FRAGMENT).toContain("abs((gl_PointCoord - 0.5) * vQuad) / max(vSize * 0.5, 0.0001)");
-  });
-
-  it("keep the core and halo terms as they were", () => {
-    expect(STAR_FRAGMENT).toContain("float core = exp(-2.6 * (d / coreRadius) * (d / coreRadius));");
+  it("uses the filtered point and white-core constants", () => {
+    expect(STAR_FRAGMENT).toContain(`* ${glsl(FILTERED_AREA)} * vDiameter * vDiameter`);
+    expect(STAR_FRAGMENT).toContain(`mix(${glsl(UNRESOLVED_CORE)}, core, resolved)`);
     expect(STAR_FRAGMENT).toContain(
-      "float halo = mix(0.08, 0.24, heroGlow) * vGlow * exp(-6.5 * r * r) * (1.0 - smoothstep(0.5, 1.0, r));",
+      `smoothstep(${glsl(WHITE_CORE.from)}, ${glsl(WHITE_CORE.to)}, vBright) * ${glsl(WHITE_CORE.gain)}`,
     );
-    expect(STAR_FRAGMENT).toContain("vec3 coreColor = mix(vColor, vec3(1.0), (0.18 + 0.4 * vRay) * core);");
-  });
-});
-
-describe("white-hot cores", () => {
-  it("are built from the constants the tested maths uses", () => {
-    expect(STAR_FRAGMENT).toContain(`${WHITE_CORE_BASE} + ${WHITE_CORE_EXTRA} * vRay`);
   });
 
-  it("keep the old 0.18 whiteness for a star without rays, because the extra is scaled by vRay", () => {
-    expect(WHITE_CORE_BASE).toBe(0.18);
-    expect(STAR_FRAGMENT).not.toContain("vec3(1.0), 0.18 * core)");
-    expect(STAR_FRAGMENT).toMatch(/\(0\.18 \+ 0\.4 \* vRay\) \* core/);
+  it("drops a fragment with no coverage", () => {
+    expect(STAR_FRAGMENT).toContain("if (alpha <= 0.0) discard;");
   });
 });
