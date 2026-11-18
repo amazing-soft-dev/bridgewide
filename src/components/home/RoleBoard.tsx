@@ -170,6 +170,55 @@ function RoleRow({
   );
 }
 
+/**
+ * The SF clock ticks every second. It owns its own state, so a tick re-renders
+ * only this line, not the six role rows.
+ */
+function SfClock({ live, reduced }: { live: boolean; reduced: boolean }) {
+  const [clock, setClock] = useState<string | null>(null);
+
+  useEffect(() => {
+    const tick = () => setClock(formatSfTime(new Date()));
+    tick();
+    if (reduced || !live) return;
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [live, reduced]);
+
+  return <>SF {clock ?? "--:--:--"}</>;
+}
+
+/** One placement at a time, swapped in place (matches the reference footer). */
+function PlacementFeed({ live, reduced }: { live: boolean; reduced: boolean }) {
+  const [feedIndex, setFeedIndex] = useState(0);
+
+  useEffect(() => {
+    if (reduced || !live || placements.length < 2) return;
+    const id = window.setInterval(
+      () => setFeedIndex((index) => (index + 1) % placements.length),
+      FEED_MS,
+    );
+    return () => window.clearInterval(id);
+  }, [live, reduced]);
+
+  const placement = placements[feedIndex];
+  if (!placement) return null;
+
+  return (
+    <div className="flex items-start gap-3 overflow-hidden border-t border-white/8 px-3.5 pt-3 pb-2.5">
+      <span className="shrink-0 rounded-[3px] bg-white/10 px-[7px] py-[3px] font-mono text-[12px] tracking-[0.14em] text-cloud uppercase">
+        Just placed
+      </span>
+      <p
+        key={feedIndex}
+        className="min-w-0 font-mono text-[12px] text-cloud/85 motion-safe:animate-sth-swap"
+      >
+        {placement.title} → {placement.company} · placed in {placement.days} days
+      </p>
+    </div>
+  );
+}
+
 export function RoleBoard() {
   const reduced = usePrefersReducedMotion();
   const boardRef = useRef<HTMLDivElement>(null);
@@ -179,20 +228,9 @@ export function RoleBoard() {
   const live = inView && visible;
   const hoveredRef = useRef<number | null>(null);
   const [slots, setSlots] = useState(() => roles.slice(0, VISIBLE).map((_, index) => index));
-  const [clock, setClock] = useState<string | null>(null);
-  const [feedIndex, setFeedIndex] = useState(0);
-
   const onHover = (row: number | null) => {
     hoveredRef.current = row;
   };
-
-  useEffect(() => {
-    const tick = () => setClock(formatSfTime(new Date()));
-    tick();
-    if (reduced || !live) return;
-    const id = window.setInterval(tick, 1000);
-    return () => window.clearInterval(id);
-  }, [live, reduced]);
 
   useEffect(() => {
     if (reduced || !live) return;
@@ -209,18 +247,6 @@ export function RoleBoard() {
     }, SWAP_MS);
     return () => window.clearInterval(id);
   }, [live, reduced]);
-
-  // One placement at a time, swapped in place (matches the reference footer).
-  useEffect(() => {
-    if (reduced || !live || placements.length < 2) return;
-    const id = window.setInterval(
-      () => setFeedIndex((index) => (index + 1) % placements.length),
-      FEED_MS,
-    );
-    return () => window.clearInterval(id);
-  }, [live, reduced]);
-
-  const placement = placements[feedIndex];
 
   return (
     <div ref={boardRef} className="@container relative rounded-xl border border-white/12 bg-[#080c1c]/74 p-1.5 text-cloud shadow-[0_40px_100px_rgba(8,12,28,0.55),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-[18px] [clip-path:polygon(0_0,calc(100%_-_26px)_0,100%_26px,100%_100%,0_100%)] motion-safe:animate-sth-board-in [&_*]:box-border [&_*]:min-w-0">
@@ -239,7 +265,7 @@ export function RoleBoard() {
           <span className="relative pl-3 text-[color-mix(in_srgb,var(--color-brand)_40%,white)] before:absolute before:top-1/2 before:left-0 before:size-1.5 before:-translate-y-1/2 before:rounded-full before:bg-brand before:content-[''] motion-safe:before:animate-sth-blink">
             Live
           </span>
-          SF {clock ?? "--:--:--"}
+          <SfClock live={live} reduced={reduced} />
         </p>
       </div>
 
@@ -255,19 +281,7 @@ export function RoleBoard() {
         ))}
       </ul>
 
-      {placement ? (
-        <div className="flex items-start gap-3 overflow-hidden border-t border-white/8 px-3.5 pt-3 pb-2.5">
-          <span className="shrink-0 rounded-[3px] bg-white/10 px-[7px] py-[3px] font-mono text-[12px] tracking-[0.14em] text-cloud uppercase">
-            Just placed
-          </span>
-          <p
-            key={feedIndex}
-            className="min-w-0 font-mono text-[12px] text-cloud/85 motion-safe:animate-sth-swap"
-          >
-            {placement.title} → {placement.company} · placed in {placement.days} days
-          </p>
-        </div>
-      ) : null}
+      <PlacementFeed live={live} reduced={reduced} />
     </div>
   );
 }

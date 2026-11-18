@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useRef, useState, type CSSProperties } from "react";
+import { LoadingImage } from "@/components/ui/LoadingImage";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ramp } from "@/hooks/scroll-frame";
 import { useTrackProgress } from "@/hooks/use-track-progress";
@@ -94,7 +94,7 @@ export function PinnedSteps({
                 className="absolute inset-0 transition-opacity duration-1000"
                 style={{ opacity: index === active ? 1 : 0, zIndex: index === active ? 1 : 0 }}
               >
-                <Image
+                <LoadingImage
                   src={src}
                   alt=""
                   fill
