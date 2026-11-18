@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { LoadingImage } from "@/components/ui/LoadingImage";
 
 export function ContentImage({
   src,
@@ -13,7 +13,7 @@ export function ContentImage({
 }) {
   return (
     <div className={`relative overflow-hidden bg-ink-soft ${className ?? ""}`}>
-      <Image
+      <LoadingImage
         src={src}
         alt={alt}
         fill

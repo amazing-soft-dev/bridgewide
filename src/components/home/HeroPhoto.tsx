@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { m, useMotionValue, useScroll, useSpring, useTransform } from "motion/react";
 import { useEffect, useRef } from "react";
 import { usePrefersReducedMotion } from "@/hooks/use-media-query";
+import { LoadingImage } from "@/components/ui/LoadingImage";
 
 export function HeroPhoto({ src, alt }: { src: string; alt: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -58,7 +58,7 @@ export function HeroPhoto({ src, alt }: { src: string; alt: string }) {
         data-motion="parallax"
         style={reduced ? undefined : { x: lagX, y }}
       >
-        <Image
+        <LoadingImage
           src={src}
           alt={alt}
           fill
