@@ -67,13 +67,19 @@ const WORD_PAD_PX = 32;
  * How big, bright and coloured each star is (tier shares, skewed size ranges,
  * the palette) lives in src/lib/astra-star-look.ts, where it is tested.
  */
-/** Pre-tone-mapping sky colour. ACES crushes darks, so this lands at about #08101a on screen. */
-const BACKGROUND = 0x2d3b4a;
-/** Bloom merges neighbouring stars into one glowing ribbon. */
-const BLOOM_STRENGTH = 0.45;
-const BLOOM_RADIUS = 0.25;
-/** Only bright star centres bloom; small stars stay crisp, even over a big star's glow. */
-const BLOOM_THRESHOLD = 0.92;
+/**
+ * Linear sky colour. Nothing is tone mapped (as on openai.com), so this is what
+ * reaches the screen: about #03040a. The section behind the canvas matches it.
+ */
+const BACKGROUND = [0.011, 0.016, 0.038] as const;
+/** Bloom spreads the HDR hero stars into big soft halos. */
+const BLOOM_STRENGTH = 0.85;
+const BLOOM_RADIUS = 0.55;
+/**
+ * Low, like openai.com's 0.08: bloom then follows HDR brightness, so hero stars
+ * (2-3.5) glow wide while 1-3px specks stay crisp.
+ */
+const BLOOM_THRESHOLD = 0.12;
 /** Stroke width in mark units. Core is 20% of this; mist reaches 120%. */
 const STROKE_WIDTH = 7.5;
 const CORE_WIDTH = STROKE_WIDTH * 0.2;
@@ -499,11 +505,10 @@ export function AstraField() {
         alpha: false,
         powerPreference: "high-performance",
       });
-      renderer.setClearColor(BACKGROUND, 1);
+      renderer.setClearColor(new THREE.Color().setRGB(...BACKGROUND, THREE.LinearSRGBColorSpace), 1);
       renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
-      // Filmic tone mapping rolls overlapping stars off softly instead of clipping to flat white.
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.25;
+      // No tone mapping, as on openai.com: hero cores and overlaps clip to white.
+      renderer.toneMapping = THREE.NoToneMapping;
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 80);
@@ -982,7 +987,7 @@ export function AstraField() {
   return (
     <section
       ref={trackRef}
-      className="relative z-10 h-[220vh] bg-[#08101a]"
+      className="relative z-10 h-[220vh] bg-[#03040a]"
       aria-label={
         fallback
           ? "BridgeWide between the words Bridge and Wide."
@@ -991,7 +996,7 @@ export function AstraField() {
     >
       <div
         ref={wrapRef}
-        className="sticky top-0 h-[100svh] min-h-[36rem] overflow-hidden bg-[#08101a] text-white select-none"
+        className="sticky top-0 h-[100svh] min-h-[36rem] overflow-hidden bg-[#03040a] text-white select-none"
         onPointerMove={(event) => {
           // The cursor nudge: where the pointer is, and how far it moved since the last frame.
           const rect = event.currentTarget.getBoundingClientRect();
