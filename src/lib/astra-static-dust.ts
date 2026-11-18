@@ -28,10 +28,11 @@ export type StaticDust = { x: number; y: number; radius: number; color: number; 
 /** The smallest radius a dot is drawn with, so no dot is too small to see. */
 const MIN_RADIUS = 0.8;
 /**
- * A dot's radius as a share of the live star's size (its diameter in CSS px), so
- * the dot is a little wider than the star it stands for: soft edges lose width.
+ * A dot's radius as a share of the live star's size (its diameter in CSS px).
+ * Live dust spans 1.3-6.6px on openai.com's size model, but most of a small
+ * star's size is its soft edge, so the dots keep the fine grain of the sky.
  */
-const RADIUS_GAIN = 0.7;
+const RADIUS_GAIN = 0.38;
 /**
  * The live field adds its stars together and blooms them, which makes them
  * brighter than their colour says. CSS dots do not, so they are drawn brighter
