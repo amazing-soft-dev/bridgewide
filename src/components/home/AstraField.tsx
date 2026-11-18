@@ -4,7 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AstraStaticDust } from "@/components/home/AstraStaticDust";
 import { AstraWord } from "@/components/home/AstraWord";
 import { AstraReplayButton } from "@/components/home/AstraReplayButton";
-import { ASTRA_REPLAY_EVENT, type Pose, restState } from "@/lib/astra-pose";
+import {
+  ASTRA_REPLAY_EVENT,
+  FOLLOW_DAMPING,
+  isAtRest,
+  nearestTurn,
+  type Pose,
+  restState,
+  settleToward,
+} from "@/lib/astra-pose";
 import { addTurn, dragTurn, keyTurn } from "@/lib/astra-pose-input";
 import { rayStrength } from "@/lib/astra-star-shader-math";
 import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
@@ -25,6 +33,7 @@ const CAMERA_LIFT_X = 0.16;
 const CAMERA_LIFT_Y = 0.09;
 const REST_YAW = 0.62;
 const REST_PITCH = -0.18;
+const REST_POSE: Pose = { yaw: REST_YAW, pitch: REST_PITCH };
 const [upperWing, lowerArch] = markPaths;
 
 /** Flow speed along each path, in mark units per second (each star varies +-15%). */
@@ -415,7 +424,9 @@ export function AstraField() {
   // True when WebGL or three could not start: the stage then shows a still sky.
   const [fallback, setFallback] = useState(false);
   const pointer = useRef({ x: 0, y: 0, inside: false, moveX: 0, moveY: 0 });
-  const orbit = useRef<Pose>(restState({ yaw: REST_YAW, pitch: REST_PITCH }));
+  const orbit = useRef<Pose>(restState(REST_POSE));
+  /** True from the end of a drag until the mark is back at rest. */
+  const settling = useRef(false);
   const surfaceRef = useRef<HTMLButtonElement>(null);
   const drag = useRef({
     active: false,
@@ -431,6 +442,16 @@ export function AstraField() {
     drag.current.active = false;
     drag.current.id = -1;
     delete surfaceRef.current?.dataset.dragging;
+    // Like openai.com (faceForward), a released mark eases back to rest, the short way round.
+    Object.assign(orbit.current, nearestTurn(orbit.current, REST_POSE));
+    settling.current = true;
+    if (surfaceRef.current) surfaceRef.current.dataset.settling = "true";
+  }, []);
+
+  /** Stops an in-flight settle, leaving the mark where it is. */
+  const holdPose = useCallback(() => {
+    settling.current = false;
+    delete surfaceRef.current?.dataset.settling;
   }, []);
 
   // A drag also ends when the window loses focus or the tab is hidden: the
@@ -721,11 +742,19 @@ export function AstraField() {
         const flow = still ? 0 : smoothstep((scroll - FLOW_START) / FLOW_SPAN);
         const time = now * 0.001;
 
-        // The mark stays where the visitor turned it. Only reduced motion pins it to rest.
+        // A released drag eases back to rest; an arrow-key turn stays. Reduced motion pins it to rest.
         const pose = orbit.current;
         if (still) {
           pose.yaw = REST_YAW;
           pose.pitch = REST_PITCH;
+        } else if (settling.current && !drag.current.active) {
+          const next = settleToward(pose, REST_POSE, FOLLOW_DAMPING, dt);
+          if (isAtRest(next, REST_POSE)) {
+            Object.assign(pose, restState(REST_POSE));
+            holdPose();
+          } else {
+            Object.assign(pose, next);
+          }
         }
         group.rotation.set(pose.pitch, pose.yaw, 0);
         group.updateMatrixWorld(true);
@@ -930,7 +959,8 @@ export function AstraField() {
       // Replay: the mark goes back to rest and the entrance starts again from its first frame.
       const onReplay = () => {
         endDrag();
-        Object.assign(orbit.current, restState({ yaw: REST_YAW, pitch: REST_PITCH }));
+        holdPose();
+        Object.assign(orbit.current, restState(REST_POSE));
         revealStart = performance.now();
       };
       window.addEventListener(ASTRA_REPLAY_EVENT, onReplay);
@@ -983,7 +1013,7 @@ export function AstraField() {
       alive = false;
       cleanup();
     };
-  }, [endDrag]);
+  }, [endDrag, holdPose]);
 
   return (
     <section
@@ -1039,6 +1069,7 @@ export function AstraField() {
               const turn = keyTurn(event.key);
               if (!turn) return;
               event.preventDefault();
+              holdPose();
               Object.assign(orbit.current, addTurn(orbit.current, turn));
             }}
             onPointerDown={(event) => {
@@ -1055,6 +1086,8 @@ export function AstraField() {
               pointer.current.y = event.clientY - rect.top;
               pointer.current.moveX = 0;
               pointer.current.moveY = 0;
+              // A new drag catches the mark from wherever it is, even mid-settle.
+              holdPose();
               drag.current.active = true;
               drag.current.id = event.pointerId;
               drag.current.startX = event.clientX;
