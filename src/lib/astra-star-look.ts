@@ -44,28 +44,26 @@ export function pickWeighted<T>(rand: Rand, entries: readonly [Weighted<T>, ...W
 
 export type Tier = "fine" | "ambient" | "flare";
 
-/** One star's look. Sizes are CSS px on the full 600px mark. */
+/** One star's look. Sizes are CSS px on the full 600px mark; brightness is an HDR multiplier. */
 export type Look = {
   tier: Tier;
   size: number;
-  glow: number;
   color: number;
   brightness: number;
 };
 
-/** Dust tiers: 85% fine, 12% ambient and the remaining 3% bright. */
-export const DUST_TIER_SHARES = { fine: 0.85, ambient: 0.12 } as const;
-
 /**
- * Star palette: a cool blue-white majority with warm accents. Weights sum to 1.
- * Shared by the dust and the ribbon stars so the whole field reads as one sky.
+ * Star palette: openai.com's "astra" palette, with the weights its picker uses
+ * (cumulative .36 / .52 / .64 / .74 / 1). A cyan and blue majority, a quarter
+ * near-white and about a fifth orange. Weights sum to 1. Shared by the dust
+ * and the ribbon stars so the whole field reads as one sky.
  */
 export const STAR_PALETTE = [
-  { value: 0xc4dcff, weight: 0.36 }, // blue-white
-  { value: 0xf2f6ff, weight: 0.14 }, // white
-  { value: 0x8fcdff, weight: 0.22 }, // ice
-  { value: 0xffbf8f, weight: 0.16 }, // peach
-  { value: 0xff8a45, weight: 0.12 }, // amber
+  { value: 0x6dcbf4, weight: 0.36 }, // cyan
+  { value: 0x7ab1fe, weight: 0.16 }, // blue
+  { value: 0xf87915, weight: 0.12 }, // orange
+  { value: 0xfa994c, weight: 0.1 }, // light orange
+  { value: 0xf5f6fb, weight: 0.26 }, // near-white
 ] as const satisfies readonly [Weighted<number>, ...Weighted<number>[]];
 
 /** A star colour drawn from the palette by weight. */
@@ -73,96 +71,56 @@ export function paletteColor(rand: Rand = Math.random): number {
   return pickWeighted<number>(rand, STAR_PALETTE);
 }
 
-function lerp(from: number, to: number, t: number): number {
-  return from + (to - from) * t;
-}
-
 /**
- * Background dust. Most grains are tiny and dim, a few are larger, and about
- * 3% are bright "flare" stars, so the sky has a few eye-catchers instead of
- * evenly sized beads. Brightness follows size inside a tier.
+ * openai.com's star size and brightness model. A star's point size in CSS px
+ * on the full 600px mark is `SIZE_BASE_PX + unit * SIZE_GAIN_PX` (its shader:
+ * `0.35 + starScale * 3.8` with `starScale = unit * 2.05`). Ordinary stars
+ * take `unit = 0.12 + rand^2.4 * 0.68`, so most are 1-3px specks with a tail
+ * to about 6.5px. Hero stars take `unit = 0.85 + 1.25 * rand` (7-17px).
  */
-export function dustLook(rand: Rand = Math.random): Look {
-  const roll = rand();
-  if (roll < DUST_TIER_SHARES.fine) {
-    const t = powerLaw(rand, 2.4);
-    return {
-      tier: "fine",
-      size: lerp(0.7, 1.8, t),
-      glow: 0.15,
-      color: paletteColor(rand),
-      brightness: lerp(0.28, 0.62, t),
-    };
-  }
-  if (roll < DUST_TIER_SHARES.fine + DUST_TIER_SHARES.ambient) {
-    const t = powerLaw(rand, 1.6);
-    return {
-      tier: "ambient",
-      size: lerp(1.6, 2.8, t),
-      glow: 0.35,
-      color: paletteColor(rand),
-      brightness: lerp(0.45, 0.72, t),
-    };
-  }
-  const t = rand();
+export const SIZE_BASE_PX = 0.35;
+export const SIZE_GAIN_PX = 3.8 * 2.05;
+/** Ordinary stars below this unit are "fine"; the rest are "ambient". */
+export const FINE_UNIT_MAX = 0.35;
+/**
+ * Share of ribbon stars that are hero stars. openai.com picks
+ * lerp(0.22, 1, sin(progress * PI)) * 0.085 along each arm (about 6%); the
+ * mark's ribbons are shorter and denser, so a smaller share gives a similar
+ * count of hero halos on screen.
+ */
+export const HERO_SHARE = 0.028;
+/** Ordinary brightness is 0.56-1.34 and hero brightness 2-3.5: HDR multipliers on the colour. */
+export const ORDINARY_BRIGHTNESS = { min: 0.56, max: 1.34 } as const;
+export const HERO_BRIGHTNESS = { min: 2, max: 3.5 } as const;
+/** Dust is the ordinary star at this share of its brightness, so the sky sits behind the mark. */
+export const DUST_BRIGHTNESS = 0.8;
+
+function ordinaryLook(rand: Rand, brightnessScale: number): Look {
+  const unit = 0.12 + powerLaw(rand, 2.4) * 0.68;
+  const tier: Tier = unit < FINE_UNIT_MAX ? "fine" : "ambient";
   return {
-    tier: "flare",
-    size: lerp(2.8, 4.4, t),
-    glow: 0.6,
+    tier,
+    size: SIZE_BASE_PX + unit * SIZE_GAIN_PX,
     color: paletteColor(rand),
-    brightness: lerp(0.85, 1, t),
+    brightness: between(rand, ORDINARY_BRIGHTNESS.min, ORDINARY_BRIGHTNESS.max) * brightnessScale,
   };
 }
 
-/** Ribbon tiers: 48% fine, 38% ambient, the remaining 14% flares. */
-export const RIBBON_TIER_SHARES = { fine: 0.48, ambient: 0.38 } as const;
-/** A quarter of the flares are large "hero" stars. */
-export const HERO_SHARE = 0.25;
-
-/**
- * A star on the mark's ribbons. The tier shares and the hero share are the
- * ones the ribbon always had, so its density of glow does not change; what
- * changes is the spread of sizes inside each tier, which is now skewed toward
- * the small end with a similar mean. A wide size range with no invisible
- * specks is what makes the line read as a glowing ribbon instead of a string
- * of equal beads.
- */
-export function ribbonLook(rand: Rand = Math.random): Look {
-  const roll = rand();
-  if (roll < RIBBON_TIER_SHARES.fine) {
-    // Small, but bright enough to stay visible next to the big stars.
-    return {
-      tier: "fine",
-      size: lerp(1.1, 2.3, powerLaw(rand, 1.6)),
-      glow: 0.3,
-      color: paletteColor(rand),
-      brightness: between(rand, 0.65, 0.9),
-    };
-  }
-  if (roll < RIBBON_TIER_SHARES.fine + RIBBON_TIER_SHARES.ambient) {
-    return {
-      tier: "ambient",
-      size: lerp(2.2, 4, powerLaw(rand, 1.4)),
-      glow: 0.55,
-      color: paletteColor(rand),
-      brightness: between(rand, 0.65, 0.9),
-    };
-  }
-  const warm = rand() < 0.2;
-  if (rand() < HERO_SHARE) {
-    return {
-      tier: "flare",
-      size: lerp(6.5, 9.8, powerLaw(rand, 1.15)),
-      glow: 1,
-      color: warm ? 0xffc9a0 : 0xcfe4ff,
-      brightness: 1,
-    };
-  }
+function heroLook(rand: Rand): Look {
   return {
     tier: "flare",
-    size: lerp(3.8, 6.3, powerLaw(rand, 1.2)),
-    glow: 0.9,
-    color: warm ? 0xffbb8a : 0xbcdcff,
-    brightness: 0.95,
+    size: SIZE_BASE_PX + between(rand, 0.85, 2.1) * SIZE_GAIN_PX,
+    color: paletteColor(rand),
+    brightness: between(rand, HERO_BRIGHTNESS.min, HERO_BRIGHTNESS.max),
   };
+}
+
+/** Background dust: always an ordinary star, a little dimmer than the ribbons. */
+export function dustLook(rand: Rand = Math.random): Look {
+  return ordinaryLook(rand, DUST_BRIGHTNESS);
+}
+
+/** A star on the mark's ribbons: an ordinary star, or now and then a hero star. */
+export function ribbonLook(rand: Rand = Math.random): Look {
+  return rand() < HERO_SHARE ? heroLook(rand) : ordinaryLook(rand, 1);
 }
