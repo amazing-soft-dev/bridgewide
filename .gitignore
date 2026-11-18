@@ -57,3 +57,7 @@ coverage/
 
 # claude code (local launch config and settings)
 /.claude/
+
+# playwright output
+/test-results/
+/playwright-report/
