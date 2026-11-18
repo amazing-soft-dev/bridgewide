@@ -1,0 +1,596 @@
+/*
+ * Site header. Structure, spacing and motion follow the Staffora (Framer)
+ * reference; colors map to the BridgeWide palette:
+ *   Framer bone/cloud -> --color-cloud / #fff, ink/night/pine -> --color-ink,
+ *   brass -> --color-brand, fog -> --color-cloud-soft, stone -> --color-stone.
+ * Unlayered on purpose: it must win over Tailwind utilities on the shared Button.
+ */
+:root {
+  --header-strip: 34px;
+  --header-bar: 62px;
+  --header-h: calc(var(--header-strip) + var(--header-bar));
+}
+@media (min-width: 640px) {
+  :root {
+    --header-bar: 72px;
+  }
+}
+
+html {
+  scroll-padding-top: 96px;
+  scroll-padding-bottom: 88px;
+}
+
+/*
+ * Pages that do not open on a dark hero reserve the header's height. A page whose
+ * first section is dark runs under the fixed header instead (JSON-LD scripts before
+ * it do not count, hence first-of-type).
+ */
+main {
+  padding-top: var(--header-h);
+}
+main:has(> section[data-header-tone="dark"]:first-of-type) {
+  padding-top: 0;
+}
+
+.sthd {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1000;
+  color: var(--color-ink);
+  pointer-events: none;
+  transition: translate 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sthd > * {
+  pointer-events: auto;
+}
+.sthd.is-hide {
+  translate: 0 -110%;
+}
+.sthd.is-dark:not(.is-search),
+.sthd.is-darksolid:not(.is-search) {
+  color: var(--color-cloud);
+}
+
+.sthd-in {
+  width: 100%;
+  max-width: calc(clamp(1280px, 92vw, 1520px) + 112px);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+@media (min-width: 640px) {
+  .sthd-in {
+    padding: 0 32px;
+  }
+}
+@media (min-width: 1024px) {
+  .sthd-in {
+    padding: 0 56px;
+  }
+}
+
+/* announcement strip */
+.sthd-strip {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  height: var(--header-strip);
+  padding: 0 14px;
+  overflow: hidden;
+  background: var(--color-ink);
+  color: color-mix(in srgb, var(--color-cloud) 80%, transparent);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition:
+    height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.3s ease;
+}
+@media (min-width: 640px) {
+  .sthd-strip {
+    justify-content: center;
+    gap: 10px;
+    padding: 0 20px;
+    letter-spacing: 0.12em;
+  }
+}
+.sthd.is-solid .sthd-strip {
+  height: 0;
+  opacity: 0;
+}
+.sthd-strip b {
+  color: var(--color-cloud);
+  font-weight: 600;
+}
+.sthd-strip i {
+  display: none;
+  font-style: normal;
+  opacity: 0.5;
+}
+@media (min-width: 640px) {
+  .sthd-strip i {
+    display: inline;
+  }
+}
+.sthd-strip a {
+  color: var(--color-cloud);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-cloud) 30%, transparent);
+}
+.sthd-strip a:hover {
+  border-color: var(--color-cloud);
+}
+.sthd-live {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  box-shadow: 0 0 10px var(--color-brand);
+  animation: sthd-blink 1.6s steps(2) infinite;
+}
+@keyframes sthd-blink {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* bar */
+.sthd-bar {
+  position: relative;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition:
+    background 0.4s ease,
+    border-color 0.4s ease,
+    backdrop-filter 0.4s ease;
+}
+.sthd.is-solid .sthd-bar {
+  background: color-mix(in srgb, var(--color-cloud) 88%, transparent);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border-color: color-mix(in srgb, var(--color-ink) 10%, transparent);
+}
+.sthd.is-darksolid .sthd-bar {
+  background: color-mix(in srgb, var(--color-ink) 86%, transparent);
+  border-color: color-mix(in srgb, var(--color-cloud) 10%, transparent);
+}
+.sthd.is-search .sthd-bar {
+  background: var(--color-cloud);
+  border-color: color-mix(in srgb, var(--color-ink) 10%, transparent);
+}
+.sthd-bar > .sthd-in {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 20px;
+  height: var(--header-bar);
+  transition: height 0.4s ease;
+}
+.sthd.is-solid .sthd-bar > .sthd-in {
+  height: 64px;
+}
+@media (min-width: 1280px) {
+  .sthd-bar > .sthd-in {
+    grid-template-columns: auto 1fr auto;
+  }
+}
+.sthd-logo {
+  justify-self: start;
+}
+
+/* primary links */
+.sthd-links {
+  display: none;
+  gap: 2px;
+  justify-self: center;
+}
+@media (min-width: 1280px) {
+  .sthd-links {
+    display: flex;
+  }
+}
+.sthd-links a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 11px;
+  border-radius: 4px;
+  color: inherit;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
+}
+.sthd-links a::after {
+  content: "";
+  position: absolute;
+  right: 11px;
+  bottom: 5px;
+  left: 11px;
+  height: 2px;
+  background: var(--color-brand);
+  transform-origin: 0 50%;
+  scale: 0 1;
+  transition: scale 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sthd-links a:hover::after,
+.sthd-links a:focus-visible::after,
+.sthd-links a[aria-current="page"]::after {
+  scale: 1 1;
+}
+@media (min-width: 1440px) {
+  .sthd-links a {
+    padding: 10px 13px;
+  }
+  .sthd-links a::after {
+    right: 13px;
+    left: 13px;
+  }
+}
+
+/* right cluster */
+.sthd-r {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+.sthd-sbtn,
+.sthd-burger,
+.sthd-x {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease;
+}
+.sthd-sbtn:hover,
+.sthd-burger:hover {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+.sthd-burger {
+  gap: 5px;
+  align-content: center;
+}
+.sthd-burger span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.sthd-burger span + span {
+  width: 12px;
+  justify-self: end;
+}
+@media (min-width: 1280px) {
+  .sthd-burger {
+    display: none;
+  }
+}
+.sthd-tel {
+  display: none;
+  color: inherit;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  opacity: 0.85;
+}
+.sthd-tel:hover {
+  opacity: 1;
+}
+@media (min-width: 1440px) {
+  .sthd-tel {
+    display: block;
+  }
+}
+.sthd-cta {
+  display: none !important;
+}
+@media (min-width: 1280px) {
+  .sthd-cta {
+    display: inline-flex !important;
+  }
+}
+/* on dark grounds the solid button wipes to cloud, like the reference */
+.sthd:is(.is-dark, .is-darksolid):not(.is-search) .sthd-cta::before {
+  background: var(--color-cloud);
+}
+.sthd:is(.is-dark, .is-darksolid):not(.is-search) .sthd-cta:is(:hover, :focus-visible) {
+  color: var(--color-ink);
+}
+
+/* search drawer */
+.sthd-search {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  background: var(--color-cloud);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent);
+  color: var(--color-ink);
+  clip-path: inset(0 0 100% 0);
+  visibility: hidden;
+  transition:
+    clip-path 0.45s cubic-bezier(0.7, 0, 0.2, 1),
+    visibility 0s 0.45s;
+}
+.sthd-search.is-on {
+  clip-path: inset(0 0 -40px 0);
+  visibility: visible;
+  transition:
+    clip-path 0.45s cubic-bezier(0.7, 0, 0.2, 1),
+    visibility 0s;
+}
+.sthd-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 66px;
+}
+.sthd-form input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: clamp(18px, 1.6vw, 24px);
+  letter-spacing: -0.01em;
+  outline: none;
+}
+.sthd-form:focus-within {
+  box-shadow: inset 0 -2px 0 var(--color-brand);
+}
+.sthd-form kbd {
+  padding: 4px 7px;
+  border: 1px solid var(--color-cloud-soft);
+  border-radius: 4px;
+  color: color-mix(in srgb, var(--color-stone) 78%, var(--color-ink));
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+.sthd-res,
+.sthd-sres {
+  display: grid;
+  gap: 4px;
+  padding: 10px 0 18px;
+}
+.sthd-res:empty {
+  padding: 0;
+}
+.sthd-hit {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 6px;
+  color: var(--color-ink);
+  text-decoration: none;
+  transition: background 0.25s ease;
+}
+.sthd-hit:hover,
+.sthd-hit:focus-visible {
+  background: var(--color-cloud-soft);
+}
+.sthd-hit > span {
+  display: grid;
+  gap: 3px;
+}
+.sthd-hit b {
+  font-size: 15px;
+  font-weight: 600;
+}
+.sthd-hit em {
+  color: color-mix(in srgb, var(--color-stone) 78%, var(--color-ink));
+  font-size: 12px;
+  font-style: normal;
+  letter-spacing: 0.06em;
+}
+.sthd-none {
+  margin: 0;
+  padding: 12px;
+  color: color-mix(in srgb, var(--color-stone) 78%, var(--color-ink));
+  font-size: 14px;
+}
+.sthd-all {
+  display: inline-block;
+  margin: 6px 12px 0;
+  color: var(--color-brand-deep);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.sthd-code {
+  display: inline-grid;
+  place-items: center;
+  min-width: 40px;
+  padding: 4px 0;
+  border: 1px solid color-mix(in srgb, var(--color-brand) 45%, transparent);
+  border-radius: 3px;
+  color: var(--color-brand-deep);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+/* phone / tablet sheet */
+.sthd-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 2147482000;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 20px 28px;
+  overflow-y: auto;
+  background: var(--color-ink);
+  color: var(--color-cloud);
+  animation: sthd-sheet-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes sthd-sheet-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.sthd-shead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sthd-x {
+  color: var(--color-cloud);
+}
+.sthd-sform {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--color-cloud) 16%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-cloud) 8%, transparent);
+}
+.sthd-sform input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-cloud);
+  font-size: 16px;
+  outline: none;
+}
+.sthd-sform input::placeholder {
+  color: color-mix(in srgb, var(--color-cloud) 78%, transparent);
+}
+.sthd-sform:focus-within {
+  border-color: var(--color-brand);
+}
+.sthd-sres .sthd-hit {
+  color: var(--color-cloud);
+}
+.sthd-sres .sthd-hit:hover,
+.sthd-sres .sthd-hit:focus-visible {
+  background: color-mix(in srgb, var(--color-cloud) 8%, transparent);
+}
+.sthd-sres .sthd-hit em,
+.sthd-sres .sthd-none {
+  color: color-mix(in srgb, var(--color-cloud) 78%, transparent);
+}
+.sthd-sres .sthd-all,
+.sthd-sres .sthd-code {
+  color: var(--color-cloud);
+}
+.sthd-slinks {
+  display: grid;
+  gap: 2px;
+  margin-top: 6px;
+}
+.sthd-slinks a {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-cloud) 10%, transparent);
+  color: var(--color-cloud);
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(30px, 9vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0;
+  translate: 0 16px;
+  animation: sthd-link-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes sthd-link-in {
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+.sthd-slinks a span {
+  color: color-mix(in srgb, var(--color-brand) 40%, var(--color-cloud));
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+}
+.sthd-sbtns {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+.sthd-sbtns > * {
+  width: 100%;
+}
+/* the ghost button wipes to cloud on the dark sheet */
+.sthd-sheet .sthd-ghost {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--color-cloud) 34%, transparent);
+}
+.sthd-sheet .sthd-ghost::before {
+  background: var(--color-cloud);
+}
+.sthd-sheet .sthd-ghost:is(:hover, :focus-visible) {
+  color: var(--color-ink);
+  border-color: var(--color-cloud);
+}
+.sthd-scontact {
+  display: grid;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 18px;
+  color: color-mix(in srgb, var(--color-cloud) 78%, transparent);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.sthd-scontact a {
+  color: var(--color-cloud);
+  text-decoration: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sthd,
+  .sthd * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+.sthd-slinks a em {
+  margin-left: auto;
+  color: color-mix(in srgb, var(--color-cloud) 78%, transparent);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}

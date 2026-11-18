@@ -1,22 +1,17 @@
 # Continuous integration.
 #
-# Runs on every pull request into `dev` or `main`, and on pushes to `dev`.
-# Deployment to GitHub Pages is separate: see nextjs.yml, which runs on pushes
-# to `main`.
-#
-# Branch flow (see README "CI/CD"):
-#   fix/* feat/* ... --auto-pr.yml-->  dev  --release.yml-->  main --nextjs.yml--> Pages
+# Runs on every pull request, every push to `dev` or `main`, and
+# workflow_dispatch. A newer push to the same ref cancels the older run.
 #
 # "CI passed" is the one status check branch rules require. It fails unless
-# every other job succeeded, so jobs can be added here without touching the
-# rules. On pull requests it also posts a checks-summary comment.
+# every other job succeeded. Merge passing pull request merges the PR only
+# after this workflow finishes with success.
 name: CI
 
 on:
   pull_request:
-    branches: ["dev", "main"]
   push:
-    branches: ["dev"]
+    branches: ["dev", "main"]
   workflow_dispatch:
 
 permissions:
@@ -36,8 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -46,6 +41,10 @@ jobs:
         run: npm run lint
       - name: Type check
         run: npm run typecheck
+      - name: Test, with a coverage floor
+        run: npm run test:coverage
+      - name: Check photos are used once
+        run: npm run check:images
 
   build:
     name: Build (${{ matrix.target }})
@@ -58,19 +57,31 @@ jobs:
         # static: the GitHub Pages export, built the same way nextjs.yml builds it.
         target: [server, static]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
       - name: Restore Next.js cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .next/cache
           key: ${{ runner.os }}-nextjs-${{ matrix.target }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'public/**', 'next.config.ts') }}
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ matrix.target }}-${{ hashFiles('package-lock.json') }}-
       - run: npm ci
+      - if: matrix.target == 'static'
+        name: Restore responsive images
+        uses: actions/cache@v6
+        with:
+          path: public/_img
+          key: img-${{ hashFiles('public/images/**', 'src/lib/image-sizes.json', 'scripts/optimize-images.mjs') }}
+      - if: matrix.target == 'static'
+        name: Build responsive images
+        run: npm run images
+      - if: matrix.target == 'static'
+        name: Omit cron routes from the static export
+        run: rm -rf src/app/api/cron
       - name: Build
         run: npx --no-install next build
         env:
@@ -81,20 +92,40 @@ jobs:
       - name: Check static export output
         if: matrix.target == 'static'
         run: |
-          for f in index.html 404.html sitemap.xml robots.txt apple-icon opengraph-image; do
+          for f in index.html 404.html sitemap.xml robots.txt llms.txt llms-full.txt insights/feed.xml favicon.ico favicon-16.png favicon-32.png apple-touch-icon.png icon-192.png icon-512.png manifest.webmanifest opengraph-image insights/brief-that-earns-a-shortlist/opengraph-image regions/usa/opengraph-image; do
             test -e "out/$f" || { echo "::error::out/$f is missing from the static export"; exit 1; }
           done
           if [ -d out/api ]; then
             echo "::error::out/api should not exist in the static export"; exit 1
+          fi
+          # Every responsive image referenced by the HTML must have been built.
+          missing=$(grep -rhoE '/_img/[^" ,?]+\.webp' out --include='*.html' | sort -u | while read -r p; do test -f "out$p" || echo "$p"; done)
+          if [ -n "$missing" ]; then
+            echo "::error::Image files referenced in HTML are missing:"; echo "$missing"; exit 1
           fi
           # Asset URLs must match where the site is served (the domain root).
           if grep -q '"/bridgewide/_next/' out/index.html; then
             echo "::error::index.html references /bridgewide/_next/ but the site is served from the domain root"; exit 1
           fi
 
+  e2e:
+    name: Browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Contact forms and closed listings
+        run: npm run test:e2e
+
   ci-passed:
     name: CI passed
-    needs: [quality, build]
+    needs: [quality, build, e2e]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -111,11 +142,12 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
           QUALITY: ${{ needs.quality.result }}
           BUILD: ${{ needs.build.result }}
+          E2E: ${{ needs.e2e.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           icon() { case "$1" in success) echo "✅";; skipped) echo "⏭️";; cancelled) echo "⚪";; *) echo "❌";; esac; }
-          if [ "$QUALITY" = success ] && [ "$BUILD" = success ]; then
+          if [ "$QUALITY" = success ] && [ "$BUILD" = success ] && [ "$E2E" = success ]; then
             verdict="✅ **All checks passed.** This PR will merge automatically."
           else
             verdict="❌ **Checks failed.** Push a fix to this branch; the PR updates and CI runs again."
@@ -134,6 +166,7 @@ jobs:
           | --- | --- |
           | Lint and type check | $(icon "$QUALITY") $QUALITY |
           | Builds (server, static) | $(icon "$BUILD") $BUILD |
+          | Browser | $(icon "$E2E") $E2E |
 
           <details><summary>Changed files ($count)</summary>
 
@@ -153,7 +186,7 @@ jobs:
             gh pr comment "$PR" --repo "$REPO" --body "$body"
           fi
       - name: Fail unless every job succeeded
-        if: needs.quality.result != 'success' || needs.build.result != 'success'
+        if: needs.quality.result != 'success' || needs.build.result != 'success' || needs.e2e.result != 'success'
         run: |
-          echo "::error::Lint and type check: ${{ needs.quality.result }}, builds: ${{ needs.build.result }}"
+          echo "::error::Lint and type check: ${{ needs.quality.result }}, builds: ${{ needs.build.result }}, browser: ${{ needs.e2e.result }}"
           exit 1

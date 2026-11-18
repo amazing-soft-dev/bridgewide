@@ -1,7 +1,25 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AstraStaticDust } from "@/components/home/AstraStaticDust";
+import { AstraWord } from "@/components/home/AstraWord";
+import { AstraReplayButton } from "@/components/home/AstraReplayButton";
+import {
+  ASTRA_REPLAY_EVENT,
+  FOLLOW_DAMPING,
+  isAtRest,
+  nearestTurn,
+  type Pose,
+  restState,
+  settleToward,
+} from "@/lib/astra-pose";
+import { addTurn, dragTurn, keyTurn } from "@/lib/astra-pose-input";
+import { STAR_FRAGMENT, STAR_VERTEX } from "@/lib/astra-star-shaders";
+import { CONTEXT_RESTORE_MS, canCreateWebgl, shouldRun } from "@/lib/astra-webgl";
 import { markPaths } from "@/components/brand/mark";
+import { firstSight, revealClock, revealProgress, revealSize } from "@/lib/astra-reveal";
+import { dustMotion } from "@/lib/astra-dust-motion";
+import { dustLook, ribbonLook, type Look, type Tier } from "@/lib/astra-star-look";
 
 /** Mark units → world. */
 const SCALE = 0.0368;
@@ -14,12 +32,29 @@ const CAMERA_LIFT_X = 0.16;
 const CAMERA_LIFT_Y = 0.09;
 const REST_YAW = 0.62;
 const REST_PITCH = -0.18;
+const REST_POSE: Pose = { yaw: REST_YAW, pitch: REST_PITCH };
 const [upperWing, lowerArch] = markPaths;
 
-/** Previous upper path midpoint was 0.071. Both ribbons share one third of that. */
-const FLOW_SPEED = 0.071 / 3;
-const TWINKLE = 0.45;
-const FLARE_TWINKLE = 0.2;
+/** Flow speed along each path, in mark units per second (each star varies +-15%). */
+const FLOW_UNITS = 8;
+/** Distance (mark units) over which a star grows in after it spawns at a path's start. */
+const SPAWN_FADE = 5;
+/** Distance (mark units) over which a star shrinks and fades out into the meeting point at a path's end. */
+const MEET_FADE = 11;
+/** Smallest size a star shrinks to before it disappears at a meeting point. */
+const MEET_MIN_SCALE = 0.12;
+/** Depth of the mark's curved surface, in mark units: gives it a real 3D body when turned. */
+const DEPTH_AMPLITUDE = 13;
+/** Ribbon stars per mark unit of path length. */
+const STARS_PER_UNIT = 5.5;
+/** A star's offset from the line is spread over a tube: this much of it goes into depth. */
+const TUBE_DEPTH = 3;
+/**
+ * Ribbon twinkle, as on openai.com: 0.86 + 0.14 * sin(phase + t * 0.62 * rate),
+ * always on (not only once the stream flows), so lines never drop out.
+ */
+const TWINKLE_DEPTH = 0.14;
+const TWINKLE_SPEED = 0.62;
 /** Ribbon stars wear the outer-spray look until this far into their gather, then take their ribbon look. */
 const LAND_START = 0.75;
 const GATHER_STAGGER = 0.22;
@@ -31,9 +66,7 @@ const NUDGE_RADIUS_PX = 150;
 const NUDGE_GAIN = 0.7;
 const NUDGE_MAX_PX = 56;
 const NUDGE_RETURN = 3.2;
-const SPRING_K = 38;
-const SPRING_C = 9;
-const DUST_PER_SIDE = 320;
+const DUST_PER_SIDE = 200;
 /** Dust settles between these NDC distances from the centre line, on both sides. */
 const BAND_INNER = 0.4;
 const BAND_OUTER = 0.98;
@@ -41,106 +74,68 @@ const BAND_Y = 0.95;
 /** NDC distance over which the clear zone around each word fades back in. */
 const WORD_FEATHER = 0.06;
 const WORD_PAD_PX = 32;
-/** Share of fine and ambient stars; the rest are flares. Dust has no flares. */
-const DUST_TIERS = [0.85, 0.15] as const;
-/** Ribbon: 60% 1px dust, 30% 3px cyan, 10% 8–12px flares. */
-const RIBBON_TIERS = [0.6, 0.3] as const;
-const FINE_COLOR = 0xffffff;
-const ICE_COLOR = 0xaee6ff;
-const AMBER_COLOR = 0xffa366;
-const FLARE_COLOR = 0xffffff;
+/**
+ * How big, bright and coloured each star is (tier shares, skewed size ranges,
+ * the palette) lives in src/lib/astra-star-look.ts, where it is tested.
+ */
+/**
+ * Linear sky colour. Nothing is tone mapped (as on openai.com), so this is what
+ * reaches the screen: about #03040a. The section behind the canvas matches it.
+ */
+const BACKGROUND = [0.011, 0.016, 0.038] as const;
+/** Bloom spreads the HDR hero stars into big soft halos. */
+const BLOOM_STRENGTH = 0.85;
+const BLOOM_RADIUS = 0.55;
+/**
+ * Low, like openai.com's 0.08: bloom then follows HDR brightness, so hero stars
+ * (2-3.5) glow wide while 1-3px specks stay crisp.
+ */
+const BLOOM_THRESHOLD = 0.12;
 /** Stroke width in mark units. Core is 20% of this; mist reaches 120%. */
-const STROKE_WIDTH = 6;
+const STROKE_WIDTH = 7.5;
 const CORE_WIDTH = STROKE_WIDTH * 0.2;
 const MIST_WIDTH = STROKE_WIDTH * 1.2;
 
-const STAR_VERTEX = /* glsl */ `
-attribute float size;
-attribute float glow;
-attribute float alpha;
-uniform float uPixelRatio;
-uniform float uDepth;
-varying vec3 vColor;
-varying float vGlow;
-varying float vAlpha;
-varying float vSize;
-varying float vQuad;
-
-void main() {
-  vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-  gl_Position = projectionMatrix * mvPosition;
-  vColor = color;
-  vGlow = glow;
-  vAlpha = alpha;
-  vSize = max(size * uPixelRatio, 1.0);
-  // Halo must reach past the core so neighbours add into one beam.
-  vQuad = max(vSize, mix(2.5, 10.0, vGlow) * uPixelRatio);
-  gl_PointSize = vQuad;
-}
-`;
-
-const STAR_FRAGMENT = /* glsl */ `
-uniform float uPixelRatio;
-varying vec3 vColor;
-varying float vGlow;
-varying float vAlpha;
-varying float vSize;
-varying float vQuad;
-
-void main() {
-  float d = length(gl_PointCoord - 0.5) * vQuad;
-  if (d > vQuad * 0.5) discard;
-  float css = d / uPixelRatio;
-  float sizeCss = vSize / uPixelRatio;
-  float hero = step(0.8, vGlow);
-  float coreCss = mix(
-    clamp(sizeCss * 0.45, 0.4, 1.4),
-    clamp(sizeCss * 0.35, 2.0, 5.0),
-    hero
-  );
-  // Under one device pixel the core aliases as it moves, so widen it and keep its energy.
-  float coreWidth = max(coreCss, 1.0 / uPixelRatio);
-  float c = css / coreWidth;
-  float core = (coreCss * coreCss) / (coreWidth * coreWidth) * exp(-2.0 * c * c);
-  float r = min(d / (vQuad * 0.5), 1.0);
-  float edge = 1.0 - r * r;
-  float halo = (0.35 + vGlow) * exp(-mix(2.2, 1.45, hero) * r) * edge * edge;
-  vec3 hot = vec3(1.0);
-  gl_FragColor = vec4((hot * core + vColor * halo) * vAlpha, 1.0);
-}
-`;
-
 type Sample = { x: number; y: number };
 type Spine = Sample[];
+/** Per-sample smoothed normal and local radius of curvature (mark units). */
+type Frame = { nx: number; ny: number; radius: number };
+/**
+ * One open stream through part of the mark (paths A-E). Stars spawn at the
+ * start, flow to the end, and shrink away into the meeting point there.
+ */
+type FlowPath = { name: string; points: Spine; frames: Frame[]; z: Float32Array; length: number };
 type Spray = { nx: number; ny: number; z: number };
-type Tier = "fine" | "ambient" | "flare";
-type Look = {
-  tier: Tier;
-  /** CSS px on the full 600px mark. */
-  size: number;
-  glow: number;
-  color: number;
-  brightness: number;
-};
 type StarBase = Look & {
   z: number;
   spray: Spray;
   delay: number;
   phase: number;
   rate: number;
+  /** Fixed per-star coverage, 0.82-0.98 (openai.com's starOpacity). */
+  opacity: number;
 };
 type RibbonStar = StarBase & {
   kind: "ribbon";
   /** Look while the star is out in the side spray, drawn from the dust split. */
   outer: Look;
-  spine: 0 | 1;
-  t: number;
+  /** Which flow path (index into the paths list) the star travels. */
+  path: number;
+  /** Distance along that path, in mark units. */
+  s: number;
+  /** Mark units per second. */
   speed: number;
   offset: number;
+  /** Angle of the offset around the line: in-plane at 0, into depth at pi/2. */
+  angle: number;
 };
 type DustStar = StarBase & {
   kind: "dust";
   band: { nx: number; ny: number };
+  /** Per-star seed in [0, 1) for the drift loop. */
+  drift: number;
+  /** 0 (far) to 1 (near): how far and fast the grain drifts and how much it slides with scroll. */
+  depth: number;
 };
 type Star = RibbonStar | DustStar;
 type Area = { left: number; right: number; top: number; bottom: number };
@@ -156,11 +151,6 @@ function clamp(value: number, min: number, max: number) {
 function smoothstep(value: number) {
   const t = clamp01(value);
   return t * t * (3 - 2 * t);
-}
-
-function wrapAngle(angle: number) {
-  const turn = Math.PI * 2;
-  return ((((angle + Math.PI) % turn) + turn) % turn) - Math.PI;
 }
 
 function sampleSpine(d: string, steps: number): Spine {
@@ -186,35 +176,157 @@ function sampleSpine(d: string, steps: number): Spine {
   return samples;
 }
 
-function spineLength(spine: Spine) {
-  let length = 0;
-  for (let i = 0; i < spine.length; i++) {
-    const a = spine[i];
-    const b = spine[(i + 1) % spine.length];
-    if (!a || !b) continue;
-    length += Math.hypot(b.x - a.x, b.y - a.y);
-  }
-  return length;
+/** Index of the sample closest to (x, y). */
+function nearestIndex(spine: Spine, x: number, y: number) {
+  let best = Infinity;
+  let index = 0;
+  spine.forEach((p, i) => {
+    const d = (p.x - x) ** 2 + (p.y - y) ** 2;
+    if (d < best) {
+      best = d;
+      index = i;
+    }
+  });
+  return index;
 }
 
-function pointOnSpine(spine: Spine, t: number, offset: number) {
+/** Index of the right-most sample. */
+function rightmostIndex(spine: Spine) {
+  let index = 0;
+  spine.forEach((p, i) => {
+    if (p.x > (spine[index]?.x ?? -Infinity)) index = i;
+  });
+  return index;
+}
+
+/** Samples from index `from` to `to` (inclusive), walking `dir` around a closed spine. */
+function arc(spine: Spine, from: number, to: number, dir: 1 | -1): Spine {
   const n = spine.length;
-  const wrapped = ((t % 1) + 1) % 1;
-  const f = wrapped * n;
-  const i = Math.floor(f) % n;
-  const u = f - Math.floor(f);
-  const a = spine[i];
-  const b = spine[(i + 1) % n];
-  if (!a || !b) return { x: 84, y: 50 };
-  const tx = b.x - a.x;
-  const ty = b.y - a.y;
-  const len = Math.hypot(tx, ty) || 1;
-  const nx = -ty / len;
-  const ny = tx / len;
+  const out: Spine = [];
+  for (let i = from, guard = 0; guard <= n; i = (i + dir + n) % n, guard++) {
+    const point = spine[i];
+    if (point) out.push(point);
+    if (i === to) break;
+  }
+  return out;
+}
+
+/**
+ * Depth of the mark's surface at a point. A function of position (not of the
+ * path), so paths that meet sit at the same depth and join without a step.
+ */
+function surfaceDepth(x: number, y: number) {
+  return DEPTH_AMPLITUDE * Math.sin((x / MARK_WIDTH) * Math.PI * 1.5 - 0.4) * Math.cos((y / MARK_HEIGHT - 0.5) * 1.6);
+}
+
+/** Smoothed normals for an open polyline (window clamped at the ends). */
+function openFrames(points: Spine, window = 6): Frame[] {
+  const n = points.length;
+  const at = (i: number) => points[clamp(i, 0, n - 1)] ?? { x: 0, y: 0 };
+  return points.map((_, i) => {
+    const prev = at(i - window);
+    const here = at(i);
+    const next = at(i + window);
+    const tx = next.x - prev.x;
+    const ty = next.y - prev.y;
+    const len = Math.hypot(tx, ty) || 1;
+    const ax = here.x - prev.x;
+    const ay = here.y - prev.y;
+    const bx = next.x - here.x;
+    const by = next.y - here.y;
+    const turn = Math.abs(Math.atan2(ax * by - ay * bx, ax * bx + ay * by));
+    const chord = Math.hypot(tx, ty);
+    const radius = turn > 1e-3 ? chord / (2 * Math.sin(turn / 2)) : Infinity;
+    return { nx: -ty / len, ny: tx / len, radius };
+  });
+}
+
+/** Even 0.4-unit spacing, so distance along the path maps linearly to sample index. */
+function makePath(name: string, raw: Spine): FlowPath {
+  const cumulative = [0];
+  for (let i = 1; i < raw.length; i++) {
+    const a = raw[i - 1];
+    const b = raw[i];
+    cumulative.push((cumulative[i - 1] ?? 0) + (a && b ? Math.hypot(b.x - a.x, b.y - a.y) : 0));
+  }
+  const length = cumulative[cumulative.length - 1] ?? 0;
+  const count = Math.max(8, Math.round(length / 0.4) + 1);
+  const points: Spine = [];
+  let k = 0;
+  for (let i = 0; i < count; i++) {
+    const target = (i / (count - 1)) * length;
+    while (k < raw.length - 2 && (cumulative[k + 1] ?? 0) < target) k++;
+    const a = raw[k];
+    const b = raw[k + 1] ?? a;
+    if (!a || !b) continue;
+    const span = (cumulative[k + 1] ?? length) - (cumulative[k] ?? 0) || 1;
+    const u = clamp01((target - (cumulative[k] ?? 0)) / span);
+    points.push({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u });
+  }
+  const z = new Float32Array(points.length);
+  points.forEach((p, i) => (z[i] = surfaceDepth(p.x, p.y)));
+  return { name, points, frames: openFrames(points), z, length };
+}
+
+/**
+ * The five streams. Each ribbon outline is split at its junctions so every
+ * edge is covered exactly once:
+ *   Upper wing (outline starts at its top-left tip):
+ *     A  outer roof    top-left tip -> along the top -> down the right hook -> fold beside "Wide"
+ *     B  inner shelf   top-left tip -> interior diagonal -> flat shelf -> same fold
+ *   Lower arch:
+ *     C  ramp          bottom-left tip -> up and right -> along the top -> far right of the loop
+ *     D  pillar        centre-bottom -> straight up -> over the inner dome -> along the base -> bottom-left tip (where C spawns)
+ *     E  bottom hook   centre-bottom -> right along the bottom -> around the loop -> far right (meets C)
+ */
+function buildPaths(upper: Spine, lower: Spine): FlowPath[] {
+  const topLeft = nearestIndex(upper, 13.7, 1.9);
+  const fold = nearestIndex(upper, 163.5, 55.3);
+  const bottomLeft = nearestIndex(lower, 2.7, 96);
+  const centreBottom = nearestIndex(lower, 111.8, 98.1);
+  const farRight = rightmostIndex(lower);
+  return [
+    makePath("A outer roof", arc(upper, topLeft, fold, 1)),
+    makePath("B inner shelf", arc(upper, topLeft, fold, -1)),
+    makePath("C ramp", arc(lower, bottomLeft, farRight, 1)),
+    makePath("D pillar", arc(lower, centreBottom, bottomLeft, 1)),
+    makePath("E bottom hook", arc(lower, centreBottom, farRight, -1)),
+  ];
+}
+
+/** Point on an open path at distance `s`, pushed `offset` along the smoothed normal. */
+function pointOnPath(path: FlowPath, s: number, offset: number) {
+  const n = path.points.length;
+  const f = clamp(s / (path.length || 1), 0, 1) * (n - 1);
+  const i = Math.min(n - 2, Math.floor(f));
+  const u = f - i;
+  const a = path.points[i];
+  const b = path.points[i + 1];
+  const fa = path.frames[i];
+  const fb = path.frames[i + 1];
+  if (!a || !b || !fa || !fb) return { x: 84, y: 50, z: 0 };
+  let nx = fa.nx + (fb.nx - fa.nx) * u;
+  let ny = fa.ny + (fb.ny - fa.ny) * u;
+  const nlen = Math.hypot(nx, ny) || 1;
+  nx /= nlen;
+  ny /= nlen;
+  // Tight bends: keep the offset inside the curve radius so stars stay on the line.
+  const radius = Math.min(fa.radius, fb.radius);
+  const limit = Number.isFinite(radius) ? Math.max(0.35, radius * 0.6) : Infinity;
+  const kept = Math.sign(offset) * Math.min(Math.abs(offset), limit);
   return {
-    x: a.x + tx * u + nx * offset,
-    y: a.y + ty * u + ny * offset,
+    x: a.x + (b.x - a.x) * u + nx * kept,
+    y: a.y + (b.y - a.y) * u + ny * kept,
+    z: (path.z[i] ?? 0) * (1 - u) + (path.z[i + 1] ?? 0) * u,
   };
+}
+
+/**
+ * 0 at a path's spawn point and at its meeting point, 1 in between: stars
+ * grow in after they spawn and shrink away into the meeting point.
+ */
+function streamEnvelope(path: FlowPath, s: number) {
+  return smoothstep(s / SPAWN_FADE) * smoothstep((path.length - s) / MEET_FADE);
 }
 
 function toWorld(x: number, y: number, z: number) {
@@ -253,41 +365,12 @@ function gaussian(sigma: number) {
 }
 
 function starLook(kind: "ribbon" | "dust"): Look {
-  const dust = kind === "dust";
-  const [fine, ambient] = dust ? DUST_TIERS : RIBBON_TIERS;
-  const roll = Math.random();
-  if (roll < fine) {
-    return {
-      tier: "fine" as const,
-      size: between(0.8, 1.5),
-      glow: dust ? 0 : 0.45,
-      color: FINE_COLOR,
-      brightness: dust ? between(0.35, 0.65) : between(0.28, 0.48),
-    };
-  }
-  if (dust || roll < fine + ambient) {
-    return {
-      tier: "ambient" as const,
-      size: dust ? between(2, 3) : between(2.5, 4.5),
-      glow: dust ? 0.3 : 0.8,
-      color: ICE_COLOR,
-      brightness: dust ? between(0.4, 0.6) : between(0.85, 1),
-    };
-  }
-  return { tier: "flare" as const, size: between(8, 12), glow: 1, color: FLARE_COLOR, brightness: 1 };
+  return kind === "dust" ? dustLook() : ribbonLook();
 }
 
-/** White 60% / icy cyan 30% / amber 10% of the ribbon, with amber on the stroke fringe. */
-function paintRibbon(look: Look): Look {
-  if (look.tier === "flare") return { ...look, color: FLARE_COLOR };
-  const paint = Math.random();
-  if (paint < 0.556) return { ...look, color: FINE_COLOR };
-  if (paint < 0.889) return { ...look, color: ICE_COLOR };
-  return { ...look, color: AMBER_COLOR, glow: Math.max(look.glow, 0.55) };
-}
-
+/** Mist stars fade with distance from the centre line, but never below 35%. */
 function spineFade(offset: number) {
-  return clamp01(1 - Math.abs(offset) / MIST_WIDTH) ** 1.35;
+  return 0.35 + 0.65 * clamp01(1 - Math.abs(offset) / MIST_WIDTH) ** 1.35;
 }
 
 function signedWidth(max: number, sigma: number) {
@@ -296,16 +379,15 @@ function signedWidth(max: number, sigma: number) {
 }
 
 /** Gaussian scatter: ~65% on the core (0–20% width), 35% of dust/ice out to 120%. */
-function ribbonSpread(tier: Tier, color: number) {
-  const mist =
-    tier !== "flare" && (color === AMBER_COLOR || Math.random() < 0.3125);
+function ribbonSpread(tier: Tier) {
+  const mist = tier === "fine" ? Math.random() < 0.45 : tier === "ambient" && Math.random() < 0.2;
   if (mist) {
     const side = Math.random() < 0.5 ? -1 : 1;
     const span = MIST_WIDTH - CORE_WIDTH;
     const reach = CORE_WIDTH + Math.min(span, Math.abs(gaussian(span * 0.55)));
-    return { offset: side * reach, z: gaussian(1.6) };
+    return { offset: side * reach, z: gaussian(3.5), angle: Math.random() * Math.PI * 2 };
   }
-  return { offset: signedWidth(CORE_WIDTH, CORE_WIDTH * 0.5), z: gaussian(0.45) };
+  return { offset: signedWidth(CORE_WIDTH, CORE_WIDTH * 0.5), z: gaussian(1.8), angle: Math.random() * Math.PI * 2 };
 }
 
 function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
@@ -315,21 +397,22 @@ function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
     spray,
     delay: Math.random(),
     phase: Math.random() * Math.PI * 2,
-    rate: 0.5 + Math.random() * 1.1,
+    rate: 0.65 + Math.random() * 0.7,
+    opacity: 0.82 + Math.random() * 0.16,
   };
 }
 
-function makeRibbon(spine: 0 | 1): RibbonStar {
-  const look = paintRibbon(starLook("ribbon"));
+function makeRibbon(path: number, length: number): RibbonStar {
+  const look = starLook("ribbon");
   return {
     ...starBase("ribbon", sprayPoint(Math.random() < 0.5 ? -1 : 1)),
     ...look,
     kind: "ribbon",
     outer: starLook("dust"),
-    spine,
-    t: Math.random(),
-    speed: FLOW_SPEED * (0.97 + Math.random() * 0.06),
-    ...ribbonSpread(look.tier, look.color),
+    path,
+    s: Math.random() * length,
+    speed: FLOW_UNITS * between(0.85, 1.15),
+    ...ribbonSpread(look.tier),
   };
 }
 
@@ -339,6 +422,8 @@ function makeDust(side: -1 | 1): DustStar {
     kind: "dust",
     band: bandPoint(side),
     z: (Math.random() - 0.5) * 0.4,
+    drift: Math.random(),
+    depth: Math.random(),
   };
 }
 
@@ -346,25 +431,52 @@ export function AstraField() {
   const trackRef = useRef<HTMLElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // True when WebGL or three could not start: the stage then shows a still sky.
+  const [fallback, setFallback] = useState(false);
   const pointer = useRef({ x: 0, y: 0, inside: false, moveX: 0, moveY: 0 });
-  const orbit = useRef({ yaw: REST_YAW, pitch: REST_PITCH, yawVelocity: 0, pitchVelocity: 0 });
+  const orbit = useRef<Pose>(restState(REST_POSE));
+  /** True from the end of a drag until the mark is back at rest. */
+  const settling = useRef(false);
+  const surfaceRef = useRef<HTMLButtonElement>(null);
   const drag = useRef({
     active: false,
+    id: -1,
     startX: 0,
     startY: 0,
     originYaw: REST_YAW,
     originPitch: REST_PITCH,
   });
 
-  const endDrag = () => {
+  const endDrag = useCallback(() => {
     if (!drag.current.active) return;
     drag.current.active = false;
-    const current = orbit.current;
-    current.yaw = REST_YAW + wrapAngle(current.yaw - REST_YAW);
-    current.pitch = REST_PITCH + wrapAngle(current.pitch - REST_PITCH);
-    current.yawVelocity = 0;
-    current.pitchVelocity = 0;
-  };
+    drag.current.id = -1;
+    delete surfaceRef.current?.dataset.dragging;
+    // Like openai.com (faceForward), a released mark eases back to rest, the short way round.
+    Object.assign(orbit.current, nearestTurn(orbit.current, REST_POSE));
+    settling.current = true;
+    if (surfaceRef.current) surfaceRef.current.dataset.settling = "true";
+  }, []);
+
+  /** Stops an in-flight settle, leaving the mark where it is. */
+  const holdPose = useCallback(() => {
+    settling.current = false;
+    delete surfaceRef.current?.dataset.settling;
+  }, []);
+
+  // A drag also ends when the window loses focus or the tab is hidden: the
+  // pointer-up would never arrive.
+  useEffect(() => {
+    const onHidden = () => {
+      if (document.hidden) endDrag();
+    };
+    window.addEventListener("blur", endDrag);
+    document.addEventListener("visibilitychange", onHidden);
+    return () => {
+      window.removeEventListener("blur", endDrag);
+      document.removeEventListener("visibilitychange", onHidden);
+    };
+  }, [endDrag]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -375,30 +487,42 @@ export function AstraField() {
     let alive = true;
     let cleanup = () => {};
 
-    void import("three").then((THREE) => {
+    void Promise.all([
+      import("three"),
+      import("three/examples/jsm/postprocessing/EffectComposer.js"),
+      import("three/examples/jsm/postprocessing/RenderPass.js"),
+      import("three/examples/jsm/postprocessing/UnrealBloomPass.js"),
+      import("three/examples/jsm/postprocessing/OutputPass.js"),
+    ]).then(([THREE, { EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }]) => {
       if (!alive) return;
+      // No WebGL (a blocked GPU, a disabled setting, an old device): show the still sky.
+      if (!canCreateWebgl(() => document.createElement("canvas"))) {
+        setFallback(true);
+        return;
+      }
 
       const upperSpine = sampleSpine(upperWing, 880);
       const lowerSpine = sampleSpine(lowerArch, 1040);
-      const spines = [upperSpine, lowerSpine];
+      const paths = buildPaths(upperSpine, lowerSpine);
       const leftWord = wrap.querySelector("[data-astra-left]");
       const rightWord = wrap.querySelector("[data-astra-right]");
 
-      const counts = [
-        Math.round(Math.max(1600, Math.min(3600, spineLength(upperSpine) * 4))),
-        Math.round(Math.max(1800, Math.min(4000, spineLength(lowerSpine) * 4))),
-      ];
+      // Stars per path follow its length, so every stream has the same density.
       const stars: Star[] = [];
-      for (let i = 0; i < (counts[0] ?? 640); i++) stars.push(makeRibbon(0));
-      for (let i = 0; i < (counts[1] ?? 720); i++) stars.push(makeRibbon(1));
+      paths.forEach((path, index) => {
+        const count = Math.round(path.length * STARS_PER_UNIT);
+        for (let i = 0; i < count; i++) stars.push(makeRibbon(index, path.length));
+      });
       for (let i = 0; i < DUST_PER_SIDE; i++) stars.push(makeDust(-1));
       for (let i = 0; i < DUST_PER_SIDE; i++) stars.push(makeDust(1));
 
       const restPosition = (star: RibbonStar) => {
-        const spine = spines[star.spine];
-        if (!spine) return [0, 0, 0] as const;
-        const point = pointOnSpine(spine, star.t, star.offset);
-        return toWorld(point.x, point.y, star.z);
+        const inPlane = star.offset * Math.cos(star.angle);
+        const depth = star.offset * Math.sin(star.angle) * TUBE_DEPTH;
+        const path = paths[star.path];
+        if (!path) return [0, 0, 0] as const;
+        const point = pointOnPath(path, star.s, inPlane);
+        return toWorld(point.x, point.y, point.z + depth + star.z);
       };
 
       const renderer = new THREE.WebGLRenderer({
@@ -407,8 +531,10 @@ export function AstraField() {
         alpha: false,
         powerPreference: "high-performance",
       });
-      renderer.setClearColor(0x050505, 1);
+      renderer.setClearColor(new THREE.Color().setRGB(...BACKGROUND, THREE.LinearSRGBColorSpace), 1);
       renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+      // No tone mapping, as on openai.com: hero cores and overlaps clip to white.
+      renderer.toneMapping = THREE.NoToneMapping;
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 80);
@@ -419,24 +545,26 @@ export function AstraField() {
       const positions = new Float32Array(stars.length * 3);
       const colors = new Float32Array(stars.length * 3);
       const sizes = new Float32Array(stars.length);
-      const glows = new Float32Array(stars.length);
+      // HDR brightness per star. The shader turns it into rays and a white-hot centre.
+      const brights = new Float32Array(stars.length);
       const alphas = new Float32Array(stars.length);
       const nudgeX = new Float32Array(stars.length);
       const nudgeY = new Float32Array(stars.length);
       const ribbonColors = new Float32Array(stars.length * 3);
       const outerColors = new Float32Array(stars.length * 3);
       // Colours stay in display space: the shader writes them without conversion.
+      // Brightness is its own attribute, so a hot star keeps its hue under its white core.
       const writeColor = (out: Float32Array, index: number, look: Look) => {
-        out[index * 3] = (((look.color >> 16) & 255) / 255) * look.brightness;
-        out[index * 3 + 1] = (((look.color >> 8) & 255) / 255) * look.brightness;
-        out[index * 3 + 2] = ((look.color & 255) / 255) * look.brightness;
+        out[index * 3] = ((look.color >> 16) & 255) / 255;
+        out[index * 3 + 1] = ((look.color >> 8) & 255) / 255;
+        out[index * 3 + 2] = (look.color & 255) / 255;
       };
       stars.forEach((star, index) => {
         writeColor(ribbonColors, index, star);
         writeColor(outerColors, index, star.kind === "ribbon" ? star.outer : star);
         writeColor(colors, index, star);
         sizes[index] = star.size;
-        glows[index] = star.glow;
+        brights[index] = star.brightness;
         alphas[index] = 1;
       });
 
@@ -445,8 +573,8 @@ export function AstraField() {
       positionAttr.setUsage(THREE.DynamicDrawUsage);
       const sizeAttr = new THREE.BufferAttribute(sizes, 1);
       sizeAttr.setUsage(THREE.DynamicDrawUsage);
-      const glowAttr = new THREE.BufferAttribute(glows, 1);
-      glowAttr.setUsage(THREE.DynamicDrawUsage);
+      const brightAttr = new THREE.BufferAttribute(brights, 1);
+      brightAttr.setUsage(THREE.DynamicDrawUsage);
       const alphaAttr = new THREE.BufferAttribute(alphas, 1);
       alphaAttr.setUsage(THREE.DynamicDrawUsage);
       geometry.setAttribute("position", positionAttr);
@@ -454,7 +582,7 @@ export function AstraField() {
       colorAttr.setUsage(THREE.DynamicDrawUsage);
       geometry.setAttribute("color", colorAttr);
       geometry.setAttribute("size", sizeAttr);
-      geometry.setAttribute("glow", glowAttr);
+      geometry.setAttribute("bright", brightAttr);
       geometry.setAttribute("alpha", alphaAttr);
 
       const uniforms = {
@@ -474,6 +602,23 @@ export function AstraField() {
       const points = new THREE.Points(geometry, material);
       points.frustumCulled = false;
       group.add(points);
+
+      // Stars render into a half-float target so additive overlaps keep their
+      // range; bloom then spreads the brightest light, and OutputPass applies
+      // tone mapping.
+      const composer = new EffectComposer(
+        renderer,
+        new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType }),
+      );
+      const bloom = new UnrealBloomPass(
+        new THREE.Vector2(1, 1),
+        BLOOM_STRENGTH,
+        BLOOM_RADIUS,
+        BLOOM_THRESHOLD,
+      );
+      composer.addPass(new RenderPass(scene, camera));
+      composer.addPass(bloom);
+      composer.addPass(new OutputPass());
 
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
       const local = new THREE.Vector3();
@@ -535,8 +680,12 @@ export function AstraField() {
         }
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
         renderer.setSize(stageWidth, stageHeight, false);
-        uniforms.uDepth.value = distance;
+        composer.setPixelRatio(renderer.getPixelRatio());
+        composer.setSize(stageWidth, stageHeight);
+        // Smaller stages get a lighter bloom so the mark does not wash out.
+        bloom.strength = BLOOM_STRENGTH * clamp(markPx / MARK_PX, 0.6, 1);
         uniforms.uPixelRatio.value = renderer.getPixelRatio();
+        uniforms.uDepth.value = camera.position.length();
         sizeScale = Math.sqrt(markPx / MARK_PX);
       };
 
@@ -584,30 +733,33 @@ export function AstraField() {
       let running = false;
       let previous = performance.now();
       let scroll = reduced.matches ? 1 : readProgress();
+      // When the section was first seen: the entrance runs once from here and is
+      // not replayed when the loop stops and starts again.
+      let revealStart: number | null = null;
 
       const draw = (now: number) => {
         const dt = Math.min(0.05, (now - previous) * 0.001);
         previous = now;
         const still = reduced.matches;
+        const reveal = revealClock(now, revealStart, still);
         const target = still ? 1 : readProgress();
         scroll += (target - scroll) * (1 - Math.exp(-dt * SCROLL_EASE));
         if (Math.abs(target - scroll) < 1e-4) scroll = target;
         const flow = still ? 0 : smoothstep((scroll - FLOW_START) / FLOW_SPAN);
         const time = now * 0.001;
 
+        // A released drag eases back to rest; an arrow-key turn stays. Reduced motion pins it to rest.
         const pose = orbit.current;
-        if (!drag.current.active) {
-          if (still) {
-            pose.yaw = REST_YAW;
-            pose.pitch = REST_PITCH;
-            pose.yawVelocity = 0;
-            pose.pitchVelocity = 0;
+        if (still) {
+          pose.yaw = REST_YAW;
+          pose.pitch = REST_PITCH;
+        } else if (settling.current && !drag.current.active) {
+          const next = settleToward(pose, REST_POSE, FOLLOW_DAMPING, dt);
+          if (isAtRest(next, REST_POSE)) {
+            Object.assign(pose, restState(REST_POSE));
+            holdPose();
           } else {
-            pose.yawVelocity += (SPRING_K * (REST_YAW - pose.yaw) - SPRING_C * pose.yawVelocity) * dt;
-            pose.pitchVelocity +=
-              (SPRING_K * (REST_PITCH - pose.pitch) - SPRING_C * pose.pitchVelocity) * dt;
-            pose.yaw += pose.yawVelocity * dt;
-            pose.pitch += pose.pitchVelocity * dt;
+            Object.assign(pose, next);
           }
         }
         group.rotation.set(pose.pitch, pose.yaw, 0);
@@ -636,47 +788,72 @@ export function AstraField() {
             ? 1
             : smoothstep((scroll - star.delay * GATHER_STAGGER) / GATHER_SPAN);
 
+          let dustAlpha = 1;
           if (star.kind === "ribbon") {
-            if (flow > 0) {
-              star.t += star.speed * dt * flow;
-              if (star.t >= 1) star.t -= 1;
+            const path = paths[star.path];
+            if (flow > 0 && path) {
+              // Past the meeting point the star respawns at the path's start.
+              star.s += star.speed * dt * flow;
+              if (star.s >= path.length) star.s -= path.length;
             }
             const [tx, ty, tz] = restPosition(star);
             settled.set(tx, ty, tz);
           } else {
-            ndcToLocal(star.band.nx, star.band.ny, star.z, settled);
+            // Dust drifts around its place, slides with scroll by depth and twinkles
+            // from the first frame. Reduced motion holds it exactly at rest.
+            const motion = dustMotion(
+              {
+                time,
+                seed: star.drift,
+                depth: star.depth,
+                phase: star.phase,
+                rate: star.rate,
+                scroll,
+              },
+              still,
+            );
+            dustAlpha = motion.alpha;
+            ndcToLocal(star.band.nx + motion.dx, star.band.ny + motion.dy, star.z, settled);
           }
 
           let x = settled.x;
           let y = settled.y;
           let z = settled.z;
           let size = star.size;
-          let tier = star.tier;
-          let alpha = 1;
+          let alpha = star.opacity;
           if (star.kind === "ribbon") {
             const land = smoothstep((gather - LAND_START) / (1 - LAND_START));
             const outer = star.outer;
             const ribbonSize = star.tier === "fine" ? star.size : star.size * sizeScale;
             size = outer.size + (ribbonSize - outer.size) * land;
-            glows[index] = outer.glow + (star.glow - outer.glow) * land;
+            brights[index] = outer.brightness + (star.brightness - outer.brightness) * land;
             for (let c = index * 3; c < index * 3 + 3; c++) {
               const from = outerColors[c] ?? 0;
               colors[c] = from + ((ribbonColors[c] ?? 0) - from) * land;
             }
-            if (land < 0.5) tier = outer.tier;
             alpha *= 1 - land * (1 - spineFade(star.offset));
+            // Once the stream flows, a star grows in after it spawns and shrinks
+            // away as it reaches its path's meeting point. Before that (and with
+            // reduced motion) the whole mark stays fully drawn.
+            const path = paths[star.path];
+            const envelope = path ? streamEnvelope(path, star.s) : 1;
+            const stream = land * flow;
+            // Size follows the whole envelope; brightness holds until the last
+            // stretch, so a star visibly shrinks first, then vanishes at the point.
+            const fadeOut = smoothstep(envelope / 0.4);
+            size *= 1 - stream * (1 - (MEET_MIN_SCALE + (1 - MEET_MIN_SCALE) * envelope));
+            alpha *= 1 - stream * (1 - fadeOut);
           }
-          const fine = tier === "fine";
-          const flare = tier === "flare";
           if (gather < 1) {
             ndcToLocal(star.spray.nx, star.spray.ny, star.spray.z, sprayed);
             x = sprayed.x + (x - sprayed.x) * gather;
             y = sprayed.y + (y - sprayed.y) * gather;
             z = sprayed.z + (z - sprayed.z) * gather;
           }
-          if (flow > 0 && !fine) {
-            const depth = flare ? FLARE_TWINKLE : TWINKLE;
-            alpha *= 1 - depth * flow * (0.5 + 0.5 * Math.sin(time * star.rate + star.phase));
+          if (star.kind === "dust") {
+            alpha *= dustAlpha;
+          } else if (!still) {
+            alpha *= 1 - TWINKLE_DEPTH + TWINKLE_DEPTH * Math.sin(star.phase + time * TWINKLE_SPEED * star.rate);
           }
 
           let ox = (nudgeX[index] ?? 0) * nudgeFade;
@@ -730,16 +907,19 @@ export function AstraField() {
           array[index * 3] = x;
           array[index * 3 + 1] = y;
           array[index * 3 + 2] = z;
-          sizes[index] = size;
-          alphas[index] = alpha;
+          // Entrance: each star fades in on its own delay and grows from a point.
+          // Both factors are exactly 1 after the reveal.
+          const appeared = revealProgress(reveal, star.delay);
+          sizes[index] = size * revealSize(appeared);
+          alphas[index] = alpha * appeared;
         }
         positionAttr.needsUpdate = true;
         sizeAttr.needsUpdate = true;
-        glowAttr.needsUpdate = true;
+        brightAttr.needsUpdate = true;
         alphaAttr.needsUpdate = true;
         colorAttr.needsUpdate = true;
 
-        renderer.render(scene, camera);
+        composer.render(dt);
         if (running) frame = requestAnimationFrame(draw);
       };
 
@@ -747,6 +927,9 @@ export function AstraField() {
         if (running) return;
         running = true;
         previous = performance.now();
+        revealStart = firstSight(revealStart, previous);
+        // The words' letters wait for this before they slide in.
+        wrap.dataset.astraSeen = "true";
         scroll = reduced.matches ? 1 : readProgress();
         frame = requestAnimationFrame(draw);
       };
@@ -754,53 +937,98 @@ export function AstraField() {
         running = false;
         cancelAnimationFrame(frame);
       };
-      const visibility = new IntersectionObserver((entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) start();
+      // The loop draws only while someone can see it and the GPU can take the work:
+      // the section is on screen, the tab is visible and the WebGL context is alive.
+      const runState = { inView: false, tabVisible: !document.hidden, contextLive: true };
+      const sync = () => {
+        if (shouldRun(runState)) start();
         else stop();
+      };
+      const visibility = new IntersectionObserver((entries) => {
+        runState.inView = entries.some((entry) => entry.isIntersecting);
+        sync();
       });
       visibility.observe(track);
+      const onVisibilityChange = () => {
+        runState.tabVisible = !document.hidden;
+        sync();
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      // Replay: the mark goes back to rest and the entrance starts again from its first frame.
+      const onReplay = () => {
+        endDrag();
+        holdPose();
+        Object.assign(orbit.current, restState(REST_POSE));
+        revealStart = performance.now();
+      };
+      window.addEventListener(ASTRA_REPLAY_EVENT, onReplay);
+
+      // A lost WebGL context (a GPU reset, memory pressure): stop drawing, let the
+      // browser restore it (three.js rebuilds its own state), and show the still sky
+      // if it does not come back in time.
+      let restoreTimer = 0;
+      const onContextLost = (event: Event) => {
+        event.preventDefault();
+        runState.contextLive = false;
+        sync();
+        window.clearTimeout(restoreTimer);
+        restoreTimer = window.setTimeout(() => {
+          const release = cleanup;
+          cleanup = () => {};
+          release();
+          setFallback(true);
+        }, CONTEXT_RESTORE_MS);
+      };
+      const onContextRestored = () => {
+        window.clearTimeout(restoreTimer);
+        runState.contextLive = true;
+        sync();
+      };
+      canvas.addEventListener("webglcontextlost", onContextLost);
+      canvas.addEventListener("webglcontextrestored", onContextRestored);
 
       cleanup = () => {
         stop();
         visibility.disconnect();
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+        window.removeEventListener(ASTRA_REPLAY_EVENT, onReplay);
+        window.clearTimeout(restoreTimer);
+        canvas.removeEventListener("webglcontextlost", onContextLost);
+        canvas.removeEventListener("webglcontextrestored", onContextRestored);
         observer.disconnect();
         geometry.dispose();
         material.dispose();
+        bloom.dispose();
+        composer.dispose();
         renderer.dispose();
       };
+    }).catch(() => {
+      // three failed to load, or the renderer could not be made: show the still sky.
+      if (alive) setFallback(true);
     });
 
     return () => {
       alive = false;
       cleanup();
     };
-  }, []);
+  }, [endDrag, holdPose]);
 
   return (
     <section
       ref={trackRef}
-      className="relative z-10 h-[220vh] bg-[#050505]"
-      aria-label="BridgeWide mark between the words Bridge and Wide. Drag to turn the mark."
+      className="relative z-10 h-[220vh] bg-[#03040a]"
+      aria-label={
+        fallback
+          ? "BridgeWide between the words Bridge and Wide."
+          : "BridgeWide mark between the words Bridge and Wide."
+      }
     >
       <div
         ref={wrapRef}
-        className="sticky top-0 h-[100svh] min-h-[36rem] cursor-grab touch-pan-y overflow-hidden bg-[#050505] text-white select-none active:cursor-grabbing"
-        onPointerDown={(event) => {
-          if (event.pointerType === "mouse" && event.button !== 0) return;
-          const rect = event.currentTarget.getBoundingClientRect();
-          pointer.current.x = event.clientX - rect.left;
-          pointer.current.y = event.clientY - rect.top;
-          pointer.current.moveX = 0;
-          pointer.current.moveY = 0;
-          drag.current.active = true;
-          drag.current.startX = event.clientX;
-          drag.current.startY = event.clientY;
-          drag.current.originYaw = orbit.current.yaw;
-          drag.current.originPitch = orbit.current.pitch;
-          orbit.current.yawVelocity = 0;
-          orbit.current.pitchVelocity = 0;
-        }}
+        className="sticky top-0 h-[100svh] min-h-[36rem] overflow-hidden bg-[#03040a] text-white select-none"
         onPointerMove={(event) => {
+          // The cursor nudge: where the pointer is, and how far it moved since the last frame.
           const rect = event.currentTarget.getBoundingClientRect();
           const x = event.clientX - rect.left;
           const y = event.clientY - rect.top;
@@ -811,32 +1039,97 @@ export function AstraField() {
           pointer.current.x = x;
           pointer.current.y = y;
           pointer.current.inside = true;
-          if (!drag.current.active) return;
-          orbit.current.yaw = drag.current.originYaw + (event.clientX - drag.current.startX) * 0.0075;
-          orbit.current.pitch = drag.current.originPitch + (event.clientY - drag.current.startY) * 0.005;
         }}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
         onPointerLeave={() => {
-          endDrag();
           pointer.current.inside = false;
           pointer.current.moveX = 0;
           pointer.current.moveY = 0;
         }}
       >
-        <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
-        <p
+        {fallback ? (
+          <AstraStaticDust />
+        ) : (
+          <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
+        )}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgba(0,0,0,0.3)_100%)]"
+        />
+        {fallback ? null : (
+          // A real button over the stage, so the mark can be turned by pointer or by the arrow keys.
+          <button
+            ref={surfaceRef}
+            type="button"
+            aria-label="Drag or use arrow keys to turn the BridgeWide mark"
+            className="absolute inset-0 z-[1] cursor-grab touch-pan-y appearance-none border-0 bg-transparent p-0 outline-white/70 focus-visible:outline-2 focus-visible:-outline-offset-4 data-[dragging=true]:cursor-grabbing motion-reduce:hidden"
+            onKeyDown={(event) => {
+              // Arrow keys turn the mark; a modified arrow (Alt+Left is Back) keeps its normal job.
+              if (event.altKey || event.ctrlKey || event.metaKey) return;
+              const turn = keyTurn(event.key);
+              if (!turn) return;
+              event.preventDefault();
+              holdPose();
+              Object.assign(orbit.current, addTurn(orbit.current, turn));
+            }}
+            onPointerDown={(event) => {
+              if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+              if (drag.current.active) return;
+              try {
+                // Keep receiving the drag when the pointer leaves the stage.
+                event.currentTarget.setPointerCapture(event.pointerId);
+              } catch {
+                return;
+              }
+              const rect = event.currentTarget.getBoundingClientRect();
+              pointer.current.x = event.clientX - rect.left;
+              pointer.current.y = event.clientY - rect.top;
+              pointer.current.moveX = 0;
+              pointer.current.moveY = 0;
+              // A new drag catches the mark from wherever it is, even mid-settle.
+              holdPose();
+              drag.current.active = true;
+              drag.current.id = event.pointerId;
+              drag.current.startX = event.clientX;
+              drag.current.startY = event.clientY;
+              drag.current.originYaw = orbit.current.yaw;
+              drag.current.originPitch = orbit.current.pitch;
+              event.currentTarget.dataset.dragging = "true";
+            }}
+            onPointerMove={(event) => {
+              if (!drag.current.active || event.pointerId !== drag.current.id) return;
+              const next = addTurn(
+                { yaw: drag.current.originYaw, pitch: drag.current.originPitch },
+                dragTurn(event.clientX - drag.current.startX, event.clientY - drag.current.startY),
+              );
+              orbit.current.yaw = next.yaw;
+              orbit.current.pitch = next.pitch;
+            }}
+            onPointerUp={(event) => {
+              if (event.pointerId === drag.current.id) endDrag();
+            }}
+            onPointerCancel={(event) => {
+              if (event.pointerId === drag.current.id) endDrag();
+            }}
+            onLostPointerCapture={(event) => {
+              if (event.pointerId === drag.current.id) endDrag();
+            }}
+          />
+        )}
+        <AstraWord
+          word="Bridge"
+          side="left"
+          animate={!fallback}
           data-astra-left
-          className="pointer-events-none absolute top-1/2 left-1/2 z-10 -translate-x-[112%] -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:left-[15%] md:translate-x-0 md:text-6xl"
-        >
-          Bridge
-        </p>
-        <p
+          className="text-[#fafafa] [text-shadow:0_2px_6px_rgba(0,0,0,0.65),0_0_1.25rem_rgba(0,0,0,0.45)] pointer-events-none absolute top-[24%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-[15%] md:translate-x-0 md:text-6xl"
+        />
+        <AstraWord
+          word="Wide"
+          side="right"
+          animate={!fallback}
           data-astra-right
-          className="pointer-events-none absolute top-1/2 left-1/2 z-10 translate-x-[12%] -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:left-auto md:right-[15%] md:translate-x-0 md:text-6xl"
-        >
-          Wide
-        </p>
+          className="text-[#fafafa] [text-shadow:0_2px_6px_rgba(0,0,0,0.65),0_0_1.25rem_rgba(0,0,0,0.45)] pointer-events-none absolute top-[76%] left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-sans text-4xl font-medium tracking-[-0.04em] md:top-1/2 md:left-auto md:right-[15%] md:translate-x-0 md:text-6xl"
+        />
+        {fallback ? null : <AstraReplayButton />}
       </div>
     </section>
   );

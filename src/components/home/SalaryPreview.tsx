@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { RevealItem, RevealGroup } from "@/components/ui/Reveal";
-import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { regions, salaryBands } from "@/content/site";
 
 const money = new Intl.NumberFormat("en-US", {
@@ -14,10 +14,10 @@ export default function SalaryPreview() {
 
   return (
     <section
-      className="seam-left relative z-10 bg-cloud pt-24 pb-24 md:pt-28 md:pb-28"
+      className="seam-right relative z-10 bg-cloud pt-24 pb-24 md:pt-28 md:pb-28"
       aria-labelledby="salary-heading"
     >
-      <div className={sectionContainer}>
+      <div className="wrap">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <SectionHeading
             id="salary-heading"
@@ -34,7 +34,7 @@ export default function SalaryPreview() {
             <RevealItem key={discipline.slug}>
               <article className="border-t border-ink/15 pt-5">
                 <h3 className="font-display text-2xl text-ink">{discipline.label}</h3>
-                <dl className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+                <dl className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
                   {regions.map((region) => {
                     const band = discipline.bands[region.slug];
                     return (

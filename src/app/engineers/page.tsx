@@ -4,9 +4,11 @@ import { PageSection } from "@/components/pages/PageSection";
 import { pageMetadata } from "@/components/pages/metadata";
 import { Button } from "@/components/ui/Button";
 import { images } from "@/content/site";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Engineers · BridgeWide",
+  title: "Engineers",
   description:
     "The candidate path is free and confidential. Send a CV and your consultant shares the band before your name goes to a company.",
   path: "/engineers",
@@ -30,6 +32,7 @@ const path = [
 export default function EngineersPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "Engineers", path: "/engineers" }])} />
       <PageHero
         eyebrow="Engineers"
         title="Your name stays with us until the brief is real."
@@ -48,7 +51,7 @@ export default function EngineersPage() {
         <ol className="grid gap-8 md:grid-cols-3">
           {path.map((step, index) => (
             <li key={step.title} className="border-t border-brand pt-4">
-              <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
+              <p className="eyebrow">
                 0{index + 1}
               </p>
               <h3 className="font-display mt-3 text-2xl">{step.title}</h3>
@@ -61,7 +64,7 @@ export default function EngineersPage() {
         id="cv"
         label="CV"
         title="Send a CV"
-        lede="PDF, DOC, or DOCX. Tell us which of the four regions you want to work in."
+        lede="PDF, DOC, or DOCX. Tell us which of the five regions you want to work in."
       >
         <CvForm />
       </PageSection>

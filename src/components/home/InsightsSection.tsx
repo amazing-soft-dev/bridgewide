@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { RevealItem, RevealGroup } from "@/components/ui/Reveal";
-import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { insights } from "@/content/site";
 
 export default function InsightsSection() {
   return (
     <section
-      className="seam-left relative z-10 bg-cloud pt-24 pb-24 md:pt-28 md:pb-28"
+      className="seam-right relative z-10 bg-cloud pt-24 pb-24 md:pt-28 md:pb-28"
       aria-labelledby="insights-heading"
     >
-      <div className={sectionContainer}>
+      <div className="wrap">
         <SectionHeading
           id="insights-heading"
           eyebrow="Notes"

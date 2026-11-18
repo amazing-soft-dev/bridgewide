@@ -1,5 +1,8 @@
-import { emailField, honeypotTripped, isRecord, limits, textField } from "@/lib/form";
-import { jsonResult, sendFormEmail } from "@/lib/mail";
+import { sla } from "@/content/sla";
+import { emailField, honeypotTripped, isRecord, limits, textField, topicField } from "@/lib/form";
+import { clientIp, deliverIntake } from "@/lib/intake";
+import { tokenFromJson } from "@/lib/turnstile";
+import { jsonResult } from "@/lib/mail";
 
 export const runtime = "nodejs";
 
@@ -25,14 +28,23 @@ export async function POST(request: Request) {
   const email = emailField(payload.email);
   if (!email.ok) return jsonResult({ ok: false, error: email.error, status: 400 });
 
+  const topic = topicField(payload.topic);
+  if (!topic.ok) return jsonResult({ ok: false, error: topic.error, status: 400 });
+
   const message = textField(payload.message, limits.message, "Message");
   if (!message.ok) return jsonResult({ ok: false, error: message.error, status: 400 });
 
-  return jsonResult(
-    await sendFormEmail({
-      subject: `Contact from ${name.value}`,
-      replyTo: email.value,
-      text: [`Name: ${name.value}`, `Email: ${email.value}`, "", message.value].join("\n"),
-    }),
-  );
+  const subject = `Contact · ${topic.value} from ${name.value}`;
+  const text = [`Name: ${name.value}`, `Email: ${email.value}`, `Topic: ${topic.value}`, "", message.value].join("\n");
+  const result = await deliverIntake({
+    kind: "contact",
+    email: email.value,
+    subject,
+    text,
+    ip: clientIp(request),
+    humanToken: tokenFromJson(payload),
+    visitorSla: sla.employer,
+  });
+  if (result.ok) return Response.json({ ok: true, id: result.id });
+  return jsonResult(result);
 }

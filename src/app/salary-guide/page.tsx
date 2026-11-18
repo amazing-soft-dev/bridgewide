@@ -3,9 +3,11 @@ import { PageSection } from "@/components/pages/PageSection";
 import { formatUsd } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { regions, salaryBands } from "@/content/site";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs, salaryDataset } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Salary guide · BridgeWide",
+  title: "Salary guide",
   description: `${salaryBands.edition}. Salary bands by region for backend, frontend, data, cloud, mobile, and engineering leadership. ${salaryBands.basis}.`,
   path: "/salary-guide",
 });
@@ -13,6 +15,8 @@ export const metadata = pageMetadata({
 export default function SalaryGuidePage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "Salary guide", path: "/salary-guide" }])} />
+      <JsonLd data={salaryDataset()} />
       <PageHero
         eyebrow="Salary guide"
         title={salaryBands.edition}
@@ -24,7 +28,7 @@ export default function SalaryGuidePage() {
         title="Bands by region"
         lede="Use a band to set an offer conversation. A figure under the median should be said early, before a shortlist goes out."
       >
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" role="region" aria-label="Salary bands by discipline and region (scrolls sideways on a narrow screen)" tabIndex={0}>
           <table className="w-full min-w-[44rem] border-collapse text-left">
             <caption className="sr-only">
               {salaryBands.edition}. {salaryBands.basis}. Low, high, and median
@@ -32,14 +36,14 @@ export default function SalaryGuidePage() {
             </caption>
             <thead>
               <tr className="border-b border-brand">
-                <th scope="col" className="py-3 pr-4 font-mono text-xs tracking-[0.18em] text-stone uppercase">
+                <th scope="col" className="py-3 pr-4 eyebrow-muted">
                   Discipline
                 </th>
                 {regions.map((region) => (
                   <th
                     key={region.slug}
                     scope="col"
-                    className="px-3 py-3 font-mono text-xs tracking-[0.18em] text-brand uppercase"
+                    className="px-3 py-3 eyebrow"
                   >
                     {region.name}
                   </th>

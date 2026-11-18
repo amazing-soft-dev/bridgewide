@@ -1,0 +1,48 @@
+# After CI succeeds on a pull request, merge that pull request with a
+# merge commit. --match-head-commit refuses if the branch moved after CI
+# started. Only feature-prefix branches into dev, and dev into main, merge.
+name: Merge passing pull request
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  merge:
+    name: Merge the validated pull request
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Merge
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          prs=$(gh api --paginate "repos/$GITHUB_REPOSITORY/commits/$SHA/pulls" \
+            --jq '.[] | select(.state=="open") | [.number, .head.ref, .base.ref] | @tsv')
+          if [ -z "$prs" ]; then
+            echo "No open pull request for $SHA."
+            exit 0
+          fi
+          while IFS=$'\t' read -r number head base; do
+            eligible=0
+            if [ "$head" = "dev" ] && [ "$base" = "main" ]; then
+              eligible=1
+            elif [ "$base" = "dev" ]; then
+              prefix="${head%%/*}"
+              case "$prefix" in
+                feat|fix|docs|ci|build) eligible=1 ;;
+              esac
+            fi
+            if [ "$eligible" = "1" ]; then
+              gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --merge --match-head-commit "$SHA"
+            else
+              echo "Pull request #$number ($head -> $base) is not eligible."
+            fi
+          done <<< "$prs"

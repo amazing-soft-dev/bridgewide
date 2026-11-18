@@ -1,80 +1,65 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
 import { Field, Honeypot } from "@/components/forms/Field";
+import { FormStatus, SubmitButton } from "@/components/forms/FormFeedback";
 import { submitForm } from "@/components/forms/read-submission";
-import { Button } from "@/components/ui/Button";
+import { useFormSubmit } from "@/hooks/use-form-submit";
 import { regions } from "@/content/site";
+import { AI_CONSENT_WORDING } from "@/content/sla";
 import { CV_ACCEPT, CV_HINT, inspectCv } from "@/lib/cv-file";
-import { allOk, emailField, fieldErrors, limits, regionField, textField } from "@/lib/form";
+import {
+  allOk,
+  cvTrackField,
+  cvTracks,
+  emailField,
+  fieldErrors,
+  limits,
+  regionField,
+  rightToWorkChoices,
+  rightToWorkField,
+  textField,
+} from "@/lib/form";
+import { formsLive } from "@/lib/forms-live";
 
-type CvErrors = Partial<Record<"name" | "email" | "region" | "file", string>>;
+type CvErrors = Partial<Record<"name" | "email" | "track" | "region" | "file" | "consent" | "rightToWork", string>>;
+
+/** Field error for the CV upload, or undefined when the file passes. */
+export function cvFileError(uploaded: FormDataEntryValue | null) {
+  if (!(uploaded instanceof File) || uploaded.size === 0) return "Attach a CV.";
+  const checked = inspectCv(uploaded);
+  return checked.ok ? undefined : checked.error;
+}
 
 export function CvForm() {
-  const [errors, setErrors] = useState<CvErrors>({});
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
-  const [serverError, setServerError] = useState("");
-  const sending = useRef(false);
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (sending.current) return;
-
-    const form = event.currentTarget;
-    const data = new FormData(form);
+  const { status, errors, serverError, sending, onSubmit } = useFormSubmit<CvErrors>((data, form) => {
     const fields = {
       name: textField(data.get("name"), limits.name, "Name"),
       email: emailField(data.get("email")),
+      track: cvTrackField(data.get("track")),
       region: regionField(data.get("region")),
+      rightToWork: rightToWorkField(data.get("rightToWork")),
     };
-    const nextErrors: CvErrors = { ...fieldErrors(fields) };
-    const uploaded = data.get("file");
-
-    if (!(uploaded instanceof File) || uploaded.size === 0) {
-      nextErrors.file = "Attach a CV.";
-    } else {
-      const checked = inspectCv(uploaded);
-      if (!checked.ok) nextErrors.file = checked.error;
+    const file = cvFileError(data.get("file"));
+    const consent =
+      fields.track.ok && fields.track.value === "ai-training" && data.get("consent") !== "yes"
+        ? "Consent is required before an AI-training introduction."
+        : undefined;
+    if (!allOk(fields) || file || consent) {
+      return { ok: false, errors: { ...fieldErrors(fields), file, consent } };
     }
-
-    if (!allOk(fields) || nextErrors.file) {
-      setErrors(nextErrors);
-      setServerError("");
-      setStatus("idle");
-      return;
-    }
-
-    setErrors({});
-    setServerError("");
-    setStatus("sending");
-    sending.current = true;
-
-    try {
-      const result = await submitForm("/api/cv", new FormData(form));
-
-      if (!result.ok) {
-        setStatus("error");
-        setServerError(result.error);
-        return;
-      }
-
-      form.reset();
-      setErrors({});
-      setStatus("success");
-    } finally {
-      sending.current = false;
-    }
-  }
+    return { ok: true, send: () => submitForm("/api/cv", new FormData(form)) };
+  });
 
   return (
     <form
       className="relative grid max-w-xl gap-4"
       noValidate
       aria-label="Send a CV"
-      aria-busy={status === "sending"}
+      aria-busy={sending}
       onSubmit={onSubmit}
     >
       <Honeypot />
+      {!formsLive() ? <p className="text-sm text-stone">This copy of the site cannot send forms.</p> : null}
       <Field label="Name" name="name" autoComplete="name" required error={errors.name} />
       <Field
         label="Email"
@@ -84,6 +69,21 @@ export function CvForm() {
         required
         error={errors.email}
       />
+      <Field
+        as="select"
+        label="This is for"
+        name="track"
+        required
+        defaultValue={cvTracks[0].value}
+        hint="Staffing places you with a company. AI training matches you to platforms that pay for model work."
+        error={errors.track}
+      >
+        {cvTracks.map((track) => (
+          <option key={track.value} value={track.value}>
+            {track.label}
+          </option>
+        ))}
+      </Field>
       <Field as="select" label="Region" name="region" required defaultValue="" error={errors.region}>
         <option value="">Choose a region</option>
         {regions.map((region) => (
@@ -92,6 +92,19 @@ export function CvForm() {
           </option>
         ))}
       </Field>
+      <Field as="select" label="Right to work in this region" name="rightToWork" required defaultValue="" error={errors.rightToWork}>
+        <option value="">Choose one</option>
+        {rightToWorkChoices.map((choice) => (
+          <option key={choice} value={choice}>
+            {choice}
+          </option>
+        ))}
+      </Field>
+      <label className="flex items-start gap-2 text-sm">
+        <input type="checkbox" name="consent" value="yes" />
+        {AI_CONSENT_WORDING}
+      </label>
+      {errors.consent ? <p className="text-sm font-medium text-ink">{errors.consent}</p> : null}
       <Field
         label="CV"
         name="file"
@@ -101,19 +114,8 @@ export function CvForm() {
         hint={CV_HINT}
         error={errors.file}
       />
-      {status === "success" ? (
-        <p role="status" className="text-sm text-ink">
-          Thanks. Your CV is on its way.
-        </p>
-      ) : null}
-      {status === "error" ? (
-        <p role="alert" className="text-sm font-medium text-ink">
-          {serverError}
-        </p>
-      ) : null}
-      <Button type="submit" variant="primary" disabled={status === "sending"}>
-        {status === "sending" ? "Sending…" : "Send CV"}
-      </Button>
+      <FormStatus status={status} error={serverError} success="Thanks. Your CV is on its way." />
+      <SubmitButton sending={sending}>Send CV</SubmitButton>
     </form>
   );
 }

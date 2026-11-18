@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { m } from "motion/react";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { usePrefersReducedMotion } from "@/lib/motion";
+import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/use-media-query";
 import { hero, images } from "@/content/site";
 
 const doors = [
@@ -14,8 +14,8 @@ const doors = [
     eyebrow: "Employers",
     title: "Hire for the seat you actually have",
     copy: "Send the stack, the hiring manager, and what the first ninety days need to prove. We come back with people your engineering managers will interview.",
-    image: images.employers,
-    alt: "Hiring team in a working session",
+    image: images.doorEmployers,
+    alt: "Hiring team around a long conference table",
     variant: "primary" as const,
     className: "",
   },
@@ -25,8 +25,8 @@ const doors = [
     eyebrow: "Engineers",
     title: "A role with the band already named",
     copy: "Live seats in the USA, Canada, Latin America, and Europe. You do not pay a fee to be introduced, and your consultant shares the band before your name goes across.",
-    image: images.engineers,
-    alt: "Engineers working at a row of screens",
+    image: images.doorEngineers,
+    alt: "Engineers at their desks in a sunlit office",
     variant: "onDark" as const,
     className: "",
   },
@@ -34,19 +34,11 @@ const doors = [
 
 export function TwoDoors() {
   const [active, setActive] = useState<number | null>(null);
-  const [wide, setWide] = useState(false);
+  const wide = useMediaQuery("(min-width: 768px)");
   const reduced = usePrefersReducedMotion();
 
-  useEffect(() => {
-    const query = window.matchMedia("(min-width: 768px)");
-    const update = () => setWide(query.matches);
-    update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
-
   return (
-    <section className="seam-right relative z-10 bg-cloud" aria-labelledby="doors-heading">
+    <section className="seam-left relative z-10 bg-cloud" aria-labelledby="doors-heading">
       <h2 id="doors-heading" className="sr-only">
         Employers and engineers
       </h2>
@@ -61,7 +53,7 @@ export function TwoDoors() {
           const transition = { duration: reduced ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] as const };
 
           return (
-            <motion.article
+            <m.article
               key={door.href}
               className="relative min-h-[28rem] min-w-0 overflow-hidden bg-ink text-cloud md:min-h-[36rem] md:flex-1 md:basis-0"
               data-motion="door"
@@ -83,7 +75,7 @@ export function TwoDoors() {
                 aria-hidden
               />
               <div className="relative flex min-h-[28rem] flex-col justify-end px-6 pt-8 pb-24 md:min-h-[36rem] md:px-10 md:pb-28">
-                <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
+                <p className="eyebrow">
                   {door.eyebrow}
                 </p>
                 <h3 className="mt-3 max-w-md font-display text-4xl leading-[1.05] text-cloud">
@@ -96,14 +88,14 @@ export function TwoDoors() {
                   </Button>
                 </div>
               </div>
-              <motion.div
+              <m.div
                 className="pointer-events-none absolute inset-0 bg-ink"
                 aria-hidden
                 initial={false}
                 animate={{ opacity: dimmed ? 0.45 : 0 }}
                 transition={transition}
               />
-            </motion.article>
+            </m.article>
           );
         })}
       </div>

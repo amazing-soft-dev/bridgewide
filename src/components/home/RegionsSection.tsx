@@ -1,65 +1,63 @@
-import Image from "next/image";
-import Link from "next/link";
-import { HoverLift } from "@/components/ui/HoverLift";
+import { RegionTile } from "@/components/ui/RegionTile";
 import { RevealItem, RevealGroup } from "@/components/ui/Reveal";
-import { SectionHeading, sectionContainer } from "@/components/ui/SectionHeading";
-import { regions, type RegionSlug } from "@/content/site";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { openRoleCount, regions, type RegionSlug } from "@/content/site";
 
 const regionAlt: Record<RegionSlug, string> = {
-  usa: "New York skyline",
-  canada: "Toronto skyline beside the lake",
-  latam: "Rio de Janeiro from above",
-  europe: "A London street",
+  usa: "Manhattan skyline and the Brooklyn Bridge over the East River",
+  canada: "The Toronto skyline and CN Tower across Lake Ontario at golden hour",
+  latam: "Paseo de la Reforma and the Mexico City skyline from the air",
+  europe: "The River Thames and St Paul's Cathedral in London from the air",
+  asia: "Marina Bay and the Singapore financial district at dusk",
 };
+
+/**
+ * The bento order: the three remote regions share the first row, and the
+ * two hybrid desks take a half each on the second. Phones stack in the same
+ * order.
+ */
+const bento: readonly { slug: RegionSlug; span: string; aspect: string; sizes: string }[] = [
+  { slug: "latam", span: "md:col-span-2", aspect: "aspect-[4/5]", sizes: "(min-width: 768px) 33vw, 100vw" },
+  { slug: "europe", span: "md:col-span-2", aspect: "aspect-[4/5]", sizes: "(min-width: 768px) 33vw, 100vw" },
+  { slug: "asia", span: "md:col-span-2", aspect: "aspect-[4/5]", sizes: "(min-width: 768px) 33vw, 100vw" },
+  { slug: "usa", span: "md:col-span-3", aspect: "aspect-[4/5] md:aspect-[16/10]", sizes: "(min-width: 768px) 50vw, 100vw" },
+  { slug: "canada", span: "md:col-span-3", aspect: "aspect-[4/5] md:aspect-[16/10]", sizes: "(min-width: 768px) 50vw, 100vw" },
+];
 
 export default function RegionsSection() {
   return (
     <section
-      className="seam-right relative z-10 bg-cloud pt-24 pb-24 md:pt-28 md:pb-28"
+      className="seam-left relative z-10 bg-cloud pt-24 pb-24 md:pt-28 md:pb-28"
       aria-labelledby="regions-heading"
     >
-      <div className={sectionContainer}>
+      <div className="wrap">
         <SectionHeading
           id="regions-heading"
           eyebrow="Coverage"
-          title="Four regions"
+          title="Five regions"
           lede="Hybrid and remote seats, permanent and contract. Each region has its own desk."
         />
-        <RevealGroup className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {regions.map((region) => (
-            <RevealItem key={region.slug} className="h-full">
-              <HoverLift className="h-full">
-              <Link
-                href={`/regions/${region.slug}`}
-                className="group flex h-full flex-col bg-ink text-cloud no-underline"
-              >
-                <div className="relative aspect-[4/5] transform-gpu overflow-hidden bg-ink">
-                  <Image
-                    src={region.image}
-                    alt={regionAlt[region.slug]}
-                    fill
-                    loading="lazy"
-                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                    className="object-cover motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:scale-105"
-                  />
-                  <div className="absolute inset-x-0 top-0 -bottom-px bg-gradient-to-t from-ink via-ink/20 to-transparent" />
-                  <p className="absolute bottom-3 left-4 font-mono text-xs tracking-[0.16em] text-brand uppercase">
-                    {region.code}
-                  </p>
-                </div>
-                <div className="relative -mt-px flex flex-1 flex-col gap-3 bg-ink p-4">
-                  <h3 className="font-display text-2xl leading-tight text-cloud">
-                    {region.name}
-                  </h3>
-                  <p className="text-sm leading-6 text-cloud/85">{region.summary}</p>
-                  <p className="mt-auto font-mono text-xs tracking-[0.14em] text-brand uppercase">
-                    {region.openRoleCount} open roles
-                  </p>
-                </div>
-              </Link>
-              </HoverLift>
-            </RevealItem>
-          ))}
+        <RevealGroup className="mt-12 grid gap-4 md:grid-cols-6">
+          {bento.map(({ slug, span, aspect, sizes }) => {
+            const region = regions.find((entry) => entry.slug === slug);
+            if (!region) return null;
+            return (
+              <RevealItem key={slug} className={span}>
+                <RegionTile
+                  variant="bento"
+                  href={`/regions/${slug}`}
+                  name={region.name}
+                  summary={region.summary}
+                  image={region.image}
+                  alt={regionAlt[slug]}
+                  code={region.code}
+                  meta={`${openRoleCount(slug)} open roles`}
+                  sizes={sizes}
+                  aspectClassName={aspect}
+                />
+              </RevealItem>
+            );
+          })}
         </RevealGroup>
       </div>
     </section>

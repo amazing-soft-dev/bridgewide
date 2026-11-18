@@ -1,3 +1,4 @@
+import { resetHumanChecks } from "@/components/forms/HumanCheck";
 import { contact } from "@/content/site";
 
 export type Submission = { ok: true } | { ok: false; error: string };
@@ -51,6 +52,8 @@ export async function submitJson(url: string, payload: unknown): Promise<Submiss
     return readSubmission(response);
   } catch {
     return { ok: false, error: "Could not reach the server." };
+  } finally {
+    resetHumanChecks();
   }
 }
 
@@ -65,5 +68,7 @@ export async function submitForm(url: string, body: FormData): Promise<Submissio
     return readSubmission(response);
   } catch {
     return { ok: false, error: "Could not reach the server." };
+  } finally {
+    resetHumanChecks();
   }
 }

@@ -6,9 +6,9 @@ It follows the layout, motion, and page set of the Staffora reference
 ([forceful-variations-474566.framer.app](https://forceful-variations-474566.framer.app/)),
 rewritten as original code with BridgeWide's own copy and an original wordmark.
 
-> Status: plan locked, ready to build. Scaffolding has been created and
-> verified in a workspace; the production build happens in the repo at
-> `E:\1.workspace\1Mine\Bridgewide`.
+> Status: the site is built and deployed. This file is the original plan.
+> The live desk covers five regions (USA, Canada, Latin America, Europe, and
+> Asia), the accent is red `brand`, and the inbox is `michael.allen@bridgewide.org`.
 
 ---
 
@@ -17,7 +17,7 @@ rewritten as original code with BridgeWide's own copy and an original wordmark.
 | Question | Choice |
 | --- | --- |
 | Motion fidelity | **Full** — Motion (ex-Framer Motion): scroll reveals, stagger, parallax |
-| Forms | **Real submission** via Resend to `hello@bridgewide.com` |
+| Forms | **Real submission** via Resend to `michael.allen@bridgewide.org` |
 | Images | **Self-hosted** curated Unsplash photos in `public/` |
 | Build location | **In place** in `E:\1.workspace\1Mine\Bridgewide` |
 | Email provider | **Resend** (key supplied by you in `.env.local`) |
@@ -33,9 +33,9 @@ rewritten as original code with BridgeWide's own copy and an original wordmark.
 - **Reference is rebuilt, not copied.** Layout, structure, and motion are
   re-authored as original code. No Framer source, CSS, or image assets are
   reused.
-- **All numbers are sample data.** Placement counts, salary bands, retention
-  stats, team names, and `hello@bridgewide.com` live in one data file and are
-  labeled "sample data" in the UI so no one mistakes them for real figures.
+- **All figures live in one data file.** Placement counts, salary bands, retention
+  stats, team names, and the contact address come from `src/content`, so a
+  change is made once.
 
 ---
 
@@ -89,7 +89,7 @@ Tokens in Tailwind (`@theme` in `globals.css`), sampled to evoke the reference:
 /engineers            Candidate path (free, confidential), CV form
 /roles                Open engineering roles
 /roles/[slug]         Role detail — region, salary, engagement
-/regions              Four regions (replaces Staffora's six industries)
+/regions              Five regions: usa, canada, latam, europe, asia (replaces Staffora's six industries)
 /regions/[region]     usa | canada | latam | europe
 /about                The desk and consultants
 /salary-guide         Bands by region for backend, frontend, data, cloud,
@@ -99,7 +99,7 @@ Tokens in Tailwind (`@theme` in `globals.css`), sampled to evoke the reference:
 /insights             Short articles
 /insights/[slug]      Single article
 /contact              Brief form
-/privacy  /terms      Short placeholder legal pages (labeled not legal advice)
+/privacy  /terms      Privacy notice and terms; noindex until a lawyer has reviewed them
 ```
 
 Dynamic routes (`[slug]`, `[region]`) use `generateStaticParams` so they
@@ -110,7 +110,7 @@ prerender.
 ## Homepage section order
 
 Announcement strip → header → hero (live role list + stats) → two doors
-(employer / engineer) → "placed this month" marquee → four regions → the week
+(employer / engineer) → "placed this month" marquee → five regions → the week
 (Mon–Fri) → open roles → the record (stats) → the desk (team) → salary guide →
 employer stories → insights → FAQ → closing band → footer.
 
@@ -120,7 +120,7 @@ employer stories → insights → FAQ → closing band → footer.
 
 Everything lives in `src/content/site.ts` so it can be swapped later:
 regions, roles, people, stories, insights, FAQ, salary bands, nav, and contact
-details (`hello@bridgewide.com`, sample phone/location).
+details (`michael.allen@bridgewide.org`, phone, location).
 
 ---
 
@@ -142,7 +142,7 @@ src/app/api/contact/route.ts
 ```
 # .env.example
 RESEND_API_KEY=            # from resend.com
-CONTACT_TO_EMAIL=hello@bridgewide.com
+CONTACT_TO_EMAIL=michael.allen@bridgewide.org
 CONTACT_FROM_EMAIL=onboarding@resend.dev   # swap for a verified domain sender
 ```
 
@@ -190,7 +190,7 @@ form on desktop and a narrow viewport. Confirm:
 
 1. Scaffold (done): Next 16 + TS + Tailwind v4 + Motion + Resend.
 2. Brand: tokens, fonts, original wordmark + bridge glyph.
-3. Content: `src/content/site.ts` (sample, labeled).
+3. Content: `src/content/site.ts`.
 4. Shared chrome + form components + Resend API routes.
 5. Homepage with dynamic below-fold imports + motion.
 6. Inner pages with per-page metadata.

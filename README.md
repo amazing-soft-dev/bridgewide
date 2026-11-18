@@ -1,10 +1,10 @@
 # BridgeWide
 
-Marketing website for **BridgeWide**, a firm that places software engineers with companies across four regions: the **USA, Canada, LATAM, and Europe**.
+Marketing website for **BridgeWide**, a firm that places software engineers with companies across five regions: the **USA, Canada, Latin America, Europe, and Asia**.
 
-The site serves two audiences. Employers can browse regions, salary bands, and client stories, then send a hiring brief. Engineers can browse open roles and submit a CV. All three forms (hire brief, CV, contact) send real email through [Resend](https://resend.com).
+The site serves two audiences. Employers can browse regions, salary bands, and client stories, then send a hiring brief. Engineers can browse open roles and submit a CV. All three forms (hire brief, CV, contact) send real email through [Resend](https://resend.com) when the app runs on Vercel or another Node host.
 
-> **Note:** Roles, placements, salary bands, stats, people, stories, and articles are sample content. They all live in `src/content/site.ts` and should be replaced with real data before launch.
+All copy and figures live in `src/content/site.ts`. The public contact address is `michael.allen@bridgewide.org`.
 
 ## Tech stack
 
@@ -15,6 +15,7 @@ The site serves two audiences. Employers can browse regions, salary bands, and c
 | Styling | Tailwind CSS v4, configured CSS-first in `src/app/globals.css` (no `tailwind.config`) |
 | Animation | [Motion](https://motion.dev) for scroll reveals and staggers; [three.js](https://threejs.org) for the homepage star-field (`AstraField`) |
 | Email | Resend, called from Next.js route handlers |
+| Analytics | Vercel Web Analytics and Speed Insights, production only (`src/components/analytics/ProductionInsights.tsx`) |
 | Fonts | `next/font`: Geist (UI), Bricolage Grotesque (headlines), IBM Plex Mono (labels) |
 
 > Next.js 16 has breaking changes from earlier versions. Before changing framework-level code, read the guides in `node_modules/next/dist/docs/` (see `AGENTS.md`).
@@ -40,6 +41,10 @@ Open <http://localhost:3000>.
 | `npm run start` | Serve the production build |
 | `npm run lint` | Run ESLint (fails on any warning) |
 | `npm run typecheck` | Generate route types and run `tsc --noEmit` |
+| `npm test` | Run the Vitest suite. A failure exits non-zero, so CI fails. |
+| `npm run test:e2e` | Build with `ROLE_CLOCK` and `ROLE_CLOSE_DATES` (test-only: `slug=date,region:usa=date`, ignored unless `ROLE_CLOCK` is set) and run the contact and closed-role browser checks |
+| `npm run images` | Build the responsive WebP variants in `public/_img` (needed for the static export) |
+| `npm run check:images` | Fail if two photos in `public/images` are the same file or one photo is wired into more than one slot |
 
 ## Environment variables
 
@@ -48,10 +53,62 @@ Copy `.env.example` to `.env.local`. Never commit real keys (`.env` and `.env*.l
 | Variable | Purpose |
 | --- | --- |
 | `RESEND_API_KEY` | API key from resend.com |
-| `CONTACT_TO_EMAIL` | Inbox that receives submissions (default `hello@bridgewide.com`) |
-| `CONTACT_FROM_EMAIL` | Sender address. `onboarding@resend.dev` is Resend's sandbox sender and only delivers to the Resend account owner's address. Switch to a sender on a verified domain for production. |
+| `CONTACT_TO_EMAIL` | Inbox that receives submissions (`michael.allen@bridgewide.org`) |
+| `CONTACT_FROM_EMAIL` | Fixed sender passed to Resend. It is not the visitor's address. Production uses `BridgeWide <noreply@bridgewide.org>` on the verified `bridgewide.org` domain. That mailbox does not need to exist. `onboarding@resend.dev` is only the local sandbox sender, and it delivers solely to the Resend account owner. The visitor's address is set as `replyTo`. |
 
 If any of the three is missing, the form APIs return a 500 that names the missing variable.
+
+Crons and the scoping call:
+
+| Variable | Purpose |
+| --- | --- |
+| `CRON_SECRET` | Bearer token for `/api/cron/*`. Required in production; with none the routes refuse every request. Vercel sends it to its cron jobs automatically |
+| `DESK_ALLOW_UNAUTHENTICATED` | Set to `1` to run the cron routes locally with no `CRON_SECRET`. Ignored when `NODE_ENV` is `production` |
+| `NEXT_PUBLIC_SCOPING_CALL_URL` | Optional. A scoping-call link shown after a complete hire brief |
+
+Spam check (Cloudflare Turnstile):
+
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public site key. When set, every form shows the Turnstile widget (interaction-only, so most visitors see nothing) |
+| `TURNSTILE_SECRET_KEY` | Secret key. When set, the server verifies the token before any email is sent. A missing or rejected token is a 400; if Cloudflare cannot be reached the post is refused with a 503. With no secret the check is skipped |
+
+Error reports (Sentry). The project key (DSN) is a constant in `src/lib/sentry-dsn.ts`, so error reporting needs no Vercel variable; empty keeps it off:
+
+| Variable | Purpose |
+| --- | --- |
+| `SENTRY_DSN` | Overrides the DSN in `src/lib/sentry-dsn.ts` for the server. Leave empty normally |
+| `NEXT_PUBLIC_SENTRY_DSN` | Overrides it for the browser (baked in at build time). Leave empty normally |
+
+The reporter sends no request bodies, cookies, headers, query strings, users, or email addresses (`src/lib/sentry-scrub.ts`), no traces, and uploads no source maps.
+
+Site, build, and test:
+
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | Canonical origin for metadata, the sitemap, and robots (default `https://www.bridgewide.org`) |
+| `NEXT_OUTPUT` | `export` builds the static export |
+| `PAGES_BASE_PATH` | Sub-path for the static export when it is not served from the domain root. Empty for the custom domain |
+| `NEXT_PUBLIC_BASE_PATH`, `NEXT_PUBLIC_STATIC_EXPORT` | Set by `next.config.ts` from the two above. Do not set them by hand |
+| `VERCEL_ENV` | Set by Vercel. Analytics load only when it is `production` |
+| `ROLE_CLOCK`, `ROLE_CLOSE_DATES` | Test only. Pin the desk clock and close roles by slug or region. `ROLE_CLOSE_DATES` is ignored unless `ROLE_CLOCK` is set |
+| `NODE_ENV`, `CI`, `LOCALAPPDATA` | Set by Node, CI, and Windows. `LOCALAPPDATA` only places the Next.js cache on the system drive for `npm run dev` and `npm run build` (see `scripts/link-next-dist.mjs`) |
+
+## How a submission is handled
+
+Nothing is stored. There is no database and no record. Every form becomes two emails through Resend:
+
+- **To the desk:** every field and the full message, under a reference such as `BW-lq3x-a8f2k1`, with `replyTo` set to the visitor. A CV, if there is one, is an attachment on this email and nowhere else.
+- **To the visitor:** a short confirmation that quotes the same reference and the reply time for that audience.
+
+What follows from that:
+
+- **Status and follow-up** happen in the desk inbox. There is no status page, no candidate login, and no guarantee clock in the code: the desk tracks those in its mailbox (labels, folders, or a shared inbox tool).
+- **Retention and deletion** are mailbox policies, not code. The 12-month talent-pool promise is met by a retention rule on the desk mailbox, and a deletion request is answered by deleting the messages. The privacy notice says so. The steps are in `docs/mailbox-retention.md`. DNS records for sending are in `docs/email-authentication.md`.
+- **Spam and floods:** a hidden honeypot field, a per-instance request limit (it only slows one warm server, since there is no shared store), and a Cloudflare Turnstile check on every form (see the spam-check variables above).
+- **Duplicates** are not detected. Two posts make two emails with two references.
+- **Open and closed roles.** A role closes at 18:00 Pacific on its `closesOn` date, and a role with no date stays open. Pages, `/llms.txt`, and `sitemap.xml` regenerate every five minutes in the server build, so no redeploy is needed. The static export is frozen at build time.
+- **Cron** (`vercel.json`): the weekday role digest (`0 16 * * 1-5`, UTC). It emails the desk the open and closed titles. A failed digest returns a non-2xx status and logs `role-digest-failed`.
 
 ## Pages
 
@@ -61,15 +118,22 @@ If any of the three is missing, the form APIs return a 500 that names the missin
 | `/employers` | How hiring works, the five-day process, fees, hire-brief form |
 | `/engineers` | Candidate path (free, confidential), CV upload form |
 | `/roles`, `/roles/[slug]` | Open engineering roles and role details |
-| `/regions`, `/regions/[region]` | The four regions: `usa`, `canada`, `latam`, `europe` |
+| `/regions`, `/regions/[region]` | Five regions: `usa`, `canada`, `latam`, `europe`, `asia` |
 | `/salary-guide` | Salary bands by region for backend, frontend, data, cloud, mobile, and leadership |
 | `/stories`, `/stories/[slug]` | Employer stories |
 | `/insights`, `/insights/[slug]` | Short articles |
 | `/about` | The desk and consultants |
-| `/contact` | Contact form |
-| `/privacy`, `/terms` | Placeholder legal pages |
+| `/contact` | Contact form and the talent-pool profile at `#keep-profile` |
+| `/ai-training` | Candidate offer, live platform openings, and how an introduction works |
+| `/ai-training/for-candidates`, `/ai-training/for-partners` | Candidate application and partner inquiry |
+| `/ai-training/jobs`, `/ai-training/jobs/[slug]` | The 32 platform openings |
+| `/ai-training/platforms`, `/ai-training/platforms/[slug]` | Platform directory |
+| `/ai-training/[region]` | Training regions |
+| `/ai-training/how-it-works`, `/ai-training/about`, `/ai-training/faq` | Process, desk, and questions |
+| `/ai-training/contact` | The same contact form as `/contact` |
+| `/privacy`, `/terms` | Privacy notice and terms. They are `noindex` and are not in the sitemap. |
 
-Dynamic routes prerender with `generateStaticParams`. The app also generates `sitemap.xml`, `robots.txt`, an Open Graph image, and app icons (`src/app/sitemap.ts`, `robots.ts`, `opengraph-image.tsx`, `apple-icon.tsx`).
+Dynamic routes prerender with `generateStaticParams`. The app also generates `sitemap.xml`, `robots.txt`, and an Open Graph image (`src/app/sitemap.ts`, `robots.ts`, `opengraph-image.tsx`). Tab, Apple, and home-screen icons are the uploaded files in `public/`, linked from the root metadata.
 
 ### Homepage sections
 
@@ -79,13 +143,18 @@ Everything below the two-doors section loads through `next/dynamic` to keep firs
 
 ## Form API
 
-All routes run on the Node.js runtime and return `{ ok: true }` or `{ ok: false, error }`.
+All routes run on the Node.js runtime and return `{ ok: true }` or `{ ok: false, error }`. A successful post also returns an `id`. The static export has no `/api`, and those forms say they cannot send.
 
 | Endpoint | Body | Fields |
 | --- | --- | --- |
-| `POST /api/hire` | JSON | `name`, `email`, `company`, `roleTitle`, `region`, `engagement` (`Permanent` / `Contract`), `message` |
-| `POST /api/cv` | `multipart/form-data` | `name`, `email`, `region`, `file` (PDF, DOC, or DOCX, 5 MB max; sent as an email attachment) |
-| `POST /api/contact` | JSON | `name`, `email`, `message` |
+| `POST /api/hire` | JSON | `name`, `email`, `company`, `roleTitle`, `regions`, `engagement` (`Permanent` / `Contract`), `manager`, `stack`, `band`, `ninety`, `fee`, `message`, optional `duration` and `confidential` |
+| `POST /api/cv` | `multipart/form-data` | `name`, `email`, `region`, `rightToWork`, `file` (PDF, DOC, or DOCX, 5 MB). An `ai-training` track also requires `consent`. |
+| `POST /api/contact` | JSON | `name`, `email`, `topic`, `message` |
+| `POST /api/salary-guide` | JSON | `email` |
+| `POST /api/talent-pool` | `multipart/form-data` | `name`, `email`, `region`, `country`, `discipline`, `years`, `workMode`, `profile`, `consent`, `file` |
+| `POST /api/ai-training/apply` | `multipart/form-data` | candidate fields, `rightToWork`, `consent`, and a CV |
+| `POST /api/ai-training/partner` | JSON | partner fields plus `volume`, `taskType`, `rate`, and `countries` |
+| `GET /api/cron/role-digest` | — | Weekday open-versus-closed report. Requires `Authorization: Bearer CRON_SECRET` in production. |
 
 The server validates every field (`src/lib/form.ts`, `src/lib/cv-file.ts`). Each form includes a hidden `companyWebsite` honeypot: if it is filled, the API returns success without sending anything.
 
@@ -94,13 +163,14 @@ The server validates every field (`src/lib/form.ts`, `src/lib/cv-file.ts`). Each
 ```
 src/
   app/                  Routes, layout, globals.css, sitemap/robots/OG
-    api/{hire,cv,contact}/route.ts
+    api/{hire,cv,contact,salary-guide,talent-pool,ai-training,cron}/route.ts
   components/
     brand/              Logo and bridge mark paths
     forms/              HireForm, CvForm, ContactForm, Field
     home/               One component per homepage section, plus AstraField
     pages/              Shared inner-page building blocks and metadata helper
     site/               Header, mobile nav, footer, announcement bar
+    analytics/          Production-only Vercel Analytics and Speed Insights
     ui/                 Button, Reveal, Accordion, Marquee, CountUp, etc.
   content/site.ts       All site copy and data
   lib/                  Form validation, CV checks, Resend mailer, motion variants
@@ -123,63 +193,68 @@ The canonical site URL (used for metadata, sitemap, and Open Graph) is `siteUrl`
 
 ## CI/CD
 
-Every change ships the same way, and you only do step 1:
+`dev` is where work lands. `main` is the release branch. Do not push to either one. See `CONTRIBUTING.md`.
 
-1. **You:** create a branch with a type prefix, commit, and push it.
-   ```bash
-   git checkout dev && git pull
-   git checkout -b fix/empty-region      # or feat/, chore/, docs/, refactor/, perf/, test/, ci/, build/, style/
-   git commit -am "fix: handle empty region"
-   git push -u origin fix/empty-region
-   ```
-2. **Auto PR → `dev`:** a pull request into `dev` opens (or updates on later pushes), labelled by prefix, with auto-merge on. CI runs and posts a checks-summary comment. When **CI passed** is green, the PR is squash-merged and the branch deleted.
-3. **Auto release → `main`:** the merge into `dev` opens (or updates) one **Release: dev → main** pull request listing everything not yet on `main`. CI runs again, and when it passes the release merges with a merge commit.
-4. **Deploy:** the push to `main` builds the static site and publishes it to https://www.bridgewide.org.
+1. Create a GitHub issue and note the number.
+2. Branch from `origin/dev` as `feat/12-short-description` (`fix/`, `docs/`, `ci/`, and `build/` work the same way). The issue number in the branch name is enough.
+3. Commit with a Conventional Commit subject. Add a `Closes #N` line when the branch name has no issue number. `Fixes` and `Resolves` work the same way.
+4. Push. `open-pull-request.yml` opens the pull request into `dev`.
+5. `ci.yml` runs. If **CI passed** is green, `merge-passing-pr.yml` merge-commits into `dev`.
+6. That push opens `dev` into `main`, or updates the open one. Its body lists `Closes #N` from numbered branches and commit keywords. CI runs again and, if it passes, merges into `main`.
+7. GitHub closes those issues when that pull request merges.
 
-If CI fails at step 2 or 3, nothing merges. Push a fix to the same branch: the PR updates, CI reruns, and the flow continues.
+A merge to `main` only re-runs CI. Vercel deploys https://www.bridgewide.org from its Git connection. GitHub Pages is not published by Actions.
 
 | Workflow | Runs on | What it does |
 | --- | --- | --- |
-| `auto-pr.yml` | Push to a work branch (`fix/*`, `feat/*`, ...) | Opens or updates the PR into `dev`, labels it, turns on auto-merge (squash) |
-| `ci.yml` | PRs into `dev` or `main`, pushes to `dev` | Lint, type check, server and static builds. The final **CI passed** job is the single required check and posts the checks-summary comment |
-| `release.yml` | Push to `dev` | Opens or updates the `dev` → `main` release PR, turns on auto-merge (merge commit) |
-| `nextjs.yml` | Push to `main` | Builds the static export and deploys it to GitHub Pages |
+| `open-pull-request.yml` | Push to `feat/**`, `fix/**`, `docs/**`, `ci/**`, `build/**`, or `dev` | Opens the branch into `dev`, or `dev` into `main` when `dev` is ahead. The pull request into `main` lists `Closes #N` from numbered branches and commit keywords, and an open one is updated |
+| `ci.yml` | Pull requests, pushes to `dev` and `main` | Lint, type check, unit tests, server and static builds, and a browser pass. **CI passed** is the required check |
+| `merge-passing-pr.yml` | CI succeeds on a pull request | Merge-commits eligible pull requests if the head commit is still the one CI validated |
 
-Run the same checks locally before pushing:
+Dependabot pull requests are not opened or merged by these workflows.
 
-```bash
-npm run lint && npm run typecheck && npm run build
-```
+The workflows call `gh` with the `GH_TOKEN` repository secret, not the default `GITHUB_TOKEN`. In **Settings → General → Pull Requests**, allow merge commits. Leave **Automatically delete head branches** off so a `dev` → `main` merge does not delete `dev`. The rulesets in `.github/rulesets/` require a pull request and **CI passed**, and they allow merge commits only.
 
-**To pause:** click **Disable auto-merge** on an open PR to hold that one change, or disable `release.yml` under **Actions** to stop releases while still collecting changes on `dev`.
+## Performance and CDN
 
-**Reviews:** GitHub doesn't let anyone approve their own pull request, and a bot approval would be a rubber stamp. So the gate is the required **CI passed** check plus the summary comment. Rulesets require 0 approvals. If a second person joins, raise `required_approving_review_count` in the `main` ruleset.
+**Responsive images.** GitHub Pages has no image optimizer, so `npm run images` (`scripts/optimize-images.mjs`) pre-builds a WebP for each width in `src/lib/image-sizes.json`. In the static export, `next/image` serves `srcset` from those files through `src/lib/static-image-loader.ts`. For example, a 384px region card loads a 22 KB file, not the 640 KB original. File names carry a content hash (`hero.<hash>.640.webp`), so they can be cached for a year. CI and the deploy run the script before `next build`, and CI fails if any image the HTML references is missing. After adding or replacing a photo in `public/images/`, run `npm run images` and commit `src/lib/image-manifest.json`.
 
-### One-time setup
+**CDN.** GitHub Pages already serves the site through Fastly's CDN with HTTPS. Its only limit is a fixed 10-minute cache on every file. For long-lived caching, Brotli and HTTP/3, put Cloudflare (free plan) in front:
 
-1. **Create the bot GitHub App.** Go to **Settings → Developer settings → GitHub Apps → New GitHub App** on your account.
-   - Name it something like `bridgewide-bot`. Homepage URL: the repo URL. Untick **Webhook → Active**.
-   - Repository permissions: **Contents: Read and write**, **Pull requests: Read and write**, **Issues: Read and write** (for labels), **Workflows: Read and write** (so it can merge changes to `.github/workflows`).
-   - Create the app, note its **App ID**, and under **Private keys** click **Generate a private key**.
-   - Click **Install App** and install it on `amazing-soft-dev/bridgewide` only.
-2. **Add the credentials to the repo.** In **Settings → Secrets and variables → Actions**:
-   - **Variables** tab: `BOT_APP_ID` = the App ID.
-   - **Secrets** tab: `BOT_APP_PRIVATE_KEY` = the full contents of the downloaded `.pem` file.
+1. Add `bridgewide.org` to Cloudflare and switch the domain's nameservers to Cloudflare.
+2. Keep the GitHub Pages DNS records (`www` CNAME to `amazing-soft-dev.github.io`, apex A/AAAA records). Leave them **DNS only** (grey cloud) until GitHub Pages shows the HTTPS certificate as issued, then switch them to **Proxied**.
+3. **SSL/TLS:** Full (strict). Turn on **Always Use HTTPS**, **Brotli** and **HTTP/3**.
+4. **Caching → Cache Rules:** for URI paths starting with `/_next/static/` or `/_img/`, set Edge TTL and Browser TTL to 1 year. These files are content-hashed, so they never change in place. Leave HTML on the origin's default.
 
-   The bot token is needed because pull requests opened with the default `GITHUB_TOKEN` don't trigger CI, so auto-merge would wait forever.
-3. **Repository settings.** In **Settings → General → Pull Requests**, tick **Allow merge commits**, **Allow squash merging**, **Allow auto-merge**, and **Automatically delete head branches**.
-4. **Branch rulesets.** In **Settings → Rules → Rulesets → New ruleset → Import a ruleset**, import `.github/rulesets/dev.json`, then `.github/rulesets/main.json`. Both require a pull request and the **CI passed** check and block force pushes and deletion. `dev` allows squash merges only, `main` merge commits only. Run CI once (any PR) before importing, so GitHub knows the **CI passed** check name.
-5. **Pages.** In **Settings → Pages**: Source **GitHub Actions**, custom domain `www.bridgewide.org`, **Enforce HTTPS** on. Under **Settings → Environments → github-pages**, make sure `main` is allowed to deploy.
+## SEO and GEO
+
+- **Metadata:** every page has a title, description, canonical URL, Open Graph and Twitter card tags, and a generated Open Graph image (`src/components/pages/metadata.ts`, `src/app/opengraph-image.tsx`).
+- **Structured data (JSON-LD, `src/lib/structured-data.ts`):** Organization (San Francisco, no street address) and WebSite on every page, FAQPage on the homepage, BreadcrumbList on detail pages, Article on insights, and JobPosting on each role. There is no Review markup.
+- **Crawlable FAQ:** FAQ answers are in the HTML even when collapsed, so search engines and AI crawlers can read them.
+- **AI crawlers:** `robots.txt` allows all crawlers and names the main AI ones (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, …).
+- **`/llms.txt`:** a plain-Markdown summary for AI assistants, generated from `src/content/site.ts`. It lists services, regions, every open role, every salary band, insights, and the FAQ, each with a URL.
+- **`sitemap.xml`:** lists the public pages, with `lastModified` dates for insights. `/privacy` and `/terms` are omitted.
+- **Analytics:** Vercel Web Analytics and Speed Insights load only when `VERCEL_ENV` is `production` and the build is not a static export. Do Not Track skips the scripts. Hits with an `email` query are dropped, and other query strings are stripped.
+
+After the next deploy, submit `https://www.bridgewide.org/sitemap.xml` in Google Search Console and Bing Webmaster Tools. Bing's index also feeds ChatGPT search and Copilot.
 
 ## Deployment
 
 ### Node host (full site)
 
-This is a standard Next.js app, so it can run on Vercel or any Node host (`npm run build && npm run start`). Set the three environment variables in the host. Before going live, verify a sending domain in Resend and update `CONTACT_FROM_EMAIL`. This is the only target where the forms send email.
+Production is the Vercel project **bridgewide**, with Production tracking `main` and serving https://www.bridgewide.org. Set these in **Settings → Environment Variables** for Production, then redeploy:
 
-### GitHub Pages (static preview)
+```text
+RESEND_API_KEY=re_...
+CONTACT_TO_EMAIL=michael.allen@bridgewide.org
+CONTACT_FROM_EMAIL=BridgeWide <noreply@bridgewide.org>
+```
 
-`.github/workflows/nextjs.yml` deploys a static export to GitHub Pages on every push to `main`. The site is served from the custom domain **https://www.bridgewide.org**. The workflow builds with:
+`bridgewide.org` is verified in Resend. Do not put these values in GitHub Actions. The same three variables work on any other Node host (`npm run build && npm run start`). This is the only target where the forms send email.
+
+### Static export
+
+CI still builds a static export so the Pages-shaped output stays valid. Actions no longer publishes that export. Locally:
 
 ```bash
 NEXT_OUTPUT=export NEXT_PUBLIC_SITE_URL=https://www.bridgewide.org npx next build   # writes ./out
@@ -188,11 +263,8 @@ NEXT_OUTPUT=export NEXT_PUBLIC_SITE_URL=https://www.bridgewide.org npx next buil
 - `NEXT_OUTPUT=export` makes `next.config.ts` switch to `output: "export"`, set `basePath`, and use the custom image loader in `src/lib/static-image-loader.ts`.
 - `PAGES_BASE_PATH` is the sub-path the site is served from. It is empty for the custom domain. Only set it (repository variable `PAGES_BASE_PATH=/bridgewide`) if you serve the site from `https://<owner>.github.io/bridgewide` without a custom domain. A mismatch makes every script, stylesheet, font and image 404.
 - `NEXT_PUBLIC_SITE_URL` sets the canonical origin used in page metadata, `sitemap.xml` and `robots.txt` (default `https://www.bridgewide.org`; override with the repository variable `SITE_URL`).
-- Route files that produce files (`sitemap.ts`, `robots.ts`, `apple-icon.tsx`, `opengraph-image.tsx`) set `dynamic = "force-static"` so they prerender.
-- Pages has no server, so `/api/*` is left out of the export. On the static site the forms skip sending and tell visitors to email `hello@bridgewide.com` instead.
-- Don't add `static_site_generator: next` back to the Pages step. It only patches `next.config.js`, so with this repo's `next.config.ts` it writes a second config that overrides ours.
-
-In the repo settings, set **Pages → Source** to **GitHub Actions**, set the custom domain to `www.bridgewide.org`, and turn on **Enforce HTTPS**.
+- Route files that produce files (`sitemap.ts`, `robots.ts`, `opengraph-image.tsx`) set `dynamic = "force-static"` so they prerender. Icons are static files in `public/` (`favicon.ico`, `favicon-16.png`, `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, and `manifest.webmanifest`).
+- The export has no server, so `/api/*` is left out. A static copy of the site cannot send the forms.
 
 ## License
 

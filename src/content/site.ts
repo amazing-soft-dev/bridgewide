@@ -2,13 +2,15 @@
  * Marketing content for BridgeWide.
  */
 
-export type RegionSlug = "usa" | "canada" | "latam" | "europe";
+import { deskNow, isRoleOpen } from "@/lib/desk-clock";
 
-export type RegionCode = "USA" | "CAN" | "LATAM" | "EUR";
+export type RegionSlug = "usa" | "canada" | "latam" | "europe" | "asia";
+
+export type RegionCode = "USA" | "CAN" | "LATAM" | "EUR" | "ASIA";
 
 export type WorkMode = "Hybrid" | "Remote";
 
-export type Engagement = "Permanent" | "Contract";
+export type Engagement = "Permanent" | "Contract" | "Temp" | "Exec search";
 
 export type Discipline =
   | "Backend"
@@ -18,7 +20,8 @@ export type Discipline =
   | "Mobile"
   | "Leadership";
 
-export type RoleTag = "New" | "Hot";
+/** Status shown on a role row and role page. "New" uses the accent fill; the rest are neutral. */
+export type RoleTag = "New" | "Hot" | "2 Left" | "6 Seats" | "12 Seats" | "Confidential";
 
 export type FaqAudience = "Employers" | "Engineers";
 
@@ -37,9 +40,45 @@ export type NavLink = {
   href: string;
 };
 
+export type FooterItem = {
+  label: string;
+  href?: string;
+};
+
+export type FooterColumn = {
+  title: string;
+  items: readonly FooterItem[];
+};
+
+export type ContactHours = {
+  /** Shown on the desk card and in llms.txt: "Mon–Fri · 08:00–18:00 PT". */
+  label: string;
+  /** Days the desk answers, 0 = Sunday through 6 = Saturday. */
+  days: readonly number[];
+  /** 24-hour local times in the desk's time zone. */
+  opens: string;
+  closes: string;
+  /** IANA zone used to decide "Open now" on the contact page. */
+  timeZone: string;
+};
+
 export type Contact = {
   email: string;
+  phone: string;
+  /** The tel: link, digits only with the country code. */
+  phoneHref: string;
+  /** The WhatsApp chat link for the same number. */
+  whatsappHref: string;
+  address: string;
   location: string;
+  hours: ContactHours;
+};
+
+/** A question on the contact page's question desk. */
+export type ContactFaqItem = {
+  question: string;
+  answer: string;
+  label: string;
 };
 
 export type Announcement = {
@@ -64,6 +103,8 @@ export type Hero = {
 export type Stat = {
   value: string;
   label: string;
+  /** The footnote under the figure: the period it covers and what is counted. */
+  basis?: string;
 };
 
 export type Region = {
@@ -71,22 +112,51 @@ export type Region = {
   name: string;
   code: RegionCode;
   summary: string;
-  openRoleCount: number;
   image: string;
 };
+
+export type SalaryUnit = "year" | "day" | "hour";
 
 export type Role = {
   slug: string;
   title: string;
+  /** Short title for the open-roles board. 20 characters or fewer. */
+  boardTitle: string;
+  /** Sector code for the open-roles board. 3 capital letters. */
+  boardCode: string;
   region: RegionSlug;
   city: string;
+  /** US roles only: the state shown in the board location, for example Texas. */
+  state?: string;
+  country: string;
+  countryCode: string;
+  salaryMin: number;
+  salaryMax: number;
+  salaryUnit: SalaryUnit;
   workMode: WorkMode;
   engagement: Engagement;
   salary: string;
   discipline: Discipline;
   summary: string;
   consultantName: string;
+  /** What the client accepts for notice, for example "1 to 3 months". Shown only when set. */
+  noticePeriod?: string;
+  /** Who the role is for, when the client is not named: "a large US company". Never a company name. */
+  clientDescriptor?: string;
+  /** ISO date the role was posted. */
+  postedOn: string;
+  /**
+   * ISO date the role closes. Open through 18:00 Pacific that day. Leave it
+   * out until the desk has a real date: a role with no date stays open.
+   */
+  closesOn?: string;
   tags?: readonly RoleTag[];
+  /** Three lines for “What you would do”, drawn from the summary. */
+  duties: readonly [string, string, string];
+  /** Three lines for “What you bring”, drawn from the summary. */
+  requirements: readonly [string, string, string];
+  /** Three lines for “What you get”, drawn from the published seat. */
+  benefits: readonly [string, string, string];
 };
 
 export type Placement = {
@@ -102,13 +172,18 @@ export type WeekStep = {
   id: "brief" | "long-list" | "interviews" | "shortlist" | "sent";
   title: string;
   copy: string;
+  /** Background photo for this step on the home "The week" stage. */
+  image: string;
 };
 
 export type Person = {
   id: string;
   name: string;
   role: string;
+  /** Country and region, as `Country (Region)`. */
   focus: string;
+  country: string;
+  regionLabel: string;
   placementCount: number;
   image: string;
 };
@@ -166,20 +241,118 @@ export type Fees = {
 };
 
 export type SiteImages = {
+  /** Home hero. The LCP image. */
   hero: string;
+  /** `/employers` hero. */
   employers: string;
+  /** `/engineers` hero. */
   engineers: string;
+  /** `/about` hero. */
   desk: string;
+  /** Closing band on `/`. */
   close: string;
+  /** Employers door tile on `/`. */
+  doorEmployers: string;
+  /** Engineers door tile on `/`. */
+  doorEngineers: string;
+  /** Backdrop of the "Meet the desk" wall on `/`. */
+  deskWall: string;
+  /** Closing band on `/roles`. */
+  rolesClose: string;
 };
 
+/** Day the current open roles were listed. */
+export const rolesListedOn = "2026-10-18";
+
+/**
+ * ISO date of the last content edit in this file. Feeds the sitemap's
+ * lastModified, the Dataset and Organization dateModified, and llms.txt.
+ * Bump it when copy, roles, bands, or stories change.
+ */
+export const contentUpdatedOn = "2026-11-12";
+
+/** Facts used for Organization structured data and /llms.txt. */
+export const organization = {
+  name: "BridgeWide",
+  description:
+    "BridgeWide is a recruitment firm that places software engineers with companies, sourcing from the United States, Canada, Latin America, Europe, and Asia on permanent and contract terms. BridgeWide also matches candidates to remote AI-training work on specialist platforms, worldwide, including the United States.",
+  areaServed: ["United States", "Canada", "Latin America", "Europe", "Asia"],
+  knowsAbout: [
+    "Software engineering recruitment",
+    "Technical recruiting",
+    "Contract software engineers",
+    "Nearshore engineering hiring in Latin America",
+    "Hiring software engineers in Europe",
+    "Hiring software engineers in Asia",
+    "Engineering salary benchmarks",
+  ],
+  /** Each service points at the page section that describes it, so the schema.org Offer has a real URL. */
+  services: [
+    { name: "Permanent software engineer placement", path: "/employers#fees" },
+    { name: "Contract software engineer placement", path: "/employers#fees" },
+    { name: "Confidential engineering searches", path: "/employers#how" },
+    { name: "Engineering leadership searches", path: "/employers#how" },
+    { name: "Matching candidates to AI-training platforms", path: "/ai-training" },
+  ],
+  /**
+   * Public profiles of the firm (LinkedIn, X, GitHub, Crunchbase). Empty until
+   * the real ones exist; schema.org sameAs is left out while this is empty.
+   */
+  sameAs: [] as readonly string[],
+} as const;
+
 export const contact: Contact = {
-  email: "hello@bridgewide.com",
-  location: "San Francisco · remote desks in four regions",
+  email: "michael.allen@bridgewide.org",
+  phone: "+1 (442) 567-1328",
+  phoneHref: "+14425671328",
+  whatsappHref: "https://wa.me/14425671328",
+  address: "San Francisco, CA",
+  location: "San Francisco · remote desks in five regions",
+  hours: {
+    label: "Mon–Fri · 08:00–18:00 PT",
+    days: [1, 2, 3, 4, 5],
+    opens: "08:00",
+    closes: "18:00",
+    timeZone: "America/Los_Angeles",
+  },
 };
+
+/** The topic select on the contact form. The first entry is the default. */
+export const contactTopics = [
+  "Something else",
+  "Hiring engineers",
+  "Looking for a role",
+  "AI training",
+  "Press",
+] as const;
+
+export type ContactTopic = (typeof contactTopics)[number];
+
+/** The three quick answers on the contact page. Longer answers live in `faq`. */
+export const contactFaq: readonly ContactFaqItem[] = [
+  {
+    label: "General",
+    question: "Which regions do you cover?",
+    answer:
+      "Five: the United States, Canada, Latin America, Europe, and Asia. Each region has its own desk with a consultant who has hired in that market, and one search can draw from more than one region when you want the comparison.",
+  },
+  {
+    label: "General",
+    question: "Where are you based?",
+    answer:
+      "The desk sits in San Francisco. Consultants work from the five regions we hire in, and most first conversations happen on video, in the hours that suit the team you are hiring for.",
+  },
+  {
+    label: "General",
+    question: "When can I reach you?",
+    answer:
+      "Monday to Friday, 08:00 to 18:00 Pacific. Email reaches the desk at any hour, and a person answers, usually within two working hours. Outside those hours, send the brief and we pick it up first thing.",
+  },
+];
 
 export const nav: readonly NavLink[] = [
   { label: "Employers", href: "/employers" },
+  { label: "AI training", href: "/ai-training" },
   { label: "Regions", href: "/regions" },
   { label: "Roles", href: "/roles" },
   { label: "Salary guide", href: "/salary-guide" },
@@ -188,29 +361,101 @@ export const nav: readonly NavLink[] = [
   { label: "Contact", href: "/contact" },
 ];
 
+export const footerColumns: readonly FooterColumn[] = [
+  {
+    title: "Company",
+    items: [
+      { label: "About", href: "/about" },
+      { label: "Regions", href: "/regions" },
+      { label: "Stories", href: "/stories" },
+      { label: "Insights", href: "/insights" },
+    ],
+  },
+  {
+    // Clients first, then engineers. "Send a CV" sits under The desk, for both services.
+    title: "Staffing",
+    items: [
+      { label: "Hire engineers", href: "/employers" },
+      { label: "How hiring works", href: "/employers#how" },
+      { label: "Salary guide", href: "/salary-guide" },
+      { label: "Open roles", href: "/roles" },
+    ],
+  },
+  {
+    title: "AI training",
+    items: [
+      { label: "Overview", href: "/ai-training" },
+      { label: "For candidates", href: "/ai-training/for-candidates" },
+      { label: "For partners", href: "/ai-training/for-partners" },
+      { label: "Jobs", href: "/ai-training/jobs" },
+    ],
+  },
+];
+
 export const images: SiteImages = {
   hero: "/images/hero.webp",
   employers: "/images/employers.webp",
   engineers: "/images/engineers.webp",
   desk: "/images/desk.webp",
   close: "/images/close.webp",
+  doorEmployers: "/images/door-employers.webp",
+  doorEngineers: "/images/door-engineers.webp",
+  deskWall: "/images/desk-wall.webp",
+  rolesClose: "/images/roles-close.webp",
 };
 
 export const hero: Hero = {
   eyebrow: "Software engineers for hiring teams",
-  headline: "A shortlist your engineering managers will actually interview.",
+  headline: "A shortlist managers will interview.",
   subcopy:
-    "BridgeWide places software engineers for companies. We source from the USA, Canada, LATAM, and Europe, and we stay on the search until the seat is filled.",
+    "BridgeWide places software engineers for companies. We source from the USA, Canada, LATAM, Europe, and Asia, and we stay on the search until the seat is filled.",
   primaryCta: { label: "Hire engineers", href: "/employers" },
   secondaryCta: { label: "Find a role", href: "/engineers" },
 };
 
+/** "2026-11-12" as "12 November 2026". */
+function longDate(iso: string): string {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/**
+ * The headline figures cover the trailing 12 months, ending on the last
+ * content update, and a placement counts on the day the engineer starts
+ * work. Update the figures and `contentUpdatedOn` together.
+ */
+export const statsPeriodEnd = longDate(contentUpdatedOn);
+
 export const stats: readonly Stat[] = [
-  { value: "186", label: "Placements in the past year" },
-  { value: "9", label: "Median days to a shortlist" },
-  { value: "94%", label: "Still in role after one year" },
-  { value: "11", label: "Median days to fill a contract seat" },
+  {
+    value: "186",
+    label: "Placements in the past year",
+    basis: `Engineers whose start date fell in the 12 months to ${statsPeriodEnd}.`,
+  },
+  {
+    value: "9",
+    label: "Median days to a shortlist",
+    basis: "Median calendar days from the brief to the shortlist, for the placements counted above.",
+  },
+  {
+    value: "94%",
+    label: "Still in role after one year",
+    basis: `Of engineers who started 12 to 24 months before ${statsPeriodEnd}, the share still in role 12 months after their start date.`,
+  },
+  {
+    value: "11",
+    label: "Median days to fill a contract seat",
+    basis: "Median calendar days from the brief to the start date, for contract seats started in the same 12 months.",
+  },
 ];
+
+/** Why the consultant counts do not add up to 186. */
+export const statsBasis =
+  "186 is the desk total, including placements by people who are not on this page. The six consultants above account for 157.";
 
 export const placements: readonly Placement[] = [
   {
@@ -235,6 +480,13 @@ export const placements: readonly Placement[] = [
     days: 8,
   },
   {
+    title: "Senior Backend Engineer",
+    company: "Lumen Pay",
+    region: "ASIA",
+    engagement: "Permanent",
+    days: 14,
+  },
+  {
     title: "Platform Engineer",
     company: "Keel Systems",
     region: "EUR",
@@ -249,30 +501,35 @@ export const week: readonly WeekStep[] = [
     id: "brief",
     title: "Brief",
     copy: "You tell us the stack, the hiring manager, and what good looks like in the first ninety days.",
+    image: "/images/week-1.webp",
   },
   {
     day: "Tue",
     id: "long-list",
     title: "Long list",
     copy: "We send a long list with notes on depth, so your team can see who is worth a conversation.",
+    image: "/images/week-2.webp",
   },
   {
     day: "Wed",
     id: "interviews",
     title: "Interviews",
     copy: "We run the first conversations and hold the calendar for people your managers should meet.",
+    image: "/images/week-3.webp",
   },
   {
     day: "Thu",
     id: "shortlist",
     title: "Shortlist",
     copy: "A short list arrives with salary, notice, and a plain reason each engineer fits this brief.",
+    image: "/images/week-4.webp",
   },
   {
     day: "Fri",
     id: "sent",
     title: "Sent",
     copy: "Offers go out with our desk still on the thread until the engineer starts.",
+    image: "/images/week-5.webp",
   },
 ];
 
@@ -281,7 +538,9 @@ export const people: readonly Person[] = [
     id: "lena-cho",
     name: "Lena Cho",
     role: "Partner, former staff backend engineer",
-    focus: "USA",
+    focus: "United States",
+    country: "United States",
+    regionLabel: "USA",
     placementCount: 42,
     image: "/images/person-lena.webp",
   },
@@ -289,7 +548,9 @@ export const people: readonly Person[] = [
     id: "henrik-dahl",
     name: "Henrik Dahl",
     role: "Principal, former platform engineer",
-    focus: "Europe · Cloud",
+    focus: "United Kingdom (Europe)",
+    country: "United Kingdom",
+    regionLabel: "Europe",
     placementCount: 31,
     image: "/images/person-henrik.webp",
   },
@@ -297,7 +558,9 @@ export const people: readonly Person[] = [
     id: "sofia-navarro",
     name: "Sofia Navarro",
     role: "Consultant, former iOS engineer",
-    focus: "LATAM · Mobile",
+    focus: "Mexico (LATAM)",
+    country: "Mexico",
+    regionLabel: "LATAM",
     placementCount: 27,
     image: "/images/person-sofia.webp",
   },
@@ -305,188 +568,553 @@ export const people: readonly Person[] = [
     id: "marcus-adeyemi",
     name: "Marcus Adeyemi",
     role: "Consultant, former data engineer",
-    focus: "Canada · Data",
+    focus: "Canada",
+    country: "Canada",
+    regionLabel: "Canada",
     placementCount: 24,
     image: "/images/person-marcus.webp",
+  },
+  {
+    id: "mei-tan",
+    name: "Mei Tan",
+    role: "Consultant, former backend engineer",
+    focus: "Singapore (Asia)",
+    country: "Singapore",
+    regionLabel: "Asia",
+    placementCount: 14,
+    image: "/images/person-mei.webp",
   },
   {
     id: "priya-raman",
     name: "Priya Raman",
     role: "Director, former engineering manager",
-    focus: "Leadership",
+    focus: "United States",
+    country: "United States",
+    regionLabel: "USA",
     placementCount: 19,
     image: "/images/person-priya.webp",
   },
 ];
 
-export const roles: readonly Role[] = [
+const roleRecords: readonly Omit<Role, "postedOn">[] = [
+  {
+    slug: "senior-backend-engineer-singapore",
+    noticePeriod: "1 to 3 months",
+    clientDescriptor: "a large US company",
+    title: "Senior Backend Engineer",
+    boardTitle: "Senior Backend",
+    boardCode: "ENG",
+    region: "asia",
+    city: "Singapore",
+    country: "Singapore",
+    countryCode: "SGP",
+    workMode: "Remote",
+    engagement: "Permanent",
+    salary: "$95,000–$130,000",
+    salaryMin: 95000,
+    salaryMax: 130000,
+    salaryUnit: "year",
+    discipline: "Backend",
+    summary:
+      "A senior backend seat on a Singapore fintech’s settlements team, remote across Asia with a daily overlap on Singapore hours. The engineer should have run Kotlin or Go services in production and be ready to own a queue-backed workflow end to end.",
+    consultantName: "Mei Tan",
+    tags: ["New"],
+    duties: [
+      "Own the settlements workflow for a Singapore fintech",
+      "Keep a daily overlap with the team on Singapore hours",
+      "Carry a queue-backed service from design to on-call",
+    ],
+    requirements: [
+      "Run Kotlin or Go services in production",
+      "Comfortable owning a workflow end to end",
+      "Based in Asia, with Singapore hours in the working day",
+    ],
+    benefits: [
+      "Salary $95,000–$130,000",
+      "Remote across Asia",
+      "Permanent seat, with Mei Tan on the search",
+    ],
+  },
+  {
+    slug: "senior-data-engineer-bangalore",
+    noticePeriod: "1 to 3 months",
+    clientDescriptor: "a large US company",
+    title: "Senior Data Engineer",
+    boardTitle: "Senior Data",
+    boardCode: "DAT",
+    region: "asia",
+    city: "Bangalore",
+    country: "India",
+    countryCode: "IND",
+    workMode: "Hybrid",
+    engagement: "Permanent",
+    salary: "$85,000–$115,000",
+    salaryMin: 85000,
+    salaryMax: 115000,
+    salaryUnit: "year",
+    discipline: "Data",
+    summary:
+      "A senior data seat on a Bangalore analytics team that serves product managers in three time zones. The engineer should have run dbt and a cloud warehouse at scale and be able to explain a model to the people who read its numbers.",
+    consultantName: "Mei Tan",
+    duties: [
+      "Own the warehouse models a product team reads every morning",
+      "Serve consumers across three time zones from Bangalore",
+      "Keep the pipeline’s production path in one owner’s hands",
+    ],
+    requirements: [
+      "Run dbt and a cloud warehouse at scale",
+      "Able to explain a model to its readers",
+      "Hybrid in Bangalore, three days a week on site",
+    ],
+    benefits: [
+      "Salary $85,000–$115,000",
+      "Hybrid in Bangalore",
+      "Permanent seat, with Mei Tan on the search",
+    ],
+  },
   {
     slug: "staff-backend-engineer-san-francisco",
     title: "Staff Backend Engineer",
+    boardTitle: "Staff Backend",
+    boardCode: "ENG",
     region: "usa",
     city: "San Francisco",
+    state: "California",
+    country: "United States",
+    countryCode: "USA",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$210,000–$245,000",
+    salaryMin: 210000,
+    salaryMax: 245000,
+    salaryUnit: "year",
     discipline: "Backend",
     summary:
       "A staff backend seat for a San Francisco payments team that needs one owner for a ledger service. The engineer should have shipped Go or Java in production and be ready to review design with the people already on the team.",
     consultantName: "Lena Cho",
     tags: ["Hot"],
+    duties: [
+      "Own the ledger service for a San Francisco payments team",
+      "Review design with the people already on the team",
+      "Keep one service’s production path in a single owner’s hands",
+    ],
+    requirements: [
+      "Shipped Go or Java in production",
+      "Ready to review design with an existing team",
+      "Comfortable as the owner of a ledger service",
+    ],
+    benefits: [
+      "Salary $210,000–$245,000",
+      "Hybrid in San Francisco",
+      "Permanent seat, with Lena Cho on the search",
+    ],
   },
   {
     slug: "senior-frontend-engineer-austin",
     title: "Senior Frontend Engineer",
+    boardTitle: "Senior Frontend",
+    boardCode: "ENG",
     region: "usa",
     city: "Austin",
+    state: "Texas",
+    country: "United States",
+    countryCode: "USA",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$165,000–$190,000",
+    salaryMin: 165000,
+    salaryMax: 190000,
+    salaryUnit: "year",
     discipline: "Frontend",
     summary:
       "Hybrid frontend seat in Austin on a product surface that operations staff use all day. We are shortlisting senior engineers who have owned a design system and can work beside an existing React team.",
     consultantName: "Lena Cho",
     tags: ["New"],
+    duties: [
+      "Build the product surface operations staff use all day",
+      "Work beside the existing React team in Austin",
+      "Own pieces of the design system that surface depends on",
+    ],
+    requirements: [
+      "Senior frontend engineer",
+      "Has owned a design system",
+      "Can work beside an existing React team",
+    ],
+    benefits: [
+      "Salary $165,000–$190,000",
+      "Hybrid in Austin",
+      "Permanent seat, with Lena Cho on the search",
+    ],
   },
   {
     slug: "engineering-manager-new-york",
     title: "Engineering Manager",
+    boardTitle: "Engineering Manager",
+    boardCode: "MGT",
     region: "usa",
     city: "New York",
+    state: "New York",
+    country: "United States",
+    countryCode: "USA",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$240,000–$280,000",
+    salaryMin: 240000,
+    salaryMax: 280000,
+    salaryUnit: "year",
     discipline: "Leadership",
     summary:
       "A manager seat in New York for a group of eight product engineers and a roadmap the company has already shared internally. The search is for a manager who has run a team of engineers and who will hire into that team after they start.",
     consultantName: "Priya Raman",
+    tags: ["2 Left"],
+    duties: [
+      "Run a group of eight product engineers in New York",
+      "Carry a roadmap the company has already shared internally",
+      "Hire into the team after the start date",
+    ],
+    requirements: [
+      "Has run a team of engineers",
+      "Will hire into that team after they start",
+      "Ready for a roadmap that is already written down",
+    ],
+    benefits: [
+      "Salary $240,000–$280,000",
+      "Hybrid in New York",
+      "Permanent seat, with Priya Raman on the search",
+    ],
   },
   {
     slug: "senior-data-engineer-toronto",
     title: "Senior Data Engineer",
+    boardTitle: "Senior Data Engineer",
+    boardCode: "DAT",
     region: "canada",
     city: "Toronto",
+    country: "Canada",
+    countryCode: "CAN",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$150,000–$175,000",
+    salaryMin: 150000,
+    salaryMax: 175000,
+    salaryUnit: "year",
     discipline: "Data",
     summary:
       "Toronto hybrid seat on a warehouse that feeds finance and product reporting. The brief calls for a senior data engineer who has run dbt and a cloud warehouse in production.",
     consultantName: "Marcus Adeyemi",
     tags: ["Hot"],
+    duties: [
+      "Own a warehouse that feeds finance and product reporting",
+      "Keep Toronto hybrid hours with the team on that warehouse",
+      "Run the models the brief already depends on",
+    ],
+    requirements: [
+      "Senior data engineer",
+      "Has run dbt in production",
+      "Has run a cloud warehouse in production",
+    ],
+    benefits: [
+      "Salary $150,000–$175,000",
+      "Hybrid in Toronto",
+      "Permanent seat, with Marcus Adeyemi on the search",
+    ],
   },
   {
     slug: "cloud-engineer-vancouver",
     title: "Cloud Engineer",
+    boardTitle: "Cloud Engineer",
+    boardCode: "CLD",
     region: "canada",
     city: "Vancouver",
+    country: "Canada",
+    countryCode: "CAN",
     workMode: "Remote",
     engagement: "Contract",
     salary: "$850–$980 / day",
+    salaryMin: 850,
+    salaryMax: 980,
+    salaryUnit: "day",
     discipline: "Cloud",
     summary:
       "A contract cloud seat, remote in Canada, to finish a platform cutover before year end. The engineer should be comfortable owning Terraform, a Kubernetes cluster, and the on-call that comes with both.",
     consultantName: "Marcus Adeyemi",
     tags: ["New"],
+    duties: [
+      "Finish a platform cutover before year end",
+      "Own Terraform and a Kubernetes cluster",
+      "Carry the on-call that comes with both",
+    ],
+    requirements: [
+      "Comfortable owning Terraform",
+      "Comfortable owning a Kubernetes cluster",
+      "Ready for the on-call that comes with the cutover",
+    ],
+    benefits: [
+      "Rate $850–$980 / day",
+      "Remote in Canada",
+      "Contract seat, with Marcus Adeyemi on the search",
+    ],
   },
   {
     slug: "senior-backend-engineer-mexico-city",
     title: "Senior Backend Engineer",
+    boardTitle: "Senior Backend",
+    boardCode: "ENG",
     region: "latam",
     city: "Mexico City",
+    country: "Mexico",
+    countryCode: "MEX",
     workMode: "Remote",
     engagement: "Contract",
     salary: "$650–$780 / day",
+    salaryMin: 650,
+    salaryMax: 780,
+    salaryUnit: "day",
     discipline: "Backend",
     summary:
       "Contract backend seat in Mexico City, overlapped with US Pacific hours, for an API that is already in market. We want a senior engineer who can pick up a Go service and ship without a long ramp.",
     consultantName: "Sofia Navarro",
     tags: ["Hot"],
+    duties: [
+      "Pick up a Go API that is already in market",
+      "Ship on that service without a long ramp",
+      "Overlap working hours with US Pacific",
+    ],
+    requirements: [
+      "Senior backend engineer",
+      "Can pick up a Go service",
+      "Can ship without a long ramp",
+    ],
+    benefits: [
+      "Rate $650–$780 / day",
+      "Remote from Mexico City, overlapped with US Pacific",
+      "Contract seat, with Sofia Navarro on the search",
+    ],
   },
   {
     slug: "mobile-engineer-sao-paulo",
     title: "Mobile Engineer",
+    boardTitle: "Mobile Engineer",
+    boardCode: "MOB",
     region: "latam",
     city: "São Paulo",
+    country: "Brazil",
+    countryCode: "BRA",
     workMode: "Remote",
     engagement: "Permanent",
     salary: "$95,000–$120,000",
+    salaryMin: 95000,
+    salaryMax: 120000,
+    salaryUnit: "year",
     discipline: "Mobile",
     summary:
       "Permanent mobile seat in São Paulo for a health product with iOS and Android already in the stores. The hire joins a small app team and is expected to own releases as well as tickets.",
     consultantName: "Sofia Navarro",
+    tags: ["12 Seats"],
+    duties: [
+      "Join a small app team on a health product",
+      "Work on iOS and Android builds already in the stores",
+      "Own releases as well as tickets",
+    ],
+    requirements: [
+      "Mobile engineer for iOS and Android",
+      "Ready to own releases, not only tickets",
+      "Based in São Paulo for a permanent seat",
+    ],
+    benefits: [
+      "Salary $95,000–$120,000",
+      "Remote in São Paulo",
+      "Permanent seat, with Sofia Navarro on the search",
+    ],
   },
   {
     slug: "frontend-engineer-bogota",
     title: "Frontend Engineer",
+    boardTitle: "Frontend Engineer",
+    boardCode: "ENG",
     region: "latam",
     city: "Bogotá",
+    country: "Colombia",
+    countryCode: "COL",
     workMode: "Remote",
     engagement: "Contract",
     salary: "$480–$620 / day",
+    salaryMin: 480,
+    salaryMax: 620,
+    salaryUnit: "day",
     discipline: "Frontend",
     summary:
       "Contract frontend seat in Bogotá for a dashboard that account managers live in. The engineer should know React well enough to improve a mature codebase in place.",
     consultantName: "Sofia Navarro",
-    tags: ["New"],
+    tags: ["6 Seats"],
+    duties: [
+      "Improve a dashboard account managers live in",
+      "Work inside a mature React codebase",
+      "Ship changes in place, without a rewrite",
+    ],
+    requirements: [
+      "Knows React well enough for a mature codebase",
+      "Can improve a product in place",
+      "Available for a contract from Bogotá",
+    ],
+    benefits: [
+      "Rate $480–$620 / day",
+      "Remote in Bogotá",
+      "Contract seat, with Sofia Navarro on the search",
+    ],
   },
   {
     slug: "staff-platform-engineer-london",
     title: "Staff Platform Engineer",
+    boardTitle: "Staff Platform",
+    boardCode: "CLD",
     region: "europe",
     city: "London",
+    country: "England",
+    countryCode: "ENG",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$160,000–$190,000",
+    salaryMin: 160000,
+    salaryMax: 190000,
+    salaryUnit: "year",
     discipline: "Cloud",
     summary:
       "Hybrid staff platform seat in London for a company whose product engineers are blocked on internal tooling. The hire sets the paved path: CI, environments, and the libraries other teams are expected to use.",
     consultantName: "Henrik Dahl",
     tags: ["Hot"],
+    duties: [
+      "Unblock product engineers who are waiting on internal tooling",
+      "Set the paved path for CI and environments",
+      "Set the libraries other teams are expected to use",
+    ],
+    requirements: [
+      "Staff platform engineer",
+      "Has set a paved path other teams actually use",
+      "Hybrid in London",
+    ],
+    benefits: [
+      "Salary $160,000–$190,000",
+      "Hybrid in London",
+      "Permanent seat, with Henrik Dahl on the search",
+    ],
   },
   {
     slug: "data-engineer-berlin",
     title: "Data Engineer",
+    boardTitle: "Data Engineer",
+    boardCode: "DAT",
     region: "europe",
     city: "Berlin",
+    country: "Germany",
+    countryCode: "DEU",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$120,000–$145,000",
+    salaryMin: 120000,
+    salaryMax: 145000,
+    salaryUnit: "year",
     discipline: "Data",
     summary:
       "Hybrid data seat in Berlin on event pipelines that feed product analytics and a customer-facing report. We are looking for an engineer who has operated streaming jobs in production.",
     consultantName: "Marcus Adeyemi",
+    tags: ["Confidential"],
+    duties: [
+      "Run event pipelines that feed product analytics",
+      "Feed a customer-facing report from those pipelines",
+      "Keep the streaming jobs healthy in production",
+    ],
+    requirements: [
+      "Has operated streaming jobs in production",
+      "Can work a hybrid week in Berlin",
+      "Comfortable with pipelines that customers see",
+    ],
+    benefits: [
+      "Salary $120,000–$145,000",
+      "Hybrid in Berlin",
+      "Permanent seat, with Marcus Adeyemi on the search",
+    ],
   },
   {
     slug: "ios-engineer-amsterdam",
     title: "iOS Engineer",
+    boardTitle: "iOS Engineer",
+    boardCode: "MOB",
     region: "europe",
     city: "Amsterdam",
+    country: "Netherlands",
+    countryCode: "NLD",
     workMode: "Remote",
     engagement: "Contract",
     salary: "$700–$860 / day",
+    salaryMin: 700,
+    salaryMax: 860,
+    salaryUnit: "day",
     discipline: "Mobile",
     summary:
       "Remote contract iOS seat in Amsterdam to ship a regulated feature before a fixed release window. The engineer should have taken an app through App Store review and be used to working with a backend team in another city.",
     consultantName: "Sofia Navarro",
     tags: ["New"],
+    duties: [
+      "Ship a regulated iOS feature before a fixed release window",
+      "Take the build through App Store review",
+      "Work with a backend team in another city",
+    ],
+    requirements: [
+      "Has taken an app through App Store review",
+      "Used to working with a backend team in another city",
+      "Available for a remote contract from Amsterdam",
+    ],
+    benefits: [
+      "Rate $700–$860 / day",
+      "Remote in Amsterdam",
+      "Contract seat, with Sofia Navarro on the search",
+    ],
   },
   {
     slug: "director-of-engineering-dublin",
     title: "Director of Engineering",
+    boardTitle: "Engineering Director",
+    boardCode: "EXE",
     region: "europe",
     city: "Dublin",
+    country: "Ireland",
+    countryCode: "IRL",
     workMode: "Hybrid",
     engagement: "Permanent",
     salary: "$200,000–$240,000",
+    salaryMin: 200000,
+    salaryMax: 240000,
+    salaryUnit: "year",
     discipline: "Leadership",
     summary:
       "A director seat in Dublin for a product org of about forty engineers across three groups. The search starts confidential, and the hire is expected to reset planning with the managers already in place.",
     consultantName: "Priya Raman",
+    tags: ["Confidential"],
+    duties: [
+      "Lead a product org of about forty engineers across three groups",
+      "Reset planning with the managers already in place",
+      "Keep the search confidential until the shortlist",
+    ],
+    requirements: [
+      "Has led managers, not only a single team",
+      "Ready to reset planning with the people already there",
+      "Comfortable with a search that starts confidential",
+    ],
+    benefits: [
+      "Salary $200,000–$240,000",
+      "Hybrid in Dublin",
+      "Permanent seat, with Priya Raman on the search",
+    ],
   },
 ];
 
-const regionSeed: readonly Omit<Region, "openRoleCount">[] = [
+export const roles: readonly Role[] = roleRecords.map((role) => ({
+  ...role,
+  postedOn: rolesListedOn,
+}));
+
+const regionSeed: readonly Region[] = [
   {
     slug: "usa",
     name: "United States",
@@ -519,18 +1147,35 @@ const regionSeed: readonly Omit<Region, "openRoleCount">[] = [
       "London, Berlin, Amsterdam, Dublin, and other UK and EU hubs. Hybrid seats for product companies that need senior engineers and engineering leaders on the ground.",
     image: "/images/region-europe.webp",
   },
+  {
+    slug: "asia",
+    name: "Asia",
+    code: "ASIA",
+    summary:
+      "India, Pakistan, Indonesia, and Singapore, with remote seats across the region that overlap Singapore or US West hours. Teams use this desk for follow-the-sun coverage and for senior engineers who join a distributed product team.",
+    image: "/images/region-asia.webp",
+  },
 ];
 
-export const regions: readonly Region[] = regionSeed.map((region) => ({
-  ...region,
-  openRoleCount: roles.filter((role) => role.region === region.slug).length,
-}));
+export const regions: readonly Region[] = regionSeed;
 
-export const announcement: Announcement = {
-  liveRoleCount: `${roles.length} roles live`,
-  salaryGuideHref: "/salary-guide",
-  salaryGuideLabel: "Salary guide",
-};
+/**
+ * Open roles in a region right now. Call it while rendering, never at module
+ * level: a role closes at 18:00 Pacific, and a value computed at import would
+ * stay frozen for the life of the server instance.
+ */
+export function openRoleCount(slug: RegionSlug, now: Date = deskNow()): number {
+  return roles.filter((role) => role.region === slug && isRoleOpen(role, now)).length;
+}
+
+/** The announcement strip, with the live count worked out when called. */
+export function getAnnouncement(now: Date = deskNow()): Announcement {
+  return {
+    liveRoleCount: `${roles.filter((role) => isRoleOpen(role, now)).length} roles live`,
+    salaryGuideHref: "/salary-guide",
+    salaryGuideLabel: "Salary guide",
+  };
+}
 
 export const salaryBands: SalaryBands = {
   edition: "Autumn 2026 edition",
@@ -544,6 +1189,7 @@ export const salaryBands: SalaryBands = {
         canada: { low: 130000, high: 185000, median: 155000 },
         latam: { low: 72000, high: 128000, median: 96000 },
         europe: { low: 110000, high: 178000, median: 142000 },
+        asia: { low: 66000, high: 118000, median: 88000 },
       },
     },
     {
@@ -554,6 +1200,7 @@ export const salaryBands: SalaryBands = {
         canada: { low: 120000, high: 175000, median: 145000 },
         latam: { low: 64000, high: 115000, median: 86000 },
         europe: { low: 100000, high: 165000, median: 130000 },
+        asia: { low: 59000, high: 106000, median: 79000 },
       },
     },
     {
@@ -564,6 +1211,7 @@ export const salaryBands: SalaryBands = {
         canada: { low: 135000, high: 195000, median: 162000 },
         latam: { low: 76000, high: 140000, median: 102000 },
         europe: { low: 115000, high: 185000, median: 148000 },
+        asia: { low: 70000, high: 129000, median: 94000 },
       },
     },
     {
@@ -574,6 +1222,7 @@ export const salaryBands: SalaryBands = {
         canada: { low: 140000, high: 200000, median: 168000 },
         latam: { low: 80000, high: 145000, median: 108000 },
         europe: { low: 120000, high: 190000, median: 152000 },
+        asia: { low: 74000, high: 133000, median: 99000 },
       },
     },
     {
@@ -584,6 +1233,7 @@ export const salaryBands: SalaryBands = {
         canada: { low: 125000, high: 180000, median: 150000 },
         latam: { low: 68000, high: 120000, median: 90000 },
         europe: { low: 105000, high: 170000, median: 136000 },
+        asia: { low: 63000, high: 110000, median: 83000 },
       },
     },
     {
@@ -594,12 +1244,29 @@ export const salaryBands: SalaryBands = {
         canada: { low: 180000, high: 270000, median: 220000 },
         latam: { low: 120000, high: 200000, median: 155000 },
         europe: { low: 160000, high: 260000, median: 205000 },
+        asia: { low: 110000, high: 184000, median: 143000 },
       },
     },
   ],
 };
 
 export const stories: readonly Story[] = [
+  {
+    slug: "lumen-pay-settlements",
+    company: "Lumen Pay",
+    region: "asia",
+    quote:
+      "The shortlist arrived with the overlap hours already checked. We interviewed three people and hired the second.",
+    attribution: "Wei Lin, CTO, Lumen Pay",
+    result: "Senior backend engineer placed in Singapore",
+    metric: "14 days",
+    image: "/images/story-5.webp",
+    body: [
+      "Lumen Pay’s settlements team in Singapore had grown a queue-backed workflow faster than its owners, and the two engineers who knew it were covering on-call between them. The CTO wanted a senior engineer who could take the service, and who would keep Singapore hours in a team spread across Asia.",
+      "We wrote the brief around the workflow, the languages in production, and the overlap the team needed each day. The long list was nine names across Singapore, Kuala Lumpur, and Bangalore. The shortlist was three, each with their working hours and notice on the same page.",
+      "The engineer started fourteen days after the brief and took the on-call rota in the first month. The CTO reopened the same brief for a data seat the following quarter.",
+    ],
+  },
   {
     slug: "northline-ledger-owner",
     company: "Northline",
@@ -664,6 +1331,22 @@ export const stories: readonly Story[] = [
       "The hire started in nineteen days. A month in, the team had a single way to ship, and Keel opened a director search on the same desk.",
     ],
   },
+  {
+    slug: "anon-canada-contract",
+    company: "Anonymized client",
+    region: "canada",
+    quote: "The contract data seat was filled before the sprint date moved.",
+    attribution:
+      "Client not named. 11 days is the published median to fill a contract seat, not a new claim.",
+    result: "Contract data engineer, client not named",
+    metric: "11 days",
+    image: "/images/story-anon-canada.webp",
+    body: [
+      "A product company in Canada needed a contract data engineer before a sprint date. The client is not named.",
+      "The desk ran the search the same way it runs every contract seat: a brief, a short list, and a start. The seat was filled in 11 days.",
+      "Eleven days is the published median to fill a contract seat. This example illustrates that median. It is not a separate measurement and it is not a named client.",
+    ],
+  },
 ];
 
 export const insights: readonly Insight[] = [
@@ -699,7 +1382,7 @@ export const insights: readonly Insight[] = [
   },
   {
     slug: "reading-salary-bands-across-regions",
-    title: "How to read salary bands across four regions",
+    title: "How to read salary bands across five regions",
     kicker: "Pay",
     date: "2 September 2026",
     minutes: 7,
@@ -749,7 +1432,7 @@ export const faq: readonly FaqItem[] = [
     audience: "Employers",
     question: "Which regions do you hire from?",
     answer:
-      "Four: the United States, Canada, Latin America, and Europe. Each region has its own desk. We place hybrid and remote engineers, on permanent and contract terms, and we can run one search that draws from more than one region when you want that comparison.",
+      "Five: the United States, Canada, Latin America, Europe, and Asia. Each region has its own desk. We place hybrid and remote engineers, on permanent and contract terms, and we can run one search that draws from more than one region when you want that comparison.",
   },
 ];
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import type { Transition, Variants } from "motion/react";
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
@@ -41,20 +40,56 @@ export const wordVariants: Variants = {
 };
 
 /**
- * Starts false so the server and the first client render match.
- * A stylesheet rule already keeps [data-motion] still and visible
- * when the visitor prefers reduced motion.
+ * Rise without the fade. Used on the page `<h1>`, which is often the Largest
+ * Contentful Paint element: text at opacity 0 is not painted, so a fade-in
+ * would push LCP back by the length of the animation.
  */
-export function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
+export const wordVariantsVisible: Variants = {
+  hidden: { y: "0.55em" },
+  visible: {
+    y: 0,
+    transition: { duration: 0.55, ease },
+  },
+};
 
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduced(query.matches);
-    update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
+/**
+ * The masked rise from the reference's section headings: the word slides up
+ * from below its line, with no fade, over a second.
+ */
+export const maskedWordVariants: Variants = {
+  hidden: { y: "108%" },
+  visible: {
+    y: 0,
+    transition: { duration: 1, ease: [0.2, 0.75, 0.2, 1] },
+  },
+};
 
-  return reduced;
-}
+/** The brand block behind an accented heading word: wipes in from the left after the word rises. */
+export const accentBlockVariants: Variants = {
+  hidden: { scaleX: 0 },
+  visible: {
+    scaleX: 1,
+    transition: { duration: 0.8, ease: [0.7, 0, 0.2, 1], delay: 0.45 },
+  },
+};
+
+/**
+ * The accented word itself: it flips to white once the block is behind it.
+ * The hidden colours are the `ink` and `cloud` tokens from globals.css; Motion
+ * cannot interpolate `var()`, so the hex values are repeated here.
+ */
+export const accentTextVariants: Record<"light" | "dark" | "brand", Variants> = {
+  light: {
+    hidden: { color: "#111111" },
+    visible: { color: "#ffffff", transition: { duration: 0.3, delay: 0.95 } },
+  },
+  dark: {
+    hidden: { color: "#f4f0e8" },
+    visible: { color: "#ffffff", transition: { duration: 0.3, delay: 0.95 } },
+  },
+  /** On the brand-red band the heading is white before and after; only the ink pill moves. */
+  brand: {
+    hidden: { color: "#ffffff" },
+    visible: { color: "#ffffff" },
+  },
+};

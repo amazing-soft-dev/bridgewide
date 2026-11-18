@@ -4,17 +4,20 @@ import { PageSection } from "@/components/pages/PageSection";
 import { textLink } from "@/components/pages/format";
 import { pageMetadata } from "@/components/pages/metadata";
 import { insights } from "@/content/site";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Insights · BridgeWide",
+  title: "Insights",
   description:
-    "Notes for hiring managers on briefs, contract seats, and reading salary bands across four regions.",
+    "Notes for hiring managers on briefs, contract seats, and reading salary bands across five regions.",
   path: "/insights",
 });
 
 export default function InsightsPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "Insights", path: "/insights" }])} />
       <PageHero
         eyebrow="Insights"
         title="Notes from the searches we are running."
@@ -25,7 +28,7 @@ export default function InsightsPage() {
           {insights.map((insight) => (
             <li key={insight.slug} className="border-t border-brand pt-6">
               <article>
-                <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
+                <p className="eyebrow">
                   {insight.kicker}
                 </p>
                 <h3 className="font-display mt-3 text-3xl text-ink">

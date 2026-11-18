@@ -5,6 +5,7 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
+import { HumanCheck } from "@/components/forms/HumanCheck";
 
 const controlClass =
   "w-full border border-stone bg-white px-3 py-2 font-sans text-base text-ink placeholder:text-stone focus-visible:outline-ink";
@@ -108,10 +109,12 @@ export function Field(props: FieldProps) {
   );
 }
 
+/** The hidden trap field for bots, plus the Turnstile check when its key is set. Every form renders this. */
 export function Honeypot() {
   const id = useId();
 
   return (
+    <>
     <div
       aria-hidden="true"
       style={{
@@ -137,5 +140,7 @@ export function Honeypot() {
         defaultValue=""
       />
     </div>
+    <HumanCheck />
+    </>
   );
 }

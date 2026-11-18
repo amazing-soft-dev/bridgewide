@@ -1,0 +1,9 @@
+/* The platform logo tape: two copies of the row slide by half their width and loop. */
+@keyframes platform-run {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

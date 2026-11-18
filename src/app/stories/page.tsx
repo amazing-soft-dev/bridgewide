@@ -7,9 +7,11 @@ import { HoverLift } from "@/components/ui/HoverLift";
 import { RevealGroup, RevealItem } from "@/components/ui/Reveal";
 import { pageMetadata } from "@/components/pages/metadata";
 import { stories } from "@/content/site";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbs } from "@/lib/structured-data";
 
 export const metadata = pageMetadata({
-  title: "Stories · BridgeWide",
+  title: "Stories",
   description:
     "How companies filled an engineering seat with BridgeWide, from the brief to the start date.",
   path: "/stories",
@@ -18,10 +20,11 @@ export const metadata = pageMetadata({
 export default function StoriesPage() {
   return (
     <>
+      <JsonLd data={breadcrumbs([{ name: "Stories", path: "/stories" }])} />
       <PageHero
         eyebrow="Stories"
         title="Searches that ended with a start date."
-        lede="Four employer stories, one from each desk. The day counts are the time from a complete brief to a hire."
+        lede="Five employer stories, one from each desk. The day counts are the time from a complete brief to a hire."
       />
       <PageSection id="list" label="Employers" title="From the desks">
         <RevealGroup className="grid gap-14">
@@ -38,7 +41,7 @@ export default function StoriesPage() {
                     className="aspect-[4/3]"
                   />
                   <div>
-                    <p className="font-mono text-xs tracking-[0.18em] text-brand uppercase">
+                    <p className="eyebrow">
                       {region.name} · {story.metric}
                     </p>
                     <h3 className="font-display mt-3 text-3xl text-ink">

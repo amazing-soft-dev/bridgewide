@@ -1,10 +1,28 @@
-import { inspectCv, MAX_CV_BYTES } from "@/lib/cv-file";
-import { emailField, honeypotTripped, limits, regionField, regionName, textField } from "@/lib/form";
-import { jsonResult, sendFormEmail } from "@/lib/mail";
+import { AI_CONSENT_VERSION, sla } from "@/content/sla";
+import { declaredTooLarge, inspectCv, inspectCvContent, MAX_CV_BYTES } from "@/lib/cv-file";
+import {
+  cvTrackField,
+  cvTrackLabel,
+  emailField,
+  honeypotTripped,
+  limits,
+  optionalText,
+  regionField,
+  regionName,
+  rightToWorkField,
+  textField,
+} from "@/lib/form";
+import { clientIp, deliverIntake } from "@/lib/intake";
+import { tokenFromForm } from "@/lib/turnstile";
+import { jsonResult } from "@/lib/mail";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  if (declaredTooLarge(request)) {
+    return jsonResult({ ok: false, error: "CV must be 5 MB or smaller.", status: 413 });
+  }
+
   let form: FormData;
   try {
     form = await request.formData();
@@ -22,8 +40,26 @@ export async function POST(request: Request) {
   const email = emailField(form.get("email"));
   if (!email.ok) return jsonResult({ ok: false, error: email.error, status: 400 });
 
+  const track = cvTrackField(form.get("track"));
+  if (!track.ok) return jsonResult({ ok: false, error: track.error, status: 400 });
+  if (track.value === "ai-training" && form.get("consent") !== "yes") {
+    return jsonResult({ ok: false, error: "Consent is required before an AI-training introduction.", status: 400 });
+  }
+
+  const work = rightToWorkField(form.get("rightToWork"));
+  if (!work.ok) return jsonResult({ ok: false, error: work.error, status: 400 });
+
   const region = regionField(form.get("region"));
   if (!region.ok) return jsonResult({ ok: false, error: region.error, status: 400 });
+
+  const phone = optionalText(form.get("phone"), limits.phone, "Phone");
+  if (!phone.ok) return jsonResult({ ok: false, error: phone.error, status: 400 });
+
+  const seat = optionalText(form.get("role"), limits.roleTitle, "Role");
+  if (!seat.ok) return jsonResult({ ok: false, error: seat.error, status: 400 });
+
+  const ref = optionalText(form.get("ref"), 32, "Reference");
+  if (!ref.ok) return jsonResult({ ok: false, error: ref.error, status: 400 });
 
   const uploaded = form.get("file");
   if (!(uploaded instanceof File)) {
@@ -40,25 +76,35 @@ export async function POST(request: Request) {
   if (bytes.byteLength > MAX_CV_BYTES) {
     return jsonResult({ ok: false, error: "CV must be 5 MB or smaller.", status: 400 });
   }
+  const content = inspectCvContent(checked.filename, bytes);
+  if (!content.ok) return jsonResult({ ok: false, error: content.error, status: 400 });
 
-  return jsonResult(
-    await sendFormEmail({
-      subject: `CV from ${name.value}`,
-      replyTo: email.value,
-      text: [
-        `Name: ${name.value}`,
-        `Email: ${email.value}`,
-        `Region: ${regionName(region.value)} (${region.value})`,
-        `File: ${checked.filename}`,
-      ].join("\n"),
-      attachments: [
-        {
-          filename: checked.filename,
-          // This Resend SDK JSON-encodes the payload, so the in-memory buffer is sent as base64.
-          content: bytes.toString("base64"),
-          contentType: checked.contentType,
-        },
-      ],
-    }),
-  );
+  const seatLine = seat.value && ref.value ? `${seat.value} (${ref.value})` : seat.value;
+  const trackLine = cvTrackLabel(track.value);
+  const lines = [
+    `Name: ${name.value}`,
+    `Email: ${email.value}`,
+    `For: ${trackLine}`,
+    `Region: ${regionName(region.value)} (${region.value})`,
+    phone.value ? `Phone: ${phone.value}` : "",
+    seatLine ? `Role: ${seatLine}` : "",
+    `Right to work: ${work.value}`,
+    track.value === "ai-training" ? `Consent: ${AI_CONSENT_VERSION}` : "",
+    `File: ${checked.filename}`,
+  ].filter(Boolean);
+
+  const result = await deliverIntake({
+    kind: "cv",
+    email: email.value,
+    subject: seatLine ? `CV from ${name.value} — ${seatLine}` : `CV from ${name.value} — ${trackLine}`,
+    text: lines.join("\n"),
+    ip: clientIp(request),
+    humanToken: tokenFromForm(form),
+    visitorSla: track.value === "ai-training" ? sla.training : sla.role,
+    filename: checked.filename,
+    contentType: checked.contentType,
+    fileBase64: bytes.toString("base64"),
+  });
+  if (result.ok) return Response.json({ ok: true, id: result.id });
+  return jsonResult(result);
 }

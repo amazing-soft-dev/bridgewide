@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import type { ReactNode } from "react";
-import { usePrefersReducedMotion } from "@/lib/motion";
+import { usePrefersReducedMotion } from "@/hooks/use-media-query";
 
 export function Marquee({
   children,
@@ -21,7 +21,7 @@ export function Marquee({
 
   return (
     <div className="overflow-hidden">
-      <motion.div
+      <m.div
         className="flex w-max"
         data-motion="marquee"
         animate={{ x: ["0%", "-50%"] }}
@@ -31,7 +31,7 @@ export function Marquee({
         <div className="flex shrink-0 items-center gap-10 pr-10" aria-hidden>
           {children}
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }

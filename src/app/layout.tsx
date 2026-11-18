@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Geist, IBM_Plex_Mono } from "next/font/google";
+import { ProductionInsights } from "@/components/analytics/ProductionInsights";
 import { siteUrl } from "@/components/pages/metadata";
-import { AnnouncementBar } from "@/components/site/AnnouncementBar";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { siteGraph } from "@/lib/structured-data";
 import { FooterMark } from "@/components/site/FooterMark";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { MotionProvider } from "@/components/ui/MotionProvider";
 import "./globals.css";
+
+/** Production Vercel only. Preview, local, and the GitHub Pages export stay quiet. */
+const productionInsights =
+  process.env.VERCEL_ENV === "production" && process.env.NEXT_OUTPUT !== "export";
 
 const geist = Geist({
   variable: "--font-geist",
@@ -24,11 +31,41 @@ const mono = IBM_Plex_Mono({
   weight: "400",
 });
 
+// A role closes at 18:00 Pacific. Next.js reads this value statically, so it must be a number literal:
+// regenerate at most every five minutes in the server build. The static export ignores it.
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "BridgeWide",
+  title: { default: "BridgeWide", template: "%s · BridgeWide" },
   description:
-    "BridgeWide places software engineers for companies across the USA, Canada, LATAM, and Europe.",
+    "BridgeWide places software engineers for companies across the USA, Canada, LATAM, Europe, and Asia.",
+  applicationName: "BridgeWide",
+  authors: [{ name: "BridgeWide", url: siteUrl }],
+  creator: "BridgeWide",
+  publisher: "BridgeWide",
+  category: "Recruitment",
+  formatDetection: { email: false, address: false, telephone: false },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  manifest: "/manifest.webmanifest",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -38,11 +75,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geist.variable} ${display.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AnnouncementBar />
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
-        <FooterMark />
+        <JsonLd data={siteGraph()} />
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-md focus:bg-ink focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-cloud focus:no-underline"
+        >
+          Skip to content
+        </a>
+        <MotionProvider>
+          <SiteHeader />
+          <main id="main" className="relative z-10 flex-1 bg-cloud">{children}</main>
+          <SiteFooter />
+          <FooterMark />
+        </MotionProvider>
+        {productionInsights ? <ProductionInsights /> : null}
       </body>
     </html>
   );
