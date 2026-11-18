@@ -54,3 +54,6 @@ next-env.d.ts
 
 # test coverage report
 coverage/
+
+# claude code (local launch config and settings)
+/.claude/
