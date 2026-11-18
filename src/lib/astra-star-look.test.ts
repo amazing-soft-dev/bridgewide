@@ -139,10 +139,10 @@ describe("dustLook", () => {
   it("colours dust from the star palette, warm accents included", () => {
     const palette = new Set<number>(STAR_PALETTE.map((entry) => entry.value));
     for (const look of looks) expect(palette.has(look.color)).toBe(true);
-    const warm = looks.filter((look) => look.color === 0xffbf8f || look.color === 0xff8a45);
-    // Peach 16% + amber 12%.
-    expect(warm.length / count).toBeGreaterThan(0.26);
-    expect(warm.length / count).toBeLessThan(0.3);
+    const warm = looks.filter((look) => look.color === 0xf87915 || look.color === 0xfa994c);
+    // Orange 12% + light orange 10%.
+    expect(warm.length / count).toBeGreaterThan(0.2);
+    expect(warm.length / count).toBeLessThan(0.24);
   });
 
   it("uses the global random source when none is passed", () => {
@@ -157,16 +157,31 @@ describe("paletteColor", () => {
     expect(total).toBeCloseTo(1, 10);
   });
 
-  it("keeps a cool majority with about a quarter warm", () => {
+  it("matches openai.com's astra palette and picker", () => {
+    expect(STAR_PALETTE.map((entry) => entry.value)).toEqual([0x6dcbf4, 0x7ab1fe, 0xf87915, 0xfa994c, 0xf5f6fb]);
+    // Its picker: r < .36 cyan, < .52 blue, < .64 orange, < .74 light orange, else near-white.
+    const at = (roll: number) => paletteColor(constant(roll));
+    expect(at(0.35)).toBe(0x6dcbf4);
+    expect(at(0.37)).toBe(0x7ab1fe);
+    expect(at(0.53)).toBe(0xf87915);
+    expect(at(0.65)).toBe(0xfa994c);
+    expect(at(0.75)).toBe(0xf5f6fb);
+  });
+
+  it("keeps a cool majority, a quarter near-white and about a fifth warm", () => {
     const rand = seeded(5);
     const count = 20000;
     let cool = 0;
+    let white = 0;
     for (let i = 0; i < count; i++) {
       const color = paletteColor(rand);
-      if (color !== 0xffbf8f && color !== 0xff8a45) cool++;
+      if (color === 0x6dcbf4 || color === 0x7ab1fe) cool++;
+      if (color === 0xf5f6fb) white++;
     }
-    expect(cool / count).toBeGreaterThan(0.7);
-    expect(cool / count).toBeLessThan(0.74);
+    expect(cool / count).toBeGreaterThan(0.5);
+    expect(cool / count).toBeLessThan(0.54);
+    expect(white / count).toBeGreaterThan(0.24);
+    expect(white / count).toBeLessThan(0.28);
   });
 });
 

@@ -57,15 +57,17 @@ export type Look = {
 export const DUST_TIER_SHARES = { fine: 0.85, ambient: 0.12 } as const;
 
 /**
- * Star palette: a cool blue-white majority with warm accents. Weights sum to 1.
- * Shared by the dust and the ribbon stars so the whole field reads as one sky.
+ * Star palette: openai.com's "astra" palette, with the weights its picker uses
+ * (cumulative .36 / .52 / .64 / .74 / 1). A cyan and blue majority, a quarter
+ * near-white and about a fifth orange. Weights sum to 1. Shared by the dust
+ * and the ribbon stars so the whole field reads as one sky.
  */
 export const STAR_PALETTE = [
-  { value: 0xc4dcff, weight: 0.36 }, // blue-white
-  { value: 0xf2f6ff, weight: 0.14 }, // white
-  { value: 0x8fcdff, weight: 0.22 }, // ice
-  { value: 0xffbf8f, weight: 0.16 }, // peach
-  { value: 0xff8a45, weight: 0.12 }, // amber
+  { value: 0x6dcbf4, weight: 0.36 }, // cyan
+  { value: 0x7ab1fe, weight: 0.16 }, // blue
+  { value: 0xf87915, weight: 0.12 }, // orange
+  { value: 0xfa994c, weight: 0.1 }, // light orange
+  { value: 0xf5f6fb, weight: 0.26 }, // near-white
 ] as const satisfies readonly [Weighted<number>, ...Weighted<number>[]];
 
 /** A star colour drawn from the palette by weight. */
