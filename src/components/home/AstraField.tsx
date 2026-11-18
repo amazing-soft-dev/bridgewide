@@ -37,13 +37,15 @@ const MEET_MIN_SCALE = 0.12;
 /** Depth of the mark's curved surface, in mark units: gives it a real 3D body when turned. */
 const DEPTH_AMPLITUDE = 13;
 /** Ribbon stars per mark unit of path length. */
-const STARS_PER_UNIT = 3.2;
+const STARS_PER_UNIT = 5.5;
 /** A star's offset from the line is spread over a tube: this much of it goes into depth. */
 const TUBE_DEPTH = 3;
-/** Twinkle never takes a star below 1 - depth of its brightness, so lines never drop out. */
-const TWINKLE = 0.22;
-const FLARE_TWINKLE = 0.12;
-const FINE_TWINKLE = 0.1;
+/**
+ * Ribbon twinkle, as on openai.com: 0.86 + 0.14 * sin(phase + t * 0.62 * rate),
+ * always on (not only once the stream flows), so lines never drop out.
+ */
+const TWINKLE_DEPTH = 0.14;
+const TWINKLE_SPEED = 0.62;
 /** Ribbon stars wear the outer-spray look until this far into their gather, then take their ribbon look. */
 const LAND_START = 0.75;
 const GATHER_STAGGER = 0.22;
@@ -55,7 +57,7 @@ const NUDGE_RADIUS_PX = 150;
 const NUDGE_GAIN = 0.7;
 const NUDGE_MAX_PX = 56;
 const NUDGE_RETURN = 3.2;
-const DUST_PER_SIDE = 320;
+const DUST_PER_SIDE = 200;
 /** Dust settles between these NDC distances from the centre line, on both sides. */
 const BAND_INNER = 0.4;
 const BAND_OUTER = 0.98;
@@ -101,6 +103,8 @@ type StarBase = Look & {
   delay: number;
   phase: number;
   rate: number;
+  /** Fixed per-star coverage, 0.82-0.98 (openai.com's starOpacity). */
+  opacity: number;
 };
 type RibbonStar = StarBase & {
   kind: "ribbon";
@@ -384,7 +388,8 @@ function starBase(kind: "ribbon" | "dust", spray: Spray): StarBase {
     spray,
     delay: Math.random(),
     phase: Math.random() * Math.PI * 2,
-    rate: 0.5 + Math.random() * 1.1,
+    rate: 0.65 + Math.random() * 0.7,
+    opacity: 0.82 + Math.random() * 0.16,
   };
 }
 
@@ -786,8 +791,7 @@ export function AstraField() {
           let y = settled.y;
           let z = settled.z;
           let size = star.size;
-          let tier = star.tier;
-          let alpha = 1;
+          let alpha = star.opacity;
           if (star.kind === "ribbon") {
             const land = smoothstep((gather - LAND_START) / (1 - LAND_START));
             const outer = star.outer;
@@ -798,7 +802,6 @@ export function AstraField() {
               const from = outerColors[c] ?? 0;
               colors[c] = from + ((ribbonColors[c] ?? 0) - from) * land;
             }
-            if (land < 0.5) tier = outer.tier;
             alpha *= 1 - land * (1 - spineFade(star.offset));
             // Once the stream flows, a star grows in after it spawns and shrinks
             // away as it reaches its path's meeting point. Before that (and with
@@ -812,8 +815,6 @@ export function AstraField() {
             size *= 1 - stream * (1 - (MEET_MIN_SCALE + (1 - MEET_MIN_SCALE) * envelope));
             alpha *= 1 - stream * (1 - fadeOut);
           }
-          const fine = tier === "fine";
-          const flare = tier === "flare";
           if (gather < 1) {
             ndcToLocal(star.spray.nx, star.spray.ny, star.spray.z, sprayed);
             x = sprayed.x + (x - sprayed.x) * gather;
@@ -822,9 +823,8 @@ export function AstraField() {
           }
           if (star.kind === "dust") {
             alpha *= dustAlpha;
-          } else if (flow > 0) {
-            const depth = flare ? FLARE_TWINKLE : fine ? FINE_TWINKLE : TWINKLE;
-            alpha *= 1 - depth * flow * (0.5 + 0.5 * Math.sin(time * star.rate + star.phase));
+          } else if (!still) {
+            alpha *= 1 - TWINKLE_DEPTH + TWINKLE_DEPTH * Math.sin(star.phase + time * TWINKLE_SPEED * star.rate);
           }
 
           let ox = (nudgeX[index] ?? 0) * nudgeFade;
